@@ -1,3 +1,7 @@
+Cicada script is a simple, interpreted language that can be extended with the user's own C/C++ code.  For details, see the website:
+
+http://heltilda.github.io/cicada
+
 Building Cicada requires a machine with a command prompt, a C or C++ compiler and the 'make' tool.
 
 If the C++ compiler is used:
