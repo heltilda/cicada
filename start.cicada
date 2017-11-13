@@ -1,0 +1,228 @@
+|*
+ *  start.cicada
+ *  This file, which is loaded by default when Cicada starts up,
+ *  runs an interactive workspace session for the user
+ *  
+ *  Cicada
+ *  Copyright (C) 2017 Brian C. Ross
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ *|
+ 
+
+
+| *******  Definitions  *******
+
+
+errCode :: counter :: memberCounter :: memID :: loopMember :: memTop :: pmTop :: int
+cicadaCode :: scriptOneLine :: opPositions :: bytecodeString :: string
+protectedMembers :: [] int
+allNames :: [] string
+moreInput :: bool
+toPrint :: *
+
+userCompilerNo := setCompiler()
+
+compiledCode :: search_path :: go_path :: { }
+
+calculator_print :: { code, print(args[1], "\n") }
+
+printl :: {  code, print(args, "\n")  }
+cat :: {  code, print_string(args[1], args)  }
+
+passed := 0
+
+
+
+    | set up the user's workspace, and make aliases to a few variables from start.cicada
+
+workspace :: {}     | our pseudo-workspace for the interactive session
+
+(workspace.calculator :: *) = @calculator_print
+workspace.ans :: *
+workspace.go_path := @go_path
+workspace.allNames := @allNames
+
+(top_of_path :: *) = @go_path[+1] = @workspace
+
+
+
+
+
+| *******  Main program  *******
+
+
+
+    | run user.cicada in the workspace, if it exists
+
+if trap(cicadaCode = load("./user.cicada")) == passed  then (
+    if trap( ; bytecodeString = compile(cicadaCode, "user.cicada", opPositions, allNames)) == passed  then (
+        errCode = trap( ; transform(bytecodeString, compiledCode, { }, "user.cicada", cicadaCode, opPositions))
+        if errCode == passed  then (
+            errCode = trap(; (workspace<<compiledCode#0)())
+            if errCode == 51  then exit
+)   )   )
+
+
+
+
+
+    | the main loop
+
+while true  do (
+    
+    
+        | read in the user input...
+        | and keep reading it in as long as the user ends with a '&' (line-continuation) character
+    
+    cicadaCode = ""
+    print("\n\n> ")
+    loop
+        if trap(scriptOneLine = input()) /= passed  then scriptOneLine = ""        | some control characters throw input() a NULL
+        
+        if size(scriptOneLine) == 0  then moreInput = false
+        else if scriptOneLine[size(scriptOneLine)] == '&'  then (
+            moreInput = true
+            scriptOneLine =! scriptOneLine[<1, size(scriptOneLine)-1>]   )
+        else  moreInput = false
+        
+        cat(cicadaCode, scriptOneLine)
+    until not moreInput
+    printl()
+    
+    
+        | compile what the user types into bytecode
+    
+    if trap( ; bytecodeString = compile(cicadaCode, *, opPositions, allNames)) == passed  then (
+        
+        
+            | if go_path has changed, then we need to update our 'search path'
+            | (the stack of objects where we look for member names)
+        
+        search_path[^top(go_path)]
+        
+        if trap(
+            for counter in <1, top(go_path)-1>  (
+            if search_path[counter+1] /= @go_path[counter]  then (
+                if type(go_path[counter]) < 5  then throw(1)
+                search_path[counter+1] = @go_path[counter]
+            ))
+            if top_of_path /= @go_path[top]  then (
+                if type(go_path[top]) < 5  then throw(1)
+                top_of_path = @go_path[top]        )
+        ) /= passed  then (
+            search_path[^1]
+            go_path[^1] = @top_of_path = @workspace
+            go_path()
+            printl("Problem with path; resetting to root..")
+        )
+        
+        
+            | mark pre-existing 'token' members (so we don't print or remove them after running the command)
+        
+        pmTop = 0
+        protectedMembers[^0]
+        memTop = top(top_of_path)
+        
+        for loopMember in <1, memTop>  (
+        if member_ID(top_of_path, loopMember) <= 0  then (
+            pmTop = that + 1
+            protectedMembers[+pmTop] = member_ID(top_of_path, loopMember)
+        ))
+        
+        
+            | 'transform' the bytecode (i.e. load it from a string variable into memory)
+        
+        errCode = trap( ; transform(bytecodeString, compiledCode, search_path))
+        if errCode == passed  then (
+            
+            
+                | finally, run the code
+            
+            setCompiler(userCompilerNo)
+            
+            errCode = trap( ; (top_of_path<<compiledCode#0)() )
+            
+            userCompilerNo = setCompiler()
+            setCompiler(1)
+            
+            
+                | if the user typed 'exit', then let him leave
+            
+            if errCode == 51  then (  printl(), exit  )
+            
+            
+                | We have some clean-up to do.  For example, when the user types "my_function()" a token of the
+                | return variable is created in the workspace (owing to a 'prefix' added by the compiler),
+                | which will never be used again but nonetheless would keep the variable's data alive forever,
+                | even if it was removed from all members of the script.  There is also a hidden args variable.
+                | We remove these useless members to prevent them from slowing things down and wasting memory.
+            
+            
+                | 1)  print out any 'prefix variables' (the calculator function), and
+                | 2)  remove those variables (to keep the workspace free of single-use prefix variables from command-prompt entries)
+            
+            for memberCounter in <1, top(top_of_path)>  (
+                memID = member_ID(top_of_path, memberCounter)
+                
+                if memID <= 0  then ( {
+                    
+                    pmTop = top(protectedMembers)
+                    for loopMember in <1, pmTop>  (
+                    if protectedMembers[loopMember] == memID  then (
+                        return
+                    ))
+                    
+                    
+                        | remove before printing to avoid self-reference errors (think 'print(q)' when pwd == root.q)
+                    
+                    toPrint = @top_of_path[memberCounter]
+                    
+                    remove top_of_path[memberCounter]
+                    
+                    if trap(size(toPrint)) == passed  then (
+                        trap(workspace.ans = @toPrint)              | trap():  ans variable may be broken
+                        if toPrint /=@ *  then (
+                            trap(workspace.calculator(toPrint))     | calculator:  ditto
+                    )   )
+                    
+                    toPrint = @nothing
+                    
+                    memberCounter = that - 1
+            })  )
+            
+            
+                | 3) remove hidden variables from the working directory, then 4) do a general clean up
+            
+            springCleaning(top_of_path)
+            springCleaning()
+            
+            
+                | Finally, if the user -- for some reason -- has left the workspace and then resized a member on his search path,
+                | he won't be able to do hardly anything including get back to root.  Help him out of this.
+            
+            if errCode == 29  then (                            | incomplete_variable_err
+                if trap(top_of_path[top+1] :: *) == passed  then remove top_of_path[top]
+                else  (
+                    printl("You look stuck; am sending you back to root...")
+                    search_path[^1]
+                    go_path[^1] = @top_of_path = @workspace    
+                    go_path()
+    )   )   )   )
+)
