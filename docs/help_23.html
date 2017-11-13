@@ -1,0 +1,379 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Writing and debugging a Cicada wrapper</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a>
+
+<H1> <CENTER> Writing and debugging a Cicada wrapper </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Let&rsquo;s try our hand at writing a Cicada script to wrap around our C routine.  It&rsquo;s our first time scripting so we will probably have a few bugs.<P>
+
+<P>  <u>NN.cicada</u>
+
+<P> 
+
+<P><P><tt> 
+
+<br> neural_network :: {
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;numNeurons :: int
+
+<br> &nbsp;&nbsp;&nbsp;numInputs :: numOutputs :: numHiddens
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;weights :: [] [] double
+
+<br> &nbsp;&nbsp;&nbsp;activity :: [] double
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;init :: {
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if trap( { numInputs, numOutputs, numHiddens } = args ) /= passed&nbsp;then (
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(&quot;usage:&nbsp;myNN.init(inputs, outputs, hidden neurons)\n&quot;)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numNeurons = numInputs + numOutputs + numHiddens + 1
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;activity[^numNeurons]
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;weights[^0][^0]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| to speed up the resize
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;weights[^numNeurons][^numNeurons]
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+
+<br> &nbsp;&nbsp;&nbsp;}
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;run :: {
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numArgs :: rtrn :: int
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;step_size :: learning_rate :: double
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs :: outputs :: [] double
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[^1] = 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// the 'bias' input
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numArgs = top(args)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if trap(
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[^numInputs + 1]
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[&lt;2, numInputs+1&gt;] = args[1][*]
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if numArgs == 4&nbsp;then (
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputs[^numOutputs]
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputs[&lt;1, numOutputs&gt;] = args[2][*]
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ step_size, learning_rate } = { args[3], args[4] }&nbsp;)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else if numArgs == 2&nbsp;then &amp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;step_size = args[2]
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else&nbsp;throw(1)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) /= passed&nbsp;then (
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(&quot;usage:&nbsp;myNN.run(input, step_size OR &quot;,
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;input, target output, step_size, learning_rate)\n&quot;)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if numArgs == 2&nbsp;then &amp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtrn = call(&quot;RunNetwork&quot;, weights, activity, inputs, step_size)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else &amp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtrn = call(&quot;RunNetwork&quot;, weights, activity, inputs, step_size, outputs, learning_rate)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if rtrn == 1&nbsp;then print(&quot;run() did not converge; try lowering step size?\n&quot;)
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+
+<br> &nbsp;&nbsp;&nbsp;}
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;
+
+<br> &nbsp;&nbsp;&nbsp;init(0, 0, 0)
+
+<br> }
+
+<br> </tt>
+
+<P>
+
+<P>  We should save NN.cicada in same directory that contains the <tt>cicada</tt> application, <tt>start.cicada</tt> and <tt>user.cicada</tt>.  (start.cicada runs the command prompt, and user.cicada pre-loads a number of useful functions.)
+
+<P> Assuming we are at Cicada&rsquo;s command prompt, we can try out our new wrapper by typing:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; run(&quot;NN&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; Error:&nbsp;left-hand argument expected in file NN
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 36:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[^1] = 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// the 'bias' input
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Hmm..  we&rsquo;re obviously not finished with NN.cicada yet.  Fortunately compile-time errors like the one above are usually easy to sort out.  In our case we accidentally wrote a C-style comment &lsquo;<tt>//</tt>&rsquo; in place of a Cicada comment &lsquo;<tt>|</tt>&rsquo;, which Cicada interpreted as a pair of division signs.  We make the straightforward fix to NN.cicada:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[1] = 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| the 'bias' input
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  and try running the script again.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; run(&quot;NN&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; Error:&nbsp;member 'numHiddens' not found in file NN
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 6:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numInputs :: numOutputs :: numHiddens
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> We have made progress:  NN.cicada successfully compiled and began running --- before impaling itself on line 3 and duly filing a complaint.  Runtime errors can be more difficult to debug than compile-time errors, but the interactive environment helps somewhat.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; neural_network.numHiddens
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; Error:&nbsp;member 'numHiddens' not found
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  With a little knowledge of the scripting language we would see that we tried to define <tt>numInputs</tt> and <tt>numOutputs</tt> to be of type <tt>numHiddens</tt>, which would be allowed except that <tt>numHiddens</tt> has not been defined yet.  What we meant to do was to define all three of these variables to be of type <tt>int</tt>.  Make the following correction to line 3:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;numInputs :: numOutputs :: numHiddens :: int
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  and re-run our script.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; run(&quot;NN&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; usage:&nbsp;myNN.init(inputs, outputs, hidden neurons)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> This time the script successfully compiled and ran, although it printed out a suspicious &lsquo;usage&rsquo; message even though we never tried initializing a neural network.  Let&rsquo;s see if <tt>init()</tt> works when we&rsquo;re actually trying to run it.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; neural_network.init(3, 4, 5)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  So far so good(?).  There should now be 13 neurons in our network (including the &lsquo;bias&rsquo; neuron).
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; neural_network.activity
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; {&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  So something is definitely wrong.  At this stage we might want to look at a number of other variables that should have been set, and the easiest way to do that is to &lsquo;go&rsquo; inside our network.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; go(neural_network)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; weights
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; {&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; numNeurons
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 0
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; go()
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The last line takes us back to our normal workspace.  So our <tt>init()</tt> call was a dud -- nothing happened.  Well, the next step is to put a trace statement in the coding section of -- the function.. hmm...  Aha! -- we forgot the <tt>code</tt> marker in the <tt>init()</tt> method, which explains all of our problems.  That should go at the beginning of <tt>init()</tt>; the method should now begin:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;init :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if trap( { numInputs, numOutputs, numHiddens } = args ) /= passed&nbsp;then (
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> etc.  For the last time, let&rsquo;s go back and try
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; run(&quot;NN&quot;), neural_network.init(3, 4, 5)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; neural_network.activity
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Finally we see what we were hoping for:  an array of neurons, initialized to a resting state and ready to start processing.
+
+<P> <ul>
+</ul><a href="https://heltilda.github.io/cicada/help_24.html">Next: The Anagrambler</a>
+<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_22.html">Prev: Putting the C in Cicada</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017

@@ -1,0 +1,44 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: break</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_36.html">Loops and <tt>if</tt> blocks</a>
+
+<H1> <CENTER> <tt>break</tt> </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+ 
+
+<P> There is no <tt>break</tt> statement in Cicada.  But there is a way to jerry-rig something that does pretty much the same.  The trick is to put braces -- with no <tt>code</tt> marker or semicolon -- around the code we eventually want to escape from.  Within those braces, a <tt>return</tt> statement will simply escape from the bracketed code and continue with what follows.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;for counter in &lt;1, 10&gt;&nbsp;(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(counter)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if input() == &quot;q&quot;&nbsp;then return&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; print(&quot;finished with counter = &quot;, counter)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This works because the braces actually define a new composite variable, and the code inside the braces is actually running inside of this variable.  This causes problems in some cases.  If we define a member, that member will be inside of this variable, which was probably not intended.  The <tt>this</tt> keyword refers to this newly-defined variable, while <tt>parent</tt> now refers to the place we were before hitting the braces.  Also, if we had been running a function, we cannot escape this function using a <tt>return</tt> statement within the bracketed code.  On the upside, we have a lot of latitude in choosing where to put the braces:  it doesn&rsquo;t have to escape from a loop, and if we do use them inside loops it does not have to be to the next-outermost <tt>for</tt> or <tt>while</tt>.
+
+<P> 
+
+<P> 
+
+<P> <a href="https://heltilda.github.io/cicada/help_37.html">Next: Sets</a>
+<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_363.html">Prev: <tt>for</tt></a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017

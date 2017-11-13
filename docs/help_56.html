@@ -1,0 +1,941 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Errors</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_5.html">Reference</a>
+
+<H1> <CENTER> Errors </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> When an error happens in a Cicada script, one of two things happens.  If the error happened inside of a <tt>trap()</tt> function, then Cicada falls out of the <tt>trap()</tt> call, printing an error message if <tt>trap()</tt>&rsquo;s arguments began with a <tt>code</tt> marker or semicolon.  If there was no <tt>trap()</tt>, then the script crashes with an error message.  Table 5 lists the error message by error code (the number passed to <tt>throw()</tt> and returned by <tt>trap()</tt>).  The rest of this section explains each error message, in alphabetical order.
+
+<P> 
+
+<br><center><div><P><table border="1"><tr><td>
+
+<b> ID</b> </td><td> <b> name</b> </td><td> <b> ID</b> </td><td> <b> name</b></td></tr><tr><td>
+ 
+0 </td><td> passed (no error) </td><td> 26 </td><td> member is void</td></tr><tr><td>
+
+1 </td><td> out of memory </td><td> 27 </td><td> cannot step to multiple members</td></tr><tr><td>
+
+2 </td><td> out of range </td><td> 28 </td><td> incomplete member</td></tr><tr><td>
+3 </td><td> initialization error </td><td> 29 </td><td> incomplete variable</td></tr><tr><td>
+
+4 </td><td> mismatched indices </td><td> 30 </td><td> invalid index</td></tr><tr><td>
+5 </td><td> error reading string </td><td> 31 </td><td> multiple indices not allowed</td></tr><tr><td>
+6 </td><td> error reading number </td><td> 32 </td><td> invalid index</td></tr><tr><td>
+7 </td><td> overflow </td><td> 33 </td><td> variable has no parent</td></tr><tr><td>
+ 
+ 8 </td><td> underflow </td><td> 34 </td><td> not a variable</td></tr><tr><td>
+
+9 </td><td> unknown command </td><td> 35 </td><td> not a function</td></tr><tr><td>
+10 </td><td> unexpected token </td><td> 36 </td><td> not composite</td></tr><tr><td>
+11 </td><td> [ token ] expected </td><td> 37 </td><td> string expected</td></tr><tr><td>
+ 
+12 </td><td> argument expected </td><td> 38 </td><td> illegal target</td></tr><tr><td>
+13 </td><td> left-hand argument expected </td><td> 39 </td><td> target was deleted</td></tr><tr><td>
+
+14 </td><td> right-hand argument expected </td><td> 40 </td><td> unequal data sizes</td></tr><tr><td>
+15 </td><td> no left-hand argument allowed </td><td> 41 </td><td> not a number</td></tr><tr><td>
+16 </td><td> no right-hand argument allowed </td><td> 42 </td><td> overlapping alias</td></tr><tr><td>
+ 
+17 </td><td> type mismatch </td><td> 43 </td><td> nonexistent Cicada function</td></tr><tr><td>
+
+18 </td><td> illegal command </td><td> 44 </td><td> call() can&rsquo;t find C function</td></tr><tr><td>
+19 </td><td> code overflow </td><td> 45 </td><td> wrong number of arguments</td></tr><tr><td>
+20 </td><td> inaccessible code </td><td> 46 </td><td> error in argument</td></tr><tr><td>
+
+21 </td><td> jump to middle of command </td><td> 47 </td><td> self reference</td></tr><tr><td>
+
+22 </td><td> division by zero </td><td> 48 </td><td> recursion depth too high</td></tr><tr><td>
+
+23 </td><td> member not found </td><td> 49 </td><td> I/O error</td></tr><tr><td>
+
+24 </td><td> variable has no member </td><td> 50 </td><td> [ return flag ]</td></tr><tr><td>
+25 </td><td> no member leads to variable </td><td> 51 </td><td> [ exit signal ]</td></tr>
+
+</table><div>Table 5:  Error messages, by error code</div></div></center><br>
+
+<P> 
+
+<br><P><b>Argument expected (#12)<P><P></b></b>
+<P>
+
+<P> There was an empty expression where there shouldn&rsquo;t be.  For example, the expression <tt>5+()</tt> causes this error because there was nothing inside the parentheses.<P>
+
+<P> 
+
+<br><P><b><tt>call()</b></tt> can&rsquo;t find C function (#44)<P><P></b>
+<P>
+
+<P> A <tt>call()</tt> statement was instructed to run a C/C++ function that does not seem to exist.  <tt>call()</tt> takes either a function name or a function ID.  If it is a name, a string corresponding to that name must appear in the <tt>UserFunctionSet</tt> array (in userfn.c/cpp).  If it is an ID, it must be on the interval 1-<i>N</i> (if there are <i>N</i> user-defined C/C++ functions).  Thus
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; call(0)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will produce this error.<P>
+
+<P> 
+
+<br><P><b>Cannot step to multiple members (#27)<P><P></b></b>
+<P>
+
+<P> Cicada tried to step into two or more members at once.  This is not allowed; the user can step to multiple indices of an array, but never two members.  So, for example,
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a ::&nbsp;[2] double
+
+<br>&nbsp;&nbsp;&nbsp; a[&lt;1, 2&gt;]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  is legal, whereas
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; b :: { one :: two :: double }
+
+<br>&nbsp;&nbsp;&nbsp; b[&lt;1, 2&gt;]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  causes an error on the second line.<P>
+
+<P> 
+
+<br><P><b>Code overflow (#19)<P><P></b></b>
+<P>
+
+<P> <tt>transform()</tt> was given bytecode that did not seem to end in the way it was supposed to.  For example, the constant-string command gives a string length followed by the characters of the string; if the length of the string is greater than the remaining length of bytecode, this error will be thrown.  All scripts must end with a 0 terminating code word.<P>
+
+<P> 
+
+<br><P><b>Division by zero (#22)<P><P></b></b>
+<P>
+
+<P> This warning is caused when the user tries to divide by zero at runtime.  Cicada still performs the division, resulting in either infinity or a not-a-number value.  And if on some machines a divide-by-zero crashes the computer, then the computer will crash.<P>
+
+<P> 
+
+<br><P><b>Error in argument (#46)<P><P></b></b>
+<P>
+
+<P> There was a problem with a parameter passed to a built-in function.  This is a catch-all error for miscellaneous problems with arguments.  It can be caused by:  <tt>compile()</tt> if the fourth (variable-names) argument is not a string array, or <tt>transform()</tt> if the bytecode string length is not a multiple of the size of an integer.<P>
+
+<P> 
+
+<br><P><b>Error reading number (#6)<P><P></b></b>
+<P>
+
+<P> The compiler tried to read a number that didn&rsquo;t follow the expected format.  This can be caused by the compiler or by the <tt>read_string()</tt> function.<P>
+
+<P> 
+
+<br><P><b>Error reading string (#5)<P><P></b></b>
+<P>
+
+<P> A string didn&rsquo;t follow the allowed format.  Strings begin and end with a double-quotation-mark character:  <tt>&quot;</tt>.  The string must all be written on one line; the line-continuation operator &lsquo;<tt>&amp;</tt>&rsquo; does not work inside strings.  A line break (other than a comma) within a string causes this error, as does the presence of a null character.  Certain special characters can be encoded with escape sequences:  <tt>\r</tt> (carriage return), <tt>\t</tt> (tab), <tt>\n</tt> (end-of-line) and <tt>\\</tt> (backslash).  General characters can be encoded using hexadecimal codes beginning with a backslash (e.g. <tt>\3D</tt> is an equals character).<P>
+
+<P> 
+
+<br><P><b>Exit signal (#51)<P><P></b></b>
+<P>
+
+<P> This error code, thrown by the <tt>exit</tt> command, is a bookkeeping device that causes Cicada to fall out of the program.  It does not mean that anything went wrong in the code.  If an <tt>exit</tt> command is written inside of a <tt>trap()</tt> function, the program does not quit, but instead falls out of the <tt>trap()</tt> with error code 51.  Typing <tt>throw(51)</tt> is equivalent to typing <tt>exit</tt>.
+
+<P> 
+
+<br><P><b>I/O error (#49)<P><P></b></b>
+<P>
+
+<P> One of the following built-in functions couldn&rsquo;t perform the action instructed of it:  <tt>load()</tt>, <tt>save()</tt>, <tt>input()</tt> or <tt>print()</tt>.  The usual cause of this is that the user tried to read a non-existent file, or read or write a file with a bad pathname or without the necessary read/write permissions.  Specifically, this error is thrown if a file cannot be opened or closed, or if data could not be read or written properly to a file or the standard input or output.<P>
+
+<P> 
+
+<br><P><b>Illegal command (#18)<P><P></b></b>
+<P>
+
+<P> Cicada found a nonsensical command in bytecode that it was trying to transform into memory.  For example, the string-constant bytecode command has a string length word -- if the string length is less than zero then this error will be thrown.  Or, Cicada may hit a command ID that simply doesn&rsquo;t exist in any of its tables, which will also cause this error.<P>
+
+<P> 
+
+<br><P><b>Illegal target (#38)<P><P></b></b>
+<P>
+
+<P> Cicada tried to make an alias to something other than a variable or the void.<P>
+
+<P> 
+
+<br><P><b>Inaccessible code (#20)<P><P></b></b>
+<P>
+
+<P> This warning is thrown by <tt>transform()</tt>.  It indicates that a null end-of-script bytecode word was encountered before the end of the bytecode was reached.  The code will still run, but the spurious code-terminating marker will prevent the last part of the bytecode from being used.<P>
+
+<P> 
+
+<br><P><b>Incomplete member (#28)<P><P></b></b>
+<P>
+
+<P> There are two situations that cause this error.  The first is that the user tried to redefine or re-alias a part of an array --- these are operations that must be done to the entire array.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myArray :: [5] int
+
+<br>&nbsp;&nbsp;&nbsp; myArray[3] = @nothing&nbsp;&nbsp;&nbsp;&nbsp;| not legal
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will cause this error.  The second scenario is that we tried to step into only some indices of an array starting from a range of indices.  This is due to a technical limitation -- Cicada is only able to reference contiguous blocks of memory.  So once we step into more than one index of an array, each subsequent step must be into the full range of indices.  So this code
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; b :: [5][2] double
+
+<br>&nbsp;&nbsp;&nbsp; print( b[&lt;1, 3&gt;][1] )&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| causes an error
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  also causes an incomplete-member error.<P>
+
+<P> 
+
+<br><P><b>Incomplete variable (#29)<P><P></b></b>
+<P>
+
+<P> Only a partial variable was used for some operation that can only be done on an entire variable:  redefining or re-aliasing, or adding/removing indices.  For example, for a hypothetical array <tt>a :: [3][2] int</tt> the following causes an incomplete-variable error.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a[1][^4]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  If we want to resize the second dimension we have to do that for the entire array:  <tt>a[*][^4]</tt>.<P>
+
+<P> 
+
+<br><P><b>Initialization error (#3)<P><P></b></b>
+<P>
+
+<P> An uninitialized linked list was passed to a linked list routine (other than <tt>newLinkedList()</tt>).  An uninitialized linked list is marked by a null pointer in its <tt>memory</tt> field.  To initialize a list one must first clear the <tt>memory</tt> field, then make a successful call to <tt>newLinkedList()</tt>..<P>
+
+<P> 
+
+<br><P><b>Invalid index (#30, #32)<P><P></b></b>
+<P>
+
+<P> The most common cause of this error is that the user requested an index of an array that does not exist:  e.g. <tt>array[5]</tt> when it only has only four indices, or <tt>array[0]</tt> under any circumstance.  Remember that hidden members do not contribute to the total index count.  A second possibility is that an index range was given where the second index was (more than one) lower than the first, which is not allowed:  <tt>array[&lt;4, 2&gt;]</tt> for example.  (However <tt>array[&lt;4, 3&gt;]</tt> is allowed and just returns zero indices.)  This error also is thrown if we resize an array to a size less than zero, or try to add a huge number of indices (more than <tt>INT_MAX</tt>).
+
+<P> The fact that this error has two error codes is irrelevant to the user, having only to do with the way Cicada keeps its books.<P>
+
+<P> 
+
+<br><P><b>Jump to middle of command (#21)<P><P></b></b>
+<P>
+
+<P> <tt>transform()</tt> found a goto statement pointing somewhere other than the beginning of a bytecode command.  The specific bytecode commands that can cause this error are:  jump-always, jump-if-true and jump-if-false.<P>
+
+<P> 
+
+<br><P><b>Left-hand argument expected (#13)<P><P></b></b>
+<P>
+
+<P> An operator is missing its left-hand argument.  For example,
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a = + 3
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will cause this error because the <tt>+</tt> operator expects a number to the left, after the equals sign.<P>
+
+<P> 
+
+<br><P><b>Member is void (#26)<P><P></b></b>
+<P>
+
+<P> Cicada attempted to step into a void member (one that has no target).  Here is the most common sort of situation that will cause a void-member error:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; x :: *
+
+<br>&nbsp;&nbsp;&nbsp; x = 2
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Many built-in functions throw this error if any of their parameters are void.
+
+<P> A void-member error can also happen when we try to use an &lsquo;unjammed&rsquo; member:  a member defined as unjammable whose target variable was later resized.  This typically only happens to members of sets.  For example, this code will unjam the only member of <tt>set</tt> and cause a void-member error:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; array :: [5] int
+
+<br>&nbsp;&nbsp;&nbsp; set :: { array[&lt;1, 5&gt;] }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; remove array[3]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| unjams the alias in our set
+
+<br>&nbsp;&nbsp;&nbsp; set[1][1] = 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| the second '[1]' causes the error&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Had we defined the member of <tt>set</tt> explicitly:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; set :: { alias := @array[&lt;1, 5&gt;] }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  we would have gotten an overlapping-alias error when we tried deleting the array element.<P>
+
+<P> 
+
+<br><P><b>Member not found (#23)<P><P></b></b>
+<P>
+
+<P> The user gave a member name that Cicada could not find.  If the missing member is at the beginning of the path, for example if it flags member <tt>list</tt> in
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; print(list[5])
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then Cicada is telling us that that member (<tt>list</tt>) was not to be found anywhere along the search path:  the current function or any enclosing object up through the workspace.  If the problematic member was some intermediate point in the path, for example if <tt>list</tt> is flagged in
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; data[5].list = anotherList
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then the missing member (<tt>list</tt>) was not immediately inside the given path (<tt>data[5]</tt>).
+
+<P> If possible, Cicada gives the member name in single quotes along with the error message, as in:  &ldquo;<tt>member &rsquo;header&rsquo; not found</tt>&rdquo;.<P>
+
+<P> 
+
+<br><P><b>Mismatched indices (#4)<P><P></b></b>
+<P>
+
+<P> Usually, this error means that the user either tried to copy or compare data between arrays of different sizes, or else alias one array to another of a different size.  For example, the following will cause this error regardless of how &lsquo;<tt>a</tt>&rsquo; and &lsquo;<tt>b</tt>&rsquo; were defined.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a[&lt;1, 3&gt;] = b[&lt;1, 2&gt;]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice that this can happen when working inside of an array; for example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; q :: int
+
+<br>&nbsp;&nbsp;&nbsp; threeQs :: [3] { qAlias := @q }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  which is basically equivalent to <tt>threeQs[*].qAlias := @q</tt>.
+
+<P> Note that arrays of different dimensions can be copied/compared if their indices are specified manually and the total number of indices is the same (and each is a contiguous block of memory -- see the section on arrays).  So, for example, the following is legal:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; q :: [4] int
+
+<br>&nbsp;&nbsp;&nbsp; r :: [2][2] int
+
+<br>&nbsp;&nbsp;&nbsp; q[*] = @r[*][*]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> If the last index of the array on the left-hand side of a compare or equate is a &lsquo;<tt>[*]</tt>&rsquo; or &lsquo;<tt>[]</tt>&rsquo;, then Cicada will automatically resize it if that will prevent a mismatched-indices error.  Sometimes this does not work; for example, in the case below:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a :: [2][3] string
+
+<br>&nbsp;&nbsp;&nbsp; b :: [5] string
+
+<br>&nbsp;&nbsp;&nbsp; a[*][*] = b[*]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  we will get a mismatched-indices error because only the <i>last</i> index of &lsquo;<tt>a</tt>&rsquo; can be resized, which is incompatible with &lsquo;<tt>b</tt>&rsquo; having an odd number of indices.  We would also get this error if the first dimension of &lsquo;<tt>a</tt>&rsquo; was sized to zero, even if &lsquo;<tt>b</tt>&rsquo; was also of zero size.
+
+<P> A mismatched-indices error can also be thrown by the linked list routines (used for working with Cicada strings in C).  The only scenario where this would happen is when the two linked lists have different element sizes.  Strings always have an element size of 1 (the byte size of a character), so this should never happen unless the linked list routines are being used for something else.<P>
+
+<P> 
+
+<br><P><b>Multiple indices not allowed (#31)<P><P></b></b>
+<P>
+
+<P> Several instances of a variable were given where only one was expected.  Whenever Cicada expects either a number or a string, that quantity has to be a constant, a single variable or a single element of an array.  For example, the following causes this error.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; if 4 &lt; a[&lt;1, 2&gt;]&nbsp;then print(&quot;dunno how this worked&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Likewise, the following expression is also (at present) disallowed for the same reason.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a :: [2] { b :: int, if 4 &lt; b&nbsp;then ... }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Many built-in Cicada functions will throw a multiple-indices error when passed an array parameter when only a single number or string was expected.<P>
+
+<P> 
+
+<br><P><b>No left-hand argument allowed (#15)<P><P></b></b>
+<P>
+
+<P> An operator had a left-hand argument that it was not allowed to have.  For example, the following line
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; 10 return
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will cause this error because it interprets the <tt>return</tt> statement as having a left-hand argument <tt>10</tt>.  <tt>return</tt> is only supposed to have an argument on the right.<P>
+
+<P> 
+
+<br><P><b>No member leads to variable (#25)<P><P></b></b>
+<P>
+
+<P> Cicada attempted an operation that involving a member, not just a variable, and it didn&rsquo;t have one.  For example, the define operator specializes the member type as well as the variable type.  The following code
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f :: { code, return 5 }
+
+<br>&nbsp;&nbsp;&nbsp; f() :: double
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will generate this error since the <tt>return</tt> command returns only a variable, not the member of the function that points to it.
+
+<P> In addition to the define operator, both equate and forced-equate require a member in order to resize an array either using <tt>[^...]</tt>, or via a <tt>[*]</tt> or <tt>[]</tt> operator.  (That is because both the variable and the member have to be resized.)  Finally, the insertion and removal operators operate on members and therefore will generate this error if none is provided.<P>
+
+<P> 
+
+<br><P><b>No right-hand argument allowed (#16)<P><P></b></b>
+<P>
+
+<P> An operator had an argument to its right that it was not allowed to have.  Depending on precedence, this problem can also cause a no-left-argument-allowed error.<P>
+
+<P> 
+
+<br><P><b>Nonexistent Cicada function (#43)<P><P></b></b>
+<P>
+
+<P> The user invoked a built-in Cicada function with a function ID that does not exist.  Cicada functions are those functions like <tt>call()</tt> and <tt>trap()</tt>, and these are distinguished in bytecode by a function ID immediately following built-in-function command.  This number must fall in the range 0-29 because there are 30 built-in functions; any other number generates this error.  This error should only happen if the user modified the language, or else wrote or modified bytecode by hand.<P>
+
+<P> 
+
+<br><P><b>Not a function (#35)<P><P></b></b>
+<P>
+
+<P> The user tried to do something involving code with an object that doesn&rsquo;t have code.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; transform(compile(&quot;&quot;), 2)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  causes this error because <tt>transform()</tt> cannot put the transformed code into the primitive variable storing &lsquo;2&rsquo;.  This error message is technically redundant with the &lsquo;not-composite&rsquo; error message, because every composite object (i.e. defined using curly braces) is a function and vice versa.<P>
+
+<P> 
+
+<br><P><b>Not a number (#41)<P><P></b></b>
+<P>
+
+<P> Cicada was given a non-numeric expression where it expected a number.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; b := &quot;7&quot;
+
+<br>&nbsp;&nbsp;&nbsp; 2 + b
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  generates this error.  In different contexts one can also get compile-time or other runtime errors; the phrase &ldquo;<tt>2 + &quot;7&quot;</tt> generates &ldquo;type mismatch&rdquo;.<P>
+
+<P> 
+
+<br><P><b>Not a variable (#34)<P><P></b></b>
+<P>
+
+<P> We tried to do some variable operation on a non-variable.  For example, the define operator operates on both a member and a variable, so trying 
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; nothing :: string
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will cause this error.  Likewise, both equate and forced equate require an existing variable to copy data into.  Likewise, the comparison operator &lsquo;<tt>==</tt>&rsquo; requires two arguments that are either constants or variables.  Code substitution and alias-comparisons both involve variables and can cause this error.<P>
+
+<P> 
+
+<br><P><b>Not composite (#36)<P><P></b></b>
+<P>
+
+<P> Cicada expected a composite variable (i.e. one defined using curly braces), but was given a primitive variable instead.  All of the &lsquo;step&rsquo; operators -- &lsquo;<tt>.</tt>&rsquo;, &lsquo;<tt>[]</tt>&rsquo;, &lsquo;<tt>[^]</tt>&rsquo;, &lsquo;<tt>[+]</tt>&rsquo;, etc. -- must start from some composite variable.  For example, the following generates a not-composite error:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a :: double
+
+<br>&nbsp;&nbsp;&nbsp; print(a.b)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This error can also be thrown by a number of built-in Cicada functions such as <tt>top()</tt> and <tt>transform()</tt>, which expect certain arguments to be composite.<P>
+
+<P> 
+
+<br><P><b>Out of memory (#1)<P><P></b></b>
+<P>
+
+<P> Cicada was not able to allocate memory while it was running a script.  Any memory error will cause this message:  for example, if the computer is out of memory, or if the memory manager for some other reason refuses to allocate a block of the requested size.  Cicada is not particularly well-designed to recover from run-time memory errors -- or at the very least, it has not been well-tested in this regard -- so it is recommended that the program be restarted if this error occurs.
+
+<P> The usual cause of a memory error is frequent creation and removal of variables within a loop.  Due to Cicada&rsquo;s incomplete garbage collection the deleted variables often do not get erased from memory until the loop is finished and the command prompt is brought up again.  Calling <tt>springCleaning()</tt> periodically within the loop will force complete garbage collection.<P>
+
+<P> 
+
+<br><P><b>Out of range (#2)<P><P></b></b>
+<P>
+
+<P> A number was used that was not within expected bounds.  This error is often thrown as a warning.  One common cause of this is that the user assigned a value too large or too negative for a given type, for example
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; (a::char) = 400
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This warning is <i>not</i> caused by rounding-off errors:  for example, we can assign the value 1.9 to an integer variable, and Cicada will quietly round it off to 1 without raising any warning flag.
+
+<P> <tt>transform()</tt> can throw at out-of-range error (an actual error, not a warning) if some element of the character-positions list (optional 6th argument) is not within [1, <i>num_chars</i>].  It can also be caused by certain defective numbers passed to <tt>newCompiler()</tt>:  a negative number of commands or precedence levels (2nd/4th arguments); a precedence level outside of bounds; an operator direction other than <tt>l_to_r</tt> or <tt>r_to_l</tt>; or an argument number or jump-to number in the bytecode (e.g. &lsquo;<tt>a5</tt>&rsquo; or &lsquo;<tt>j4</tt>&rsquo;) beyond the number of arguments/jump positions (or outside the range 1-9).  Finally, this error can be thrown by the linked list routines if a nonexistent/nonsensical element number of a list is passed (although <tt>InsertElements()</tt> allows the insertion point to be one greater than the top element).  Remember that linked list indices begin at 1, not 0.<P>
+
+<P> 
+
+<br><P><b>Overflow (#7)<P><P></b></b>
+<P>
+
+<P> The compiler tried to read a numeric constant that was larger than the maximum that will fit in a double-precision variable.  For negative numbers this means that the number was less than the most negative allowed number.  For example, writing the number <tt>5e999</tt> causes this error.<P>
+
+<P> 
+
+<br><P><b>Overlapping alias (#42)<P><P></b></b>
+<P>
+
+<P> The user tried to do resize an array some of whose elements are also aliased elsewhere.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a :: [5] int
+
+<br>&nbsp;&nbsp;&nbsp; b := @a[&lt;2, 4&gt;]
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; a[+3]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Resizing one member (&lsquo;<tt>a</tt>&rsquo;) does not affect any aliases (&lsquo;<tt>b</tt>&rsquo;), so there would be a contradiction in the array if the resize were allowed.  Notice that an alias to the array variable (as opposed to certain indices of the integer variable), as in
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; c := @a
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  does not have this problem.<P>
+
+<P> 
+
+<br><P><b>Recursion depth too high (#48)<P><P></b>
+<P>
+
+<P> Too many nested functions are being run.  In order to avoid blowing the program stack, Cicada sets a limit to the number of nested functions that can be run inside one another.  This limit is set in the <tt>glMaxRecursions</tt> variable at the top of bytecd.c -- Cicada comes with it set to 100.  So if we have <tt>f1</tt> call <tt>f2</tt> which then calls <tt>f3</tt>, then there is no problem because the total depth is only 4 (the three functions plus the calling script).  On the other hand, if we try<P>
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f :: { f2 :: this }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then we will immediately get this error because defining &lsquo;<tt>f</tt>&rsquo; requires an infinite level of recursion.  (<tt>f</tt> creates <tt>f2</tt> which creates its own <tt>f2</tt>, etc.)<P>
+
+<P> 
+
+<br><P><b>Return flag (#50)<P><P></b></b>
+<P>
+
+<P> This error code is used internally to cause Cicada to fall out of a function when it hits a <tt>return</tt> statement.  Since returning from functions is a perfectly legitimate thing to do, the error code is always set to 0 (no error) after the function has been escaped.  Writing <tt>throw(50)</tt> in a script is the same as writing <tt>return</tt>.
+
+<P> 
+
+<br><P><b>Right-hand argument expected (#14)<P><P></b></b>
+<P>
+
+<P> An operator requiring a right-hand argument does not have one.  For example,
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a = 5 +
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  causes an error because the <tt>+</tt> operator requires a number or expression to the left <i>and</i> the right.<P>
+
+<P> 
+
+<br><P><b>Self reference (#47)<P><P></b></b>
+<P>
+
+<P> A variable with an alias to itself was given to an operation in which self-aliases are not allowed.  It is fine for a variable to have aliases to itself, but we cannot sensibly, say, copy data to that variable since it has an infinite depth.  For example, if we define:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; me :: { self := @this }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then <tt>me</tt> contains <tt>me.self</tt>, which contains <tt>me.self.self</tt>, etc.  Therefore if we try to use this variable, or any enclosing variable, in an equate, comparison, forced equate, or the built-in functions <tt>print_string()</tt>, <tt>read_string</tt>, <tt>size()</tt>, <tt>load()</tt> or <tt>save()</tt>, we will get this error.<P>
+
+<P> 
+
+<br><P><b>String expected (#37)<P><P></b></b>
+<P>
+
+<P> A built-in Cicada function requiring a string argument was passed something that was manifestly not a string.  For example, <tt>call()</tt> expects either a string or a number as its first argument to specify the function to run, so writing
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; call(true)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will generate this error.<P>
+
+<P> 
+
+<br><P><b>Target was deleted (#39)<P><P></b></b>
+<P>
+
+<P> A member was removed while it was being aliased.  One has to try hard to get this error.<P>
+
+<P> 
+
+<br><P><b>[ Token ] expected (#11)<P><P></b></b>
+<P>
+
+<P> A multi-token command (like &lsquo;<tt>while</tt>&rsquo; followed by &lsquo;<tt>do</tt>&rsquo;) was missing one of its parts.  So a typical error message would be
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; while true
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; Error:&nbsp;'do' expected
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice that the error message contains the name of the token that is missing.<P>
+
+<P> 
+
+<br><P><b>Type mismatch (#17)<P><P></b></b>
+<P>
+
+<P> A member or variable does not have the expected type.  This error can occur either when data is being copied or compared, when a variable or member is having its type altered (e.g. via the define operator), or when a built-in function is run with the wrong argument types.
+
+<P> When two variables are copied or compared, Cicada requires that they have identical structures with the proviso that numeric types are interchangeable.  So if (any part of) the first variable is composite, the (corresponding part of) the second variable must also be composite, have the same number of (non-hidden) members, and each array member must have the same number of indices.  Here are some commands that don&rsquo;t work:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; { string, int } = { int, string }
+
+<br>&nbsp;&nbsp;&nbsp; { [5] int } = { [4] int }
+
+<br>&nbsp;&nbsp;&nbsp; string = char
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  and nor does substituting specific <tt>int</tt>-, <tt>char</tt>- and <tt>string</tt>-typed variables work.  Numeric members in one variable must correspond to numeric variables in the other, strings with strings, Booleans with Booleans.
+
+<P> Cicada is also fastidious about redefining members and variables:  it doesn&rsquo;t care about the structure of the variables, but it does require that their old types exactly match or be compatible with the new types.  A type can only change by being updated, using the inheritance operator.  Redefining a variable as a different numeric type, as in
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myNum :: int
+
+<br>&nbsp;&nbsp;&nbsp; myNum :: double
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will cause this error, even though copying/comparing different numeric types (e.g. <tt>{ int } = { double }</tt>) is legal.
+
+<P> One composite type can be changed (specialized) into another only if all of the existing <i>N</i> codes are also the first <i>N</i> codes in the new type, in the same order.  Thus if we define <tt>var1</tt> to be of type <tt>a:b</tt>, then we can specialize it into <tt>a:b:c</tt> but not <tt>c:a:b</tt> or <tt>b:a:c</tt>.<P>
+
+<P> 
+
+<br><P><b>Underflow (#8)<P><P></b></b>
+<P>
+
+<P> A number was encountered which was so small that it was read as zero.  <tt>1e-400</tt> will do the trick on most machines.<P>
+
+<P> 
+
+<br><P><b>Unequal data sizes (#40)<P><P></b></b>
+<P>
+
+<P> Cicada was not able to perform a forced equate because the byte-sizes of the left- and right-hand arguments were different.  For example, the following fails:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; (a :: double) =! (b :: int)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  even though a normal equate would have worked in this situation.
+
+<P> Before throwing this error, the forced-equate operator explores two options for making the data fit.  1) If the final step into the left-hand variable involved a <tt>[*]</tt> operator it tries to resize that last member.  2) If the left-hand variable contains a string, that string can soak up excess bytes from the right-hand argument.  If after (1) and (2) the data on the right still cannot fit into the variable on the left, then this error is thrown.  If both (1) and (2) apply, Cicada may not able to figure out how to resize the array correctly in which case the user must resize the array manually.<P>
+
+<P> 
+
+<br><P><b>Unexpected token (#10)<P><P></b></b>
+<P>
+
+<P> The compiler encountered a token that usually follows another token, but didn&rsquo;t.  For example, writing a <tt>do</tt> without a <tt>while</tt> will cause this error.<P>
+
+<P> 
+
+<br><P><b>Unknown command (#9)<P><P></b></b>
+<P>
+
+<P> The compiler encountered some mysterious symbol which it cannot recognize as an operator.  For example, the following will cause this error
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a = %
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  because a percent sign has no use in Cicada.<P>
+
+<P> 
+
+<br><P><b>Variable has no member (#24)<P><P></b></b>
+<P>
+
+<P> A step was attempted into a variable without a member.  For example <tt>{}[*]</tt> will cause this error.  This error is also thrown if we use the <tt>top</tt> keyword (which is different from the <tt>top()</tt> function!) anywhere outside of array brackets.<P>
+
+<P> 
+
+<br><P><b>Variable has no parent (#33)<P><P></b></b>
+<P>
+
+<P> A pathname tried to step to <tt>parent</tt> or <tt>\</tt> when it was already at the beginning of the search path.  Just typing <tt>parent</tt> at the command prompt will cause this error.<P>
+
+<P> 
+
+<br><P><b>Wrong number of arguments (#45)<P><P></b></b>
+<P>
+
+<P> A built-in Cicada function was called with the wrong number of arguments.  For example, the following expression will cause this error
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; top(a, b)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  because <tt>top()</tt> accepts only a single argument.<P>
+
+<P> 
+
+<P> 
+
+
+<P> 
+
+<P> <ul>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_55.html">Prev: Linked list routines for handling Cicada strings in C</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017

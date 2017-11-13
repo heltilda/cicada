@@ -1,0 +1,205 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Inheritance</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_39.html">Classes and Inheritance</a>
+
+<H1> <CENTER> Inheritance </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Cicada also supports a sort of inheritance.  The syntax is different from that in C++:  we use a colon &lsquo;<tt>:</tt>&rsquo; to separate the parent object from the code that specializes it.  For example, to derive an object from <tt>myClassObject</tt> we could write:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myDerivedClassObject :: myClassObject : {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;newString := &quot;hello, I am a new string&quot;
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <tt>myDerivedClassObject</tt> has all of the members of the original <tt>myClassObject</tt> such as <tt>data</tt> and <tt>otherMethod()</tt> (see previous section), as well as the new string member <tt>newString</tt>.
+
+<P> In this last example, we specialized a predefined parent object with inlined code within braces, using a single inheritance operator.  But one doesn&rsquo;t have to follow this pattern; we can combine class objects and inlined codes in any number and any combination.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; A :: { var1 :: int }
+
+<br>&nbsp;&nbsp;&nbsp; B :: { } : { var2 :: string }
+
+<br>&nbsp;&nbsp;&nbsp; C :: A : B
+
+<br>&nbsp;&nbsp;&nbsp; D :: B : A
+
+<br>&nbsp;&nbsp;&nbsp; E :: { var3 :: int, var4 :: string } : A : { var5 :: char }
+
+<br>&nbsp;&nbsp;&nbsp; F :: C : { remove var1 }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  So for example the type of <tt>C</tt> is effectively <tt>{ var1 :: int } : { } : { var2 :: string }</tt>, whereas <tt>D</tt> is <tt>{ } : { var2 :: string } : { var1 :: int }</tt>.  The definition of <tt>F</tt> shows us that it is possible for a derived object to have <i>fewer</i> members than its parent object.
+
+<P> Importantly, the order of inheritance affects an object&rsquo;s type.  <tt>C</tt> has a different type than <tt>D</tt>, so <tt>C :: D</tt> or <tt>C = @D</tt> will cause a type-mismatch error.
+
+<P> Cicada allows <i>existing</i> objects to be redefined as a different type only if the new type is derived from its original type.  We can always specialize a member&rsquo;s type by adding more inheritance operators <i>at the end</i> of the type specification.  All of the following commands will work in order except the last one.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; C :: A : B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| sure -- was already defined this way
+
+<br>&nbsp;&nbsp;&nbsp; C :: A : B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| we already did this, but fine
+
+<br>&nbsp;&nbsp;&nbsp; C :: C&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| fine -- C equals A : B
+
+<br>&nbsp;&nbsp;&nbsp; C :: C : B&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| OK -- now C will be A : B : B
+
+<br>&nbsp;&nbsp;&nbsp; C :: A : B : B : {}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| OK
+
+<br>&nbsp;&nbsp;&nbsp; C :: A : B : B : {}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| error!
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The last line failed only because any two inlined types are presumed different -- Cicada is not in the business of comparing what&rsquo;s inside those braces to see if they match up.
+
+<P> Although types can be specialized, they can never generalized.  So typing <tt>F :: C</tt> will cause a type-mismatch error.
+
+<P> The same type-matching rules apply to aliases.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; D ::&nbsp;B : A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| was already defined this way
+
+<br>&nbsp;&nbsp;&nbsp; G :: B : A : { }
+
+<br>&nbsp;&nbsp;&nbsp; D = @G&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| legal
+
+<br>&nbsp;&nbsp;&nbsp; (D =@ *) :: B : A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| legal
+
+<br>&nbsp;&nbsp;&nbsp; G = @D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| NOT legal!
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Aliasing doesn&rsquo;t change a member&rsquo;s type, which explains why we could reassign <tt>D</tt> to a new variable of its original type.
+
+<P> It turns out that the inheritance operator can derive new types for any composite Cicada object:  variables, sets, even functions.  Inheritance of sets is best thought of as a concatenation of these sets.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a :: {&nbsp;Alice, Bob&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; b :: {&nbsp;Charlie, David&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; c :: a : b
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  So <tt>c</tt> contains <tt>Alice</tt>, <tt>Bob</tt>, <tt>Charlie</tt>, <tt>David</tt>, in that order.
+
+<P> Inheritance of <i>functions</i> basically tacks new code at the end of the old (parent) function.  Each sub-code keeps its own original search path (the example of Figure 3 shows a situation where these may be different).  Function-inheritance makes the most sense when the function does not return a value (i.e. it&rsquo;s a subroutine), because any <tt>return</tt> statement will prevent the new code from running.  The resulting function contains members from both parent functions.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; absval :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;sign :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;sign = 1
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if args[1] &lt; 0&nbsp;then sign = -1
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;args[1] = that*sign
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; sqrt :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;return args^0.5
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; modulus_sqrt :: absval : sqrt
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Here is a better version of this example, where we use the inheritance operator to specialize a function using a composite object that has no coding section (no <tt>code</tt> marker).
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; sqrt :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;f :: { ; return args[1] }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;return f(args[1])^0.5
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; modulus_sqrt :: sqrt : {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;remove f
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;f :: { ; return abs(args[1])&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  So the inheritance operator can conjoin different types of objects:  functions, sets, classes, basically any composite object.  To see how this works, think of any non-function as the constructor part of a function (for example, imagine putting a <tt>code</tt> marker at the very end).  Inheritance in Cicada is really a concatenation of code, whether that be constructor code (the commands before the first <tt>code</tt> marker), the first coding block, or any subsequent code blocks.  In Cicada type is code.  Incidentally, this explains why objects can be specialized but not generalized:  we can always do new things to an existing object, but there&rsquo;s no general way to reverse what&rsquo;s already been done to it.
+
+
+<P> 
+
+<P> 
+
+<P> <a href="https://heltilda.github.io/cicada/help_4.html">Next: Customizing the Cicada language</a>
+<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_391.html">Prev: Classes</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017

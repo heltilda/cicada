@@ -1,0 +1,50 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Rules for embedding C/C++ code</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a>
+
+<H1> <CENTER> Rules for embedding C/C++ code </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> The first step in embedding C or C++ code is to use the correct version of Cicada.  We can use C code with the C version of Cicada, whose source files ending in <tt>.c</tt>.  Likewise we can use C++ code with the C++ version of Cicada, whose source files end in <tt>.cpp</tt>.  The two versions of Cicada are identical except for the names of their source files.
+
+<P> There are two ways to merge C with Cicada:  we can embed C functions inside Cicada (per the tutorial), and we can also embed Cicada inside of a larger C or C++ program.  If Cicada is going inside of a larger program, then we need to comment out the following line in Cicada&rsquo;s <tt>userfn.h</tt> file.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; // #define CicadaMainProgram
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  An outside C/C++ function can run an instance of Cicada by calling
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; errCode = runCicada(argc, argv);
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  With no arguments (<tt>argc</tt> = 0) Cicada will run the <tt>start.cicada</tt> script.  If we set <tt>argc</tt> to 1 and pass the name of a script file in <tt>argv[0]</tt>, then Cicada will load and run that script file instead.  Any source file that calls <tt>runCicada()</tt> also needs to include Cicada&rsquo;s <tt>ccmain.h</tt> source file.
+
+<P> The procedure for embedding C or C++ functions involves three steps.  First, one declares the C/C++ routine in a particular way and writes the code accordingly; this is easy because Cicada-embedded functions look just like the <tt>main()</tt> function of a stand-alone program.  In the second step the author introduces his routine to Cicada by changing a couple of lines in Cicada&rsquo;s <tt>userfn.c</tt> or <tt>userfn.cpp</tt> file.  The final, optional step is to write a wrapper in Cicada&rsquo;s scripting language that allocates storage for the C/C++ function and provides it with a smooth interface.
+
+<P> <ul>
+<li><a href="https://heltilda.github.io/cicada/help_251.html">C function declaration</a>
+<li><a href="https://heltilda.github.io/cicada/help_252.html">Cicada&rsquo;s <tt>userfn</tt> source files</a>
+<li><a href="https://heltilda.github.io/cicada/help_253.html">A minimal wrapper</a>
+</ul><a href="https://heltilda.github.io/cicada/help_251.html">Next: C function declaration</a>
+<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_24.html">Prev: The Anagrambler</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017

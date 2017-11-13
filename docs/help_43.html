@@ -1,0 +1,91 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Custom-compiling within a script</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Customizing the Cicada language</a>
+
+<H1> <CENTER> Custom-compiling within a script </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> For a variety of reasons, we might occasionally want to run a script manually without using the <tt>run()</tt> function.  This involves two steps.  The first step is to produce bytecode, easily done using the <tt>compile()</tt> function.  Second, the <tt>transform()</tt> function gives bytecode a perch on a function&rsquo;s internal code registry.  Here is a simple example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myBytecode := compile(&quot;myMessage := \&quot;Hello, world!\&quot;; print(myMessage)&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; newFunction :: transform(myBytecode)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; newFunction()
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Manual compilation and transformation is necessary when <tt>user.cicada</tt> has not been loaded, for example when running Cicada from the command prompt with a script-file argument.
+
+<P> Another situation where we will want to compile scripts manually is when we want to run a script that uses a <i>different syntax</i> from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  We don&rsquo;t want to change <tt>cicada.c</tt> because then none of the other scripts like <tt>start.cicada</tt> will work.  Instead we will need to use the <tt>newCompiler()</tt> function to process the user&rsquo;s input differently from our own scripts.  Here is an example, relying on language-constant definitions in <tt>user.cicada</tt>.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; newLanguage :: [] compiledCommandType
+
+<br>&nbsp;&nbsp;&nbsp; newLanguage[*] = {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;{ cat(&quot;add&nbsp;&quot;, type1arg, &quot;to&quot;, type1arg), 1, &quot;0&quot;, cat(inbytecode, &quot;8 173 10&quot;, anonymousmember, &quot;27 a1 a2 0&quot;) },
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;{ cat(&quot;negative&quot;, type1arg), 2, &quot;1&quot;, cat(inbytecode, &quot;29 54 -1 a1&quot;) },
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;{ int_constant, 0, &quot;1&quot;, cat(inbytecode, &quot;54 a1&quot;) },
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;{ double_constant, 0, &quot;1&quot;, cat(inbytecode, &quot;55 a1&quot;) }
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; newLanguageAssociativity :: [] int
+
+<br>&nbsp;&nbsp;&nbsp; newLanguageAssociativity[*] = { l_to_r, r_to_l }
+
+<br>&nbsp;&nbsp;&nbsp; newCompilerID := setCompiler(newLanguage, newLanguageAssociativity)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; myBytecode := compile(input())
+
+<br>&nbsp;&nbsp;&nbsp; doMath :: transform(myBytecode)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; doMath()
+
+<br>&nbsp;&nbsp;&nbsp; printl(&quot;The answer is:&nbsp;&quot;, doMath[1])
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice how the two array arguments to <tt>newCompilerID()</tt> are exactly the same as the two arrays that specify the language in <tt>cicada.c/cpp</tt>.  For consistency, all of the constants used in the C file (such as <tt>int_constant</tt> and <tt>inbytecode</tt>) are also defined in <tt>user.cicada</tt>.  The main difference is that we have to use the <tt>cat()</tt> function to concatenate strings.  Also, make sure to define both arguments as arrays -- <tt>setCompiler()</tt> will not understand anything inside of curly braces.  As always, any script must have an overall type of 0, which in this case means that any valid script is an &lsquo;<tt>add</tt>&rsquo; command.
+
+<P> Cicada always opens with a single compiler -- compiler ID 1 -- so to switch back we can just type the command <tt>newCompiler(1)</tt>.  Calling <tt>newCompiler()</tt> with no arguments returns the ID of the current compiler, without changing which compiler is active.
+
+<P> Functions produced by different compilers live in different namespaces, because each compiler which keeps its own running tally of all member names it has encountered (and how many anonymous members have been made).  But the use of separate compilers does <i>not</i> prevent collisions of member names between these functions:  if anything switching compilers makes collisions more likely.  (Any new compiler member will assign member IDs starting from 1 and counting upwards, and that ID is the only thing Cicada sees when the function runs.)  To avoid problems, use <tt>transform()</tt>&rsquo;s ability to customize the search path so that the calling script is hidden from any transformed bytecode that it produces.
+
+<P> 
+
+<P> 
+
+<P> <ul>
+</ul><a href="https://heltilda.github.io/cicada/help_5.html">Next: Reference</a>
+<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_422.html">Prev: Adapters</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017

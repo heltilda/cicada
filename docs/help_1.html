@@ -1,0 +1,85 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Introduction</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a>
+
+<H1> <CENTER> Introduction </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Cicada script is a simple, interpreted language that interfaces naturally with C and C++.  Its goal is to have the best from two worlds:  an interactive and portable scripting language, embedded with our C routines that run at the top speed of the machine.  We build a Cicada program by compiling the Cicada source files (which are written in C/C++) together with our own C/C++ files.  Voil&agrave;, this gives us a command-line environment for executing our C routines and managing their data.
+
+<P> For example, suppose we want to write a program to alphabetize a list of names.  It&rsquo;s a large list and will take quite a while to process, so we opt to write the sorting routine in C.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; int SortPhoneBook(int argc, char **argv)&nbsp;&nbsp;&nbsp;&nbsp;// format explained later
+
+<br>&nbsp;&nbsp;&nbsp; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+ 
+ Speed is not critical for the rest of the job, but it would be nice to be able to call our routine from the command line.  So we paste our C routine into Cicada, specifically in the source file userfn.c.  We then give our sorting routine a name within Cicada, by modifying one of the pre-existing lines in userfn.c.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; UserFunction UserFunctionSet[] = { { &quot;DoSort&quot;, &amp;SortPhoneBook } };
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Finally, we update our Makefile and re-compile Cicada.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; user-prompt% make cicada
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Finally we run Cicada, which brings up a command prompt allowing us to make our list and sort it.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; ListUSA := load(&quot;AllUSA.txt&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &gt; call(&quot;DoSort&quot;, ListUSA)
+
+<br>&nbsp;&nbsp;&nbsp; &gt; save(&quot;/Documents/SortedList.txt&quot;, ListUSA)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  And we are done.  Of course there are a few details.  The syntax should be easy to grasp at a glance -- in fact you can change the default syntax if you want -- but at its heart this language is a bit of an oddball.  For example, many Cicada functions will call their own arguments.
+
+<P> The rest of this document explains the Cicada language in more detail three times over:  through an extended example (Chapter 2), a textbook-style explanation (Chapters 3 and 4), and a reference section (Chapter 5).
+
+<P> 
+
+<P> 
+
+<P> <ul>
+</ul><a href="https://heltilda.github.io/cicada/help_2.html">Next: Example:  neural networks in Cicada</a>
+<br><P><div align="center"><a href="https://heltilda.github.io/cicada/toc.html">Prev: Table of Contents</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017

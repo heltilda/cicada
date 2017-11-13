@@ -1,0 +1,47 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Define operator flags</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_5.html">Reference</a> ---> <a href="https://heltilda.github.io/cicada/help_52.html">Bytecode operators</a>
+
+<H1> <CENTER> Define operator flags </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+ 
+
+<P> Table 3 lists the common define/equate/equate-at operators and their associated bytecode flag words (the bytecode word following the define operator).  Each flag word encodes the various binary properties of a define operator:  it is the decimal representation of the columns in the table treated as binary digits (where a checkmark equals 1).  The flags are:  equate (0), update-members (1), add-members (2), new-target (3), relink-target (4), run-constructor (5), hidden (6), and unjammable (7).  The last six operators that have asterisks in their names cannot be written into a script, but are generated automatically by the compiler in various situations.<P>
+
+<P> 
+
+<br><center><div><P><table border="1"><tr><td>
+
+<b> name</b> </td><td> <b> abbr</b> </td><td> <b> symbol</b> </td><td> <b> flags</b> </td><td> <b> 7</b> </td><td> <b> 6</b> </td><td> <b> 5</b> </td><td> <b> 4</b> </td><td> <b> 3</b> </td><td> <b> 2</b> </td><td> <b> 1</b> </td><td> <b> 0</b></td></tr><tr><td>
+ 
+define </td><td> def </td><td> <tt>::</tt> </td><td> 46 </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> X </td><td>&nbsp;</td></tr><tr><td>
+member-define </td><td> mdf </td><td> <tt>*::</tt> </td><td> 6 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> X </td><td>&nbsp;</td></tr><tr><td>
+variable-define </td><td> vdf </td><td> <tt>@::</tt> </td><td> 44 </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
+
+equate </td><td> equ </td><td> <tt>=</tt> </td><td> 1 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td></tr><tr><td>
+define-equate </td><td> deq </td><td> <tt>:=</tt> </td><td> 47 </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> X </td><td> X </td></tr><tr><td>
+
+equate-at </td><td> eqa </td><td> <tt>=@</tt> </td><td> 16 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
+define-equate-at </td><td> dqa </td><td> <tt>:=@</tt> </td><td> 22 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td>&nbsp;</td></tr><tr><td>
+
+
+~define </td><td> def* </td><td> N/A </td><td> 172</td><td> X </td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
+~define-equate </td><td> deq* </td><td> N/A </td><td> 173 </td><td> X </td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td></tr><tr><td>
+~define-equate-at </td><td> dqa* </td><td> N/A </td><td> 148 </td><td> X </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
+
+~define </td><td> def** </td><td> N/A </td><td> 236 </td><td> X </td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
+~define-equate </td><td> deq** </td><td> N/A </td><td> 237 </td><td> X </td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td></tr><tr><td>
+~define </td><td> def-c** </td><td> N/A </td><td> 204 </td><td> X </td><td> X </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr>
+
+</table><div>Table 3:  The flags of all various define, assignment and aliasing operators</div></div></center><br> 
+
+<P> 
+
+<P> <a href="https://heltilda.github.io/cicada/help_53.html">Next: Cicada built-in functions</a>
+<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_52.html">Prev: Bytecode operators</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017
