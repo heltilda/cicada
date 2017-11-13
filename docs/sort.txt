@@ -1,0 +1,131 @@
+| sort() sorts a table by one of its (numerical) columns or by another list
+
+sort :: {
+    tableToSort :: sortingList :: sortedTable :: *
+    c1 :: totalIndices :: oneIndex :: sortIndex :: int
+    linklist :: [] int
+    
+    params :: { direction :: increasing :: decreasing :: int }
+    
+    code
+    
+    (params << {
+        code
+        direction = increasing = 1
+        decreasing = -1
+    })()
+    
+    if trap(
+        if top(args) /= 1 and top(args) /= 2  then throw(1)
+        tableToSort = @args[1]
+        totalIndices = top(tableToSort)
+        
+        if totalIndices > 0  then (
+            if trap(sortIndex = args[2]) == passed or top(args) == 1  then (
+                if type(tableToSort[1]) < 5  then (
+                    sortingList @:: [totalIndices] tableToSort[1]
+                    sortingList = tableToSort       )
+                else  (
+                    if top(args) == 1  then throw(2)
+                    sortingList @:: [totalIndices] tableToSort[1][sortIndex]
+                    for c1 in <1, totalIndices>  (
+                        sortingList[c1] = tableToSort[c1][sortIndex]
+            )   )   )
+            
+            else  (
+                sortingList = @args[2]
+        )   )
+        
+        (params<<args)()
+        if params.direction /= params.increasing and params.direction /= params.decreasing  then throw(2)
+    ) /= passed  then (
+        printl("usage:  sort(my_list) or sort(my_table, sortIndex/sort-by_list [, code, direction = increasing/decreasing])")
+        tableToSort =@ sortingList =@ *
+        return      )
+    
+    if totalIndices == 0  then return
+    
+    if totalIndices /= top(sortingList)  then (
+        printl("sort() error:  tableToSort, sort-by_list have the same number of rows")
+        tableToSort =@ sortingList =@ *
+        return          )
+    
+    remove sortedTable
+    if trap(
+        sortedTable @:: tableToSort
+        sortedTable = tableToSort
+    ) /= passed  then (
+        if trap(
+            sortedTable =@ *
+            sortedTable[totalIndices] @:: tableToSort[*]
+            sortedTable = tableToSort
+        ) /= passed  then (
+            if trap(
+                sortedTable =@ *
+                sortedTable[totalIndices][top(tableToSort[1])] @:: tableToSort[*][*]
+                sortedTable = tableToSort
+            ) /= passed  then (
+                printl("sort() error:  tableToSort differs from its original definition; could not be sorted")
+                tableToSort =@ sortingList =@ *
+                return
+    )   )   )
+    
+    linklist[^totalIndices] = 0
+    
+    oneIndex = (firstSort::sortpart)(1, totalIndices)
+    
+    for c1 in <1, totalIndices>  (
+        sortedTable[c1] = tableToSort[oneIndex]
+        oneIndex = linklist[oneIndex]     )
+    
+    tableToSort = sortedTable
+    remove firstSort                       | unjam the lists
+    tableToSort =@ sortingList =@ *
+}
+
+sort.sortpart :: {
+    
+    sortingList *:: linklist *:: *
+    left :: right :: middle :: smallest :: toWrite :: direction :: side :: nextSide :: int
+    idx :: [2] int
+    
+    code
+    
+    sortingList = @sort.sortingList
+    linklist = @sort.linklist
+    direction = sort.params.direction
+    
+    { left, right } = args
+    
+    if right /= left  then (
+        
+        nextsort :: this
+        
+        middle = floor((right + left)/2)
+        idx[1] = nextsort(left, middle)
+        idx[2] = nextsort(middle + 1, right)
+        
+        if (sortingList[idx[1]] - sortingList[idx[2]])*direction <= 0  then side = 1
+        else side = 2
+        
+        smallest = toWrite = idx[side]
+        idx[side] = linklist[that]
+        
+        while idx[1] /= 0 and idx[2] /= 0  do (
+            
+            if (sortingList[idx[1]] - sortingList[idx[2]])*direction <= 0  then nextSide = 1
+            else nextSide = 2
+            
+            if side /= nextSide  then (
+                linklist[toWrite] = idx[nextSide]
+                side = nextSide        )
+            
+            toWrite = idx[side]
+            idx[side] = linklist[idx[side]]     )
+        
+        linklist[toWrite] = idx[3-side]
+        
+        return smallest     )
+        
+    else  return left
+}
