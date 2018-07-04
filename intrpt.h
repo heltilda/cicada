@@ -27,6 +27,7 @@
 #define Interpret_h
 
 #include "lnklst.h"
+#include "intrpt.h"
 
 
 
@@ -259,6 +260,10 @@ extern cc_interpret_global_struct cc_interpret_globals;
 
 // Prototypes
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const ccFloat LLFreeSpace;
 
 extern void copyWindowData(view *, view *);
@@ -348,15 +353,13 @@ extern void setError(ccInt, ccInt *);
 extern void setWarning(ccInt, ccInt *);
 extern void setErrIndex(ccInt *, ccInt, ccInt *, ccInt *, code_ref *);
 
-extern ccInt initCicada(ccInt *, ccInt, char *, ccInt, char *, ccInt *, ccInt);
-extern void cleanUp();
 extern ccInt addVariable(variable **, ccInt, ccInt, ccInt, ccBool);
 extern void refVariable(variable *);
 extern void derefVariable(variable *);
 extern ccInt addWindow(variable *, ccInt, ccInt, window **, ccBool);
 extern void refWindow(window *);
 extern void derefWindow(window **);
-extern void combVariables();
+extern void combVariables(void);
 extern void combBranch(variable *, ccBool);
 extern void unlinkWindow(variable *, window **, ccInt);
 extern ccInt addMember(variable *, ccInt, ccInt, member **, ccBool);
@@ -374,10 +377,14 @@ extern ccInt checkMemberOverlap(window *, ccInt, ccInt, ccInt);
 extern ccInt addMemory(window *, ccInt, ccInt);
 extern void adjustOffsetAndIW(ccBool, ccInt *, ccInt *, ccInt, ccInt);
 extern void unflagVariables(variable *, unsigned char);
-extern void unflagMembers(variable *, unsigned char);
+extern void unflagWindow(window *, unsigned char);
 
 extern ccInt align(ccInt);
 
 extern const ccInt typeSizes[];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -39,7 +39,7 @@
 
 // Jump tables for the built-in functions and variables.
 
-void(*BuiltInFunctionJumpTable[])() =
+void(*BuiltInFunctionJumpTable[])(void) =
          {  &cclib_call, &cclib_setCompiler, &cclib_compile, &cclib_transform, &cclib_load,
                 &cclib_save, &cclib_input, &cclib_print, &cclib_read_string, &cclib_print_string,
             &cclib_trap, &cclib_throw, &cclib_top, &cclib_size, &cclib_abs,
@@ -121,9 +121,9 @@ void cclib_call()
     
     for (argCounter = 2; argCounter <= numArgs; argCounter++)  {
         argView.windowPtr = getBIFmember(argCounter);
-        argView.offset = argView.windowPtr->offset;
-        argView.width = argView.windowPtr->width;
         if (argView.windowPtr != NULL)   {
+            argView.offset = argView.windowPtr->offset;
+            argView.width = argView.windowPtr->width;
             countDataLists(&argView, (void *) &numDataWindows, (void *) &numStrings);
             if (errCode != passed)  break;
     }   }
@@ -144,9 +144,9 @@ void cclib_call()
     argvInfo = infoList;
     for (argCounter = 2; argCounter <= numArgs; argCounter++)  {
         argView.windowPtr = getBIFmember(argCounter);
-        argView.offset = argView.windowPtr->offset;
-        argView.width = argView.windowPtr->width;
         if (argView.windowPtr != NULL)  {
+            argView.offset = argView.windowPtr->offset;
+            argView.width = argView.windowPtr->width;
             argvFillHandles(&argView, (void *) &argvHandles, (void *) &argvInfo);
             if (errCode != passed)  break;
     }   }
@@ -164,9 +164,9 @@ void cclib_call()
     argvHandles = pointerList;
     for (argCounter = 2; argCounter <= numArgs; argCounter++)  {
         argView.windowPtr = getBIFmember(argCounter);
-        argView.offset = argView.windowPtr->offset;
-        argView.width = argView.windowPtr->width;
         if (argView.windowPtr != NULL)  {
+            argView.offset = argView.windowPtr->offset;
+            argView.width = argView.windowPtr->width;
             argvFixStrings(&argView, (void *) &argvHandles, NULL);
     }   }
     
@@ -929,7 +929,7 @@ void cclib_print_string()
     if (precisionWindow->variable_ptr->type <= double_type)  {
         stringWindowPosition = 2;
         if (numArgs < 2)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
-        maxDigits = (ccInt) getBIFnumArg(1, 0., (double) maxPrintableDigits);      }
+        maxDigits = (ccInt) getBIFnumArg(1, 0., (ccFloat) maxPrintableDigits);      }
     
     else if (precisionWindow->variable_ptr->type == string_type)  {
         stringWindowPosition = 1;
@@ -1193,7 +1193,7 @@ void cclib_size()
 // All math is done in floating point.
 
 void cclib_abs()  {  doMath(&doAbs);  }
-ccFloat doAbs(ccFloat argument)  {  return fabs(argument);  }
+ccFloat doAbs(ccFloat argument)  {  return (ccFloat) fabs((double) argument);  }
 
 void cclib_floor()  {  doMath(&doFloor);  }
 ccFloat doFloor(ccFloat argument)  {  return floor(argument);  }

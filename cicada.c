@@ -89,6 +89,8 @@ commandTokenType cicadaLanguage[] = {
     { type2arg "(" type1arg ")", stepVarLevel, "23456", inbytecode "6 a1 8 236 10" anonymousmember "57 a2 0" },
     
     { "cicadaLibraryFunction # " type4arg " (" type1arg ")", stepVarLevel, "123456", inbytecode "7 a1 8 236 10" anonymousmember "57 a2 0" },
+    { "$" stringarg "(" type1arg ")", stepVarLevel, "123456",
+                    inbytecode "7 54 0 8 236 10" anonymousmember "57 8 173 10" anonymousmember "56 a1 a2 0" },
     
     
         // Define, equate and forced-equate operators
@@ -234,7 +236,6 @@ commandTokenType cicadaLanguage[] = {
         // *****  Commands with a scripted definition (using the operators defined above)  *****
         // *************************************************************************************
     
-    { type2arg "[ -" type4arg "]", stepVarLevel, "1", "remove " arg1 "[" arg2 "]" },
     { type2arg "[ - <" type4arg "," type4arg "> ]", stepVarLevel, "1", "remove " arg1 "[<" arg2 "," arg3 ">]" },
     
     { "call (" type1arg ")", stepVarLevel, "1456", "cicadaLibraryFunction#0(" arg1 ")" },

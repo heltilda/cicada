@@ -23,10 +23,10 @@
  *  SOFTWARE.
  */
 
-#ifndef Main_h
-#define Main_h
+#ifndef CCMain_h
+#define CCMain_h
 
-// #define CicadaTest_ON    /* this line should be commented or nothing will work */
+ #define CicadaTest_ON    /* this line should be commented or nothing will work */
 
 
 #include "lnklst.h"
@@ -35,11 +35,20 @@
 
 // Prototypes
 
-#ifdef CicadaMainProgram
-extern int main(int, char **);
+#ifdef __cplusplus
+extern "C" {
 #endif
-extern int runCicada(int, char **);
-extern int cicadaMain(int, char **);
+
+extern const char *errorStrings[];
+
+extern ccInt runCicada(ccInt, char **);
+extern ccInt cicadaMain(ccInt, char **);
+extern ccInt initCicada(ccInt *, ccInt, char *, ccInt, char *, ccInt *, ccInt);
+extern void cleanUp(void);
 extern void printError(char *, char *, ccInt, ccBool);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

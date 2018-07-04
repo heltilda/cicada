@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 #include "intrpt.h"
 #include "bytecd.h"
 #include "cicada.h"
@@ -39,8 +40,8 @@
 cc_interpret_global_struct cc_interpret_globals;     // see intrpt.h
 
 
-    // next: the amount of extra space allocated in linked lists
-    // these LLs are used for variable data, member lists, code lists, ... -- almost everything
+    // Next: the amount of extra space allocated in linked lists.
+    // These LLs are used for variable data, member lists, code lists, ... -- almost everything
     // LLFreeSpace is set in initCicada(); the default is 100%, which the user can change (0-255)
 
 const ccFloat LLFreeSpace = 1.;
@@ -884,7 +885,7 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, ccBool doIn
     
     else  {        // it's a primitive variable
         if (theVar->type == string_type)  {
-            int viewTop = theView->width;
+            ccInt viewTop = theView->width;
             if (bundleStrings)  viewTop = 1;  
             
             for (indexCounter = 1; indexCounter <= viewTop; indexCounter++)  {
@@ -1130,89 +1131,6 @@ void setErrIndex(ccInt *errPtr, ccInt theError, ccInt *errCodePtr, ccInt *errInd
 // * * * * *  Memory routines  * * * * *
 
 
-// initCicada() initializes the interpreter when Cicada boots up.
-// Allocates memory for things like VariableList, the PCStack, Zero, etc.
-
-ccInt initCicada(ccInt *zeroCode, ccInt zeroCodeLength,
-        char *fileName, ccInt fileNameLength, char *sourceCode, ccInt *opCharNum, ccInt sourceCodeLength)
-{
-    variable *varZero;
-    ccInt zeroCodeIndex, *zeroCodeEntryPtr, rtrn;
-    
-    baseView.windowPtr = NULL;              // these can confuse addMemory if not initialized to NULL first
-    searchView.windowPtr = NULL;            // to prevent an error on startup when addMemory checks baseView.windowPtr->variable_ptr
-    topView.windowPtr = NULL;
-    
-    rtrn = newPLL(&VariableList, 0, sizeof(variable), LLFreeSpace);        // make space for variables & codes
-    if (rtrn != passed)  return rtrn;
-    rtrn = newPLL(&MasterCodeList, 0, sizeof(storedCodeType), LLFreeSpace);
-    if (rtrn != passed)  return rtrn;
-    rtrn = newStack(&PCStack, sizeof(view), 100, LLFreeSpace);
-    if (rtrn != passed)  return rtrn;
-    
-    rtrn = addVariable(&varZero, composite_type, composite_type, 0, ccTrue);
-    if (rtrn != passed)  return rtrn;
-    rtrn = addWindow(varZero, 0, 1, &Zero, ccTrue);
-    if (rtrn != passed)  return rtrn;
-    rtrn = drawPath(&ZeroSuspensor, Zero, NULL, 1, 1);
-    if (rtrn != passed)  return rtrn;
-    
-    rtrn = addCode(zeroCode, &zeroCodeEntryPtr, &zeroCodeIndex, zeroCodeLength,
-                fileName, fileNameLength, sourceCode, opCharNum, sourceCodeLength);
-    if (rtrn != passed)  return rtrn;
-    rtrn = addCodeRef(&(varZero->codeList), ZeroSuspensor, zeroCodeEntryPtr, zeroCodeIndex);
-    if (rtrn != passed)  return rtrn;
-    PCCodeRef = *(code_ref *) element(&(varZero->codeList), 1);
-    
-    refWindow(Zero);
-    refPath(ZeroSuspensor);
-    
-    pcCodePtr = zeroCodeEntryPtr;        // should immediately call checkBytecode()
-    
-    rtrn = newLinkedList(&(GL_Object.arrayDimList), 0, sizeof(ccInt), 2., ccFalse);
-    if (rtrn != passed)  return rtrn;
-    rtrn = newLinkedList(&codeRegister, 0, sizeof(code_ref), 0., ccFalse);      // used in bytecd.c to pass codes from code blocks
-    if (rtrn != passed)  return rtrn;
-    
-    rtrn = newLinkedList(&stringRegister, 0, sizeof(char), 0., ccFalse);     // set up the string register
-    if (rtrn != passed)  return rtrn;
-    
-    errCode = warningCode = passed;
-    errIndex = 1;              // for now
-    errScript.code_ptr = NULL;
-    warningScript.code_ptr = NULL;
-    
-    recursionCounter = 0;
-    pcSearchPath = NULL;
-    BIF_argsView.windowPtr = NULL;
-    argsView.windowPtr = NULL;
-    returnView.windowPtr = NULL;
-    thatView.windowPtr = NULL;
-    
-    extCallMode = ccFalse;
-    doPrintError = ccFalse;
-    
-    return passed;
-}
-
-
-// cleanUp() deletes the global variables when Cicada exits.  Just to be tidy.
-
-void cleanUp()
-{
-    derefCodeList(&codeRegister);
-    
-    deletePLL(&VariableList);
-    deletePLL(&MasterCodeList);
-    deleteStack(&PCStack);
-    deleteLinkedList(&codeRegister);
-    deleteLinkedList(&(GL_Object.arrayDimList));
-    deleteLinkedList(&stringRegister);
-    
-    return;
-}
-
-
 // addVariable() adds a new variable to the variable tree, and sets a number of the fields in the variable record.
 // It not allocate memory for members or data -- that is done by each of the two routines manually.
 // Business is set to zero.  Assumes zero initial instances of the variable.
@@ -1221,7 +1139,7 @@ void cleanUp()
 ccInt addVariable(variable **theNewVar, ccInt variableType, ccInt eventualVariableType, ccInt arrayDepth, ccBool makeSpareRoom)
 {
     ccInt newVarIndex, rtrn;
-    double freeSpace;
+    ccFloat freeSpace;
     
     rtrn = addPLLElement(&VariableList, (void **) theNewVar, &newVarIndex);
     if (rtrn != passed)  return rtrn;
@@ -1308,7 +1226,8 @@ ccInt addWindow(variable *hostVariable, ccInt windowOffset, ccInt addedInstances
     (*newWindow)->variable_ptr = hostVariable;
     (*newWindow)->offset = windowOffset;
     (*newWindow)->business = ccFalse;
-    (*newWindow)->jamStatus = ifCanJam;
+    if (ifCanJam)  (*newWindow)->jamStatus = can_jam;
+    else  (*newWindow)->jamStatus = cannot_jam;
     
     *((*newWindow)->references) = 0;
     
@@ -1736,22 +1655,24 @@ ccInt checkMemberOverlap(window *theWindow, ccInt newOffset, ccInt newWidth, ccI
             
             loopMember = LL_member(theWindow->variable_ptr, counter);
             if (loopMember->memberWindow != NULL)  {
-            if ((loopMember->memberWindow->jamStatus == unjammed) && (!isBusy(loopMember, busy_overlap_flag)))  {
+            if ((loopMember->memberWindow->jamStatus == can_jam) && (!isBusy(loopMember, busy_overlap_flag)))  {
                 setBusy(loopMember, busy_overlap_flag);
                 rtrn = checkMemberOverlap(loopMember->memberWindow,
                             newOffset*loopMember->indices, newWidth*loopMember->indices, mode);
                 if (rtrn != passed)  return rtrn;
         }   }}
         
-        return passed;
+        if ((mode == cbo_set_flags) || (mode == cbo_unset_flags))  return passed;
     }
     
-    if (mode == cbo_set_flags)  {
-        setBusy(theWindow, busy_resize_flag);
-        return passed;       }
-    else if (mode == cbo_unset_flags)  {
-        clearBusy(theWindow, busy_resize_flag);
-        return passed;       }
+    else  {
+        if (mode == cbo_set_flags)  {
+            setBusy(theWindow, busy_resize_flag);
+            return passed;       }
+        else if (mode == cbo_unset_flags)  {
+            clearBusy(theWindow, busy_resize_flag);
+            return passed;
+    }   }
     
     windowsPLL = &(theWindow->variable_ptr->windows);
     
@@ -1920,24 +1841,25 @@ void unflagVariables(variable *theVariable, unsigned char theFlag)
 }
 
 
-// unflagMembers() removes the busy flag on currentWindow, its variable's members' windows, etc.
+// unflagWindow() removes the busy flag on currentWindow, its variable's members' windows, etc.
 // This needs to run after each outer checkMemberOverlap() call, in order for CBO() to work again.
 
-void unflagMembers(variable *theObject, unsigned char theFlag)
+void unflagWindow(window *theWindow, unsigned char theFlag)
 {
+    variable *theVariable = theWindow->variable_ptr;
     ccInt counter;
     
-    if (!isBusy(theObject, theFlag))  return;
-    clearBusy(theObject, theFlag);
+    if (!isBusy(theWindow, theFlag))  return;
+    clearBusy(theWindow, theFlag);
     
-    if (theObject->type >= composite_type)  {
-    for (counter = 1; counter <= theObject->mem.members.elementNum; counter++)  {
+    if (theVariable->type >= composite_type)  {
+    for (counter = 1; counter <= theVariable->mem.members.elementNum; counter++)  {
         
-        member *loopMember = LL_member(theObject, counter);
+        member *loopMember = LL_member(theVariable, counter);
         if (loopMember->memberWindow != NULL)  {
-        if ((loopMember->memberWindow->jamStatus == unjammed) && (isBusy(loopMember, busy_overlap_flag)))  {
+        if ((loopMember->memberWindow->jamStatus == can_jam) && (isBusy(loopMember, busy_overlap_flag)))  {
             clearBusy(loopMember, busy_overlap_flag);
-            unflagMembers(loopMember->memberWindow->variable_ptr, theFlag);
+            unflagWindow(loopMember->memberWindow, theFlag);
     }}  }}
     
     return;

@@ -23,18 +23,14 @@
  *  SOFTWARE.
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
-#include "ccmain.h"
-#include "cicada.h"
+#include <stdio.h>
 #include "lnklst.h"
+#include "ccmain.h"
 #include "cmpile.h"
 #include "intrpt.h"
 #include "bytecd.h"
-#include "ciclib.h"
-#include "userfn.h"
 
 
 // CicadaTest_ON (in ccmain.h) should always be commented out
@@ -42,6 +38,7 @@
 #ifdef CicadaTest_ON
 #include "Test/Test.c"
 #endif
+
 
 
 // Below:  the lists of error messages for cases where the main script (start.cicada or the argument to Cicada) blows up.
@@ -61,23 +58,17 @@ const char *errorStrings[] = {
 
 
 
-// cicadaMain() is the outermost function.  It initializes Cicada's memory,
-// loads and runs the required script start.cicada, flags any error, and quits.
 
-// main() is used if Cicada is to be compiled as a stand-alone program (i.e. not as an API).
+// * * * * *  The code that boots up Cicada and cleans after it  * * * * *
 
 
-#ifdef CicadaMainProgram
-int main(int argc, char **argv)
+
+// runCicada() and cicadaMain() are the outermost functions.  These initializes Cicada's memory,
+// load and run the required script start.cicada, flag any error, and then quit.
+
+ccInt runCicada(ccInt argc, char **argv)
 {
-    return runCicada(argc-1, argv+1);         // we ignore the first argument
-}
-#endif
-
-
-int runCicada(int argc, char **argv)
-{
-    int rtrn;
+    ccInt rtrn;
     
     cc_compile_global_struct hold_compile_globals = cc_compile_globals;
     cc_interpret_global_struct hold_interpret_globals = cc_interpret_globals;
@@ -93,8 +84,7 @@ int runCicada(int argc, char **argv)
 }
 
 
-
-int cicadaMain(int argc, char **argv)
+ccInt cicadaMain(ccInt argc, char **argv)
 {
     ccInt mainErrorCode = 0, startupFileNameLength, loopCompiler, rtrn;
     char *firstChar, *startupFileName;
@@ -122,7 +112,7 @@ int cicadaMain(int argc, char **argv)
         *(compiler_type **) element(&allCompilers, 1) = currentCompiler;         }
     
     if (rtrn != passed)  {
-        printf("Error loading compiler (error code %i on command %i)\n", errCode, errPosition);
+        printf("Error loading compiler (error code %i on command %i)\n", (int) errCode, (int) errPosition);
         return rtrn;       }
     
     
@@ -227,6 +217,89 @@ test_MM_CountRefs();
 }
 
 
+// initCicada() initializes the interpreter when Cicada boots up.
+// Allocates memory for things like VariableList, the PCStack, Zero, etc.
+
+ccInt initCicada(ccInt *zeroCode, ccInt zeroCodeLength,
+        char *fileName, ccInt fileNameLength, char *sourceCode, ccInt *opCharNum, ccInt sourceCodeLength)
+{
+    variable *varZero;
+    ccInt zeroCodeIndex, *zeroCodeEntryPtr, rtrn;
+    
+    baseView.windowPtr = NULL;              // these can confuse addMemory if not initialized to NULL first
+    searchView.windowPtr = NULL;            // to prevent an error on startup when addMemory checks baseView.windowPtr->variable_ptr
+    topView.windowPtr = NULL;
+    
+    rtrn = newPLL(&VariableList, 0, sizeof(variable), LLFreeSpace);        // make space for variables & codes
+    if (rtrn != passed)  return rtrn;
+    rtrn = newPLL(&MasterCodeList, 0, sizeof(storedCodeType), LLFreeSpace);
+    if (rtrn != passed)  return rtrn;
+    rtrn = newStack(&PCStack, sizeof(view), 100, LLFreeSpace);
+    if (rtrn != passed)  return rtrn;
+    
+    rtrn = addVariable(&varZero, composite_type, composite_type, 0, ccTrue);
+    if (rtrn != passed)  return rtrn;
+    rtrn = addWindow(varZero, 0, 1, &Zero, ccTrue);
+    if (rtrn != passed)  return rtrn;
+    rtrn = drawPath(&ZeroSuspensor, Zero, NULL, 1, 1);
+    if (rtrn != passed)  return rtrn;
+    
+    rtrn = addCode(zeroCode, &zeroCodeEntryPtr, &zeroCodeIndex, zeroCodeLength,
+                fileName, fileNameLength, sourceCode, opCharNum, sourceCodeLength);
+    if (rtrn != passed)  return rtrn;
+    rtrn = addCodeRef(&(varZero->codeList), ZeroSuspensor, zeroCodeEntryPtr, zeroCodeIndex);
+    if (rtrn != passed)  return rtrn;
+    PCCodeRef = *(code_ref *) element(&(varZero->codeList), 1);
+    
+    refWindow(Zero);
+    refPath(ZeroSuspensor);
+    
+    pcCodePtr = zeroCodeEntryPtr;        // should immediately call checkBytecode()
+    
+    rtrn = newLinkedList(&(GL_Object.arrayDimList), 0, sizeof(ccInt), 2., ccFalse);
+    if (rtrn != passed)  return rtrn;
+    rtrn = newLinkedList(&codeRegister, 0, sizeof(code_ref), 0., ccFalse);      // used in bytecd.c to pass codes from code blocks
+    if (rtrn != passed)  return rtrn;
+    
+    rtrn = newLinkedList(&stringRegister, 0, sizeof(char), 0., ccFalse);     // set up the string register
+    if (rtrn != passed)  return rtrn;
+    
+    errCode = warningCode = passed;
+    errIndex = 1;              // for now
+    errScript.code_ptr = NULL;
+    warningScript.code_ptr = NULL;
+    
+    recursionCounter = 0;
+    pcSearchPath = NULL;
+    BIF_argsView.windowPtr = NULL;
+    argsView.windowPtr = NULL;
+    returnView.windowPtr = NULL;
+    thatView.windowPtr = NULL;
+    
+    extCallMode = ccFalse;
+    doPrintError = ccFalse;
+    
+    return passed;
+}
+
+
+// cleanUp() deletes the global variables when Cicada exits.  Just to be tidy.
+
+void cleanUp()
+{
+    derefCodeList(&codeRegister);
+    
+    deletePLL(&VariableList);
+    deletePLL(&MasterCodeList);
+    deleteStack(&PCStack);
+    deleteLinkedList(&codeRegister);
+    deleteLinkedList(&(GL_Object.arrayDimList));
+    deleteLinkedList(&stringRegister);
+    
+    return;
+}
+
+
 
 // printError() converts the character number of an error into a line number, then outputs
 // that line number along with the line of text and an error flagging the offending character.
@@ -237,14 +310,14 @@ void printError(char *errFileName, char *errText, ccInt errCharNum, ccBool force
         // print the error/warning message, if there is one
     
     if (errCode != passed)  {
-        if ((errCode < passed) || (errCode > finished_signal))  printf("Unknown error #%i\n", errCode);
+        if ((errCode < passed) || (errCode > finished_signal))  printf("Unknown error #%i\n", (int) errCode);
         else if ((errCode == return_flag) || (errCode == finished_signal))  return;
         else if (errCode == token_expected_err)  printf("Error:  '%s' expected", expectedTokenName);
         else if (errCode != member_not_found_err)  printf("Error:  %s", errorStrings[errCode]);
         else  {
             const char *defaultMemberName = "";
             char *memberName = (char *) defaultMemberName;
-            int soughtMember = *(errScript.code_ptr + errIndex - 1);
+            ccInt soughtMember = *(errScript.code_ptr + errIndex - 1);
             
             if ((soughtMember >= 1) && (soughtMember <= currentCompiler->varNames.elementNum))  {
                 memberName = ((varNameType *) element(&(currentCompiler->varNames), soughtMember))->theName;    }
@@ -253,7 +326,7 @@ void printError(char *errFileName, char *errText, ccInt errCharNum, ccBool force
     }   }
     
     else if (warningCode != passed)  {
-        if ((warningCode < passed) || (warningCode > finished_signal))  printf("Unknown warning #%i\n", warningCode);
+        if ((warningCode < passed) || (warningCode > finished_signal))  printf("Unknown warning #%i\n", (int) warningCode);
         printf("Warning:  %s", errorStrings[warningCode]);
         warningCode = passed;          }
     
@@ -270,7 +343,8 @@ void printError(char *errFileName, char *errText, ccInt errCharNum, ccBool force
     
     if (errText != NULL)  {
         
-        ccInt lineNo = 1, loopChar, lineBeginningChar, lineEndChar, numLineNoChars;
+        ccInt lineNo = 1, loopChar, lineBeginningChar, lineEndChar;
+        int numLineNoChars;
         
         lineBeginningChar = lineEndChar = errCharNum;
         
@@ -293,7 +367,7 @@ void printError(char *errFileName, char *errText, ccInt errCharNum, ccBool force
                 lineNo++;
             }}
             
-            printf("%i:  %n", lineNo, &numLineNoChars);         }
+            printf("%i:  %n", (int) lineNo, &numLineNoChars);         }
         
         
             // .. and the line in the script that caused it..
@@ -308,7 +382,7 @@ void printError(char *errFileName, char *errText, ccInt errCharNum, ccBool force
         
             // .. and finally a marker indicating the offending character in the line.
         
-        for (loopChar = 1; loopChar <= numLineNoChars; loopChar++)  {
+        for (loopChar = 1; loopChar <= (ccInt) numLineNoChars; loopChar++)  {
             printf(" ");        }
         
         for (loopChar = lineBeginningChar; loopChar < errCharNum; loopChar++)  {

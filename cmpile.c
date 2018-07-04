@@ -413,8 +413,8 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
 
 
 
-// addTokenSpec() adds an token string or variable name to the compiler's list of known strings
-// first makes a copy of the string to store
+// addTokenSpec() adds a token string or variable name to the compiler's list of known strings,
+// and makes a copy of the string to store
 
 ccInt addTokenSpec(compiler_type *compiler, char **tokenCharPtr, char **newName, ccInt tokenID, ccBool isVariableName,
         ccBool expectLHarg, ccBool optionalLHarg, ccInt nthToken, ccInt varID)
@@ -1117,7 +1117,7 @@ ccInt readTextString(char **scanPtr, char *closingString, ccInt **stringBuffer, 
     
         // get a buffer to store the string in
     
-    *stringSizeInInts = ceil(1.*chars_num/sizeof(ccInt));    // align along an int boundary
+    *stringSizeInInts = ceil(1.*chars_num/sizeof(ccInt));    // align along a ccInt boundary
     if (!isChar)  (*stringSizeInInts)++;
     *stringBuffer = (ccInt *) malloc((size_t) (*stringSizeInInts)*sizeof(ccInt));
     if (*stringBuffer == NULL)   {

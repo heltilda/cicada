@@ -31,18 +31,11 @@
 
 
 
-// Comment out the following line if Cicada is to be embedded in a larger C/C++ application
-// (i.e. if Cicada's own main() function is not needed).
-
-#define CicadaMainProgram
-
-
-
 // The required type of user-defined C or C++ functions
 
 typedef struct {
     const char *functionName;
-    int(*functionPtr)(int, char **);
+    ccInt(*functionPtr)(ccInt, char **);
 } userFunction;
 
 
@@ -63,12 +56,20 @@ typedef struct {
 #define endArgs NULL,NULL,-1
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern userFunction UserFunctions[];
 extern const ccInt userFunctionsNum;
 
-extern int pass2nums(int, char **);
+extern ccInt pass2nums(ccInt, char **);
 
-extern void getArgs(int, char **, ...);
+extern void getArgs(ccInt, char **, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

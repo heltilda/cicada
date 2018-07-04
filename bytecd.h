@@ -179,82 +179,86 @@ extern cc_bytecode_global_struct cc_bytecode_globals;
 
 // Prototypes
 
-extern void _jump_always();
-extern void _jump_if_true();
-extern void _jump_if_false();
-extern void _code_marker();
-extern void _func_return();
-extern void _user_function();
-extern void _built_in_function();
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern void _def_general();
+extern void _jump_always(void);
+extern void _jump_if_true(void);
+extern void _jump_if_false(void);
+extern void _code_marker(void);
+extern void _func_return(void);
+extern void _user_function(void);
+extern void _built_in_function(void);
+
+extern void _def_general(void);
 extern void copyCompareMultiView(void(*)(view *, view *), view *, view *);
 extern void encompassMultiView(view *, window *, window *, variable *, ccBool);
-extern int relinkGLStemMember(view *, ccBool, ccBool, ccBool);
+extern ccInt relinkGLStemMember(view *, ccBool, ccBool, ccBool);
 extern void newStringLL(view *);
 extern ccInt checkType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, view *, ccBool, ccBool);
 extern void updateType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, ccInt, ccBool);
 
-extern void _forced_equate();
+extern void _forced_equate(void);
 
-extern void _search_member();
-extern void _define_search_member();
-extern void _object_search_member();
+extern void _search_member(void);
+extern void _define_search_member(void);
+extern void _object_search_member(void);
 extern void smStep(ccBool);
-extern void _step_to_memberID();
-extern void _define_step_to_memberID();
-extern void _object_step_to_memberID();
+extern void _step_to_memberID(void);
+extern void _define_step_to_memberID(void);
+extern void _object_step_to_memberID(void);
 extern void sidStep(ccBool);
-extern void _step_to_index();
-extern void _define_step_to_index();
-extern void _object_step_to_index();
+extern void _step_to_index(void);
+extern void _define_step_to_index(void);
+extern void _object_step_to_index(void);
 extern void stixStep(ccBool);
-extern void _step_to_indices();
-extern void _define_step_to_indices();
-extern void _object_step_to_indices();
+extern void _step_to_indices(void);
+extern void _define_step_to_indices(void);
+extern void _object_step_to_indices(void);
 extern void sticsStep(ccBool);
-extern void _step_to_all_indices();
-extern void _define_step_to_all_indices();
+extern void _step_to_all_indices(void);
+extern void _define_step_to_all_indices(void);
 extern void staiStep(ccBool);
-extern void _resize();
-extern void _define_resize();
-extern void _resize_start();
+extern void _resize(void);
+extern void _define_resize(void);
+extern void _resize_start(void);
 extern void doResize(ccBool);
-extern void _insert_index();
-extern void _define_insert_index();
-extern void _insert_indices();
-extern void _define_insert_indices();
+extern void _insert_index(void);
+extern void _define_insert_index(void);
+extern void _insert_indices(void);
+extern void _define_insert_indices(void);
 extern void do_insert_index(ccBool);
 extern void do_insert_indices(ccBool);
 extern void masterInsert(ccBool, ccBool);
 
-extern void callSearchPathFunction();
-extern ccInt callIndexFunction();
+extern void callSearchPathFunction(void);
+extern ccInt callIndexFunction(void);
 extern void navigate(void (*)(ccBool), ccBool, ccBool, ccBool);
 
 extern void resizeMember(member *, ccInt, ccInt);
 extern void resizeIndices(member *, ccInt, ccInt, ccInt);
 
-extern void _delete_indices();
+extern void _delete_indices(void);
 
-extern void _if_eq();
-extern void _if_ne();
-extern void compareReadArg(void(*)(), ccInt *, ccBool *);
-extern void _if_eq_at();
-extern void _if_ne_at();
-extern void eqaOneArg();
+extern void _if_eq(void);
+extern void _if_ne(void);
+extern void compareReadArg(void(*)(void), ccInt *, ccBool *);
+extern void _if_eq_at(void);
+extern void _if_ne_at(void);
+extern void eqaOneArg(void);
 
-extern void _if_gt();
-extern void _if_ge();
-extern void _if_lt();
-extern void _if_le();
+extern void _if_gt(void);
+extern void _if_ge(void);
+extern void _if_lt(void);
+extern void _if_le(void);
 
-extern void _addf();
-extern void _subf();
-extern void _mulf();
-extern void _divf();
-extern void _powf();
-extern void _modi();
+extern void _addf(void);
+extern void _subf(void);
+extern void _mulf(void);
+extern void _divf(void);
+extern void _powf(void);
+extern void _modi(void);
 
 extern void Math_GT(ccFloat);
 extern void Math_GE(ccFloat);
@@ -270,66 +274,66 @@ extern void Math_Mod(ccFloat firstArgument);
 
 extern void mathOperator(void(*theOp)(ccFloat), ccInt);
 
-extern void _if_not();
-extern void _if_and();
-extern void _if_or();
-extern void _if_xor();
+extern void _if_not(void);
+extern void _if_and(void);
+extern void _if_or(void);
+extern void _if_xor(void);
 
 extern void logicAnd(ccBool);
 extern void logicOr(ccBool);
 extern void logicXor(ccBool);
 extern void logicalOperator(void(*logicOp)(ccBool));
 
-extern void _code_number();
-extern void _sub_code();
-extern void _append_code();
+extern void _code_number(void);
+extern void _sub_code(void);
+extern void _append_code(void);
 extern void getCurrentCodeList(linkedlist *);
 
-extern void _get_args();
-extern void _this_var();
-extern void _that_var();
-extern void _parent_var();
-extern void _top_var();
-extern void _no_var();
+extern void _get_args(void);
+extern void _this_var(void);
+extern void _that_var(void);
+extern void _parent_var(void);
+extern void _top_var(void);
+extern void _no_var(void);
 
-extern void _array_cmd();
+extern void _array_cmd(void);
 
-extern void _bool_cmd();
-extern void _char_cmd();
-extern void _int_cmd();
-extern void _double_cmd();
-extern void _string_cmd();
+extern void _bool_cmd(void);
+extern void _char_cmd(void);
+extern void _int_cmd(void);
+extern void _double_cmd(void);
+extern void _string_cmd(void);
 
-extern void _constant_bool();
-extern void _constant_char();
-extern void _constant_int();
-extern void _constant_double();
-extern void _constant_string();
-extern void _code_block();
+extern void _constant_bool(void);
+extern void _constant_char(void);
+extern void _constant_int(void);
+extern void _constant_double(void);
+extern void _constant_string(void);
+extern void _code_block(void);
 
-extern void _illegal();
+extern void _illegal(void);
 
 extern void refCodeList(linkedlist *);
 extern void derefCodeList(linkedlist *);
 
-extern void intAdapter();
-extern void doubleAdapter();
+extern void intAdapter(void);
+extern void doubleAdapter(void);
 extern void numAdapter(ccInt);
 
-extern void skipNoArgs();
-extern void skipOneArg();
-extern void skipTwoArgs();
-extern void skipThreeArgs();
-extern void skipInt();
-extern void skipDouble();
-extern void skipString();
-extern void skipIntAndOneArg();
-extern void skipIntAndTwoArgs();
-extern void skipOneArgAndInt();
-extern void skipCode();
+extern void skipNoArgs(void);
+extern void skipOneArg(void);
+extern void skipTwoArgs(void);
+extern void skipThreeArgs(void);
+extern void skipInt(void);
+extern void skipDouble(void);
+extern void skipString(void);
+extern void skipIntAndOneArg(void);
+extern void skipIntAndTwoArgs(void);
+extern void skipOneArgAndInt(void);
+extern void skipCode(void);
 
-extern void checkBytecode();
-extern void checkBytecodeSentences();
+extern void checkBytecode(void);
+extern void checkBytecodeSentences(void);
 
 extern void checkCommand(ccInt);
 extern void checkBackCommand(ccInt);
@@ -344,18 +348,18 @@ extern void checkBytecodeArg(ccInt);
 extern void illegalCmd(ccInt);
 
 extern void beginExecution(code_ref *, ccBool, ccInt, ccInt, ccInt);
-extern void runBytecode();
+extern void runBytecode(void);
 extern void runSkipMode(ccInt);
 
-extern void callBytecodeFunction();
-extern void callDefineFunction();
-extern void callObjectFunction();
-extern void callSentenceStartFunction();
-extern void callLogicalFunction();
+extern void callBytecodeFunction(void);
+extern void callDefineFunction(void);
+extern void callObjectFunction(void);
+extern void callSentenceStartFunction(void);
+extern void callLogicalFunction(void);
 extern void callNumericFunction(ccInt);
-extern void callCodeFunction();
-extern void callSkipFunction();
-extern void callFunction(void(*[commands_num])());
+extern void callCodeFunction(void);
+extern void callSkipFunction(void);
+extern void callFunction(void(*[commands_num])(void));
 
 extern void saveBoolRegister(variable *, ccInt);
 extern void loadBoolRegister(variable *, ccInt);
@@ -371,12 +375,12 @@ extern char leftArgs[commands_num];
 extern char rightArgs[commands_num];
 extern void(*checkJumpTables[6][commands_num])(ccInt);
 
-extern void(*sentenceStartJumpTable[commands_num])();
-extern void(*skipJumpTable[commands_num])();
-extern void(*numericJumpTable[commands_num])();
-extern void(*codeJumpTable[commands_num])();
-extern void(*bytecodeJumpTable[commands_num])();
-extern void(*defineJumpTable[commands_num])();
+extern void(*sentenceStartJumpTable[commands_num])(void);
+extern void(*skipJumpTable[commands_num])(void);
+extern void(*numericJumpTable[commands_num])(void);
+extern void(*codeJumpTable[commands_num])(void);
+extern void(*bytecodeJumpTable[commands_num])(void);
+extern void(*defineJumpTable[commands_num])(void);
 
 extern ccInt BIF_Types[];
 
@@ -384,6 +388,10 @@ extern void(*loadIntRegJumpTable[])(void *);
 extern void(*saveIntRegJumpTable[])(void *);
 extern void(*loadDPRegJumpTable[])(void *);
 extern void(*saveDPRegJumpTable[])(void *);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 // misc

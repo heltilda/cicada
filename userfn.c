@@ -42,7 +42,7 @@
 
 // **********************************************
 // UserFunctions defines the { names, function addresses } of user's C routines.
-// Each routine must be of the form:  int RoutineName(int argc, char **argv)
+// Each routine must be of the form:  ccInt RoutineName(ccInt argc, char **argv)
 
 
 userFunction UserFunctions[] = { { "pass2nums", &pass2nums }, { "cicada", &runCicada } };
@@ -63,13 +63,13 @@ const ccInt userFunctionsNum = (ccInt) (sizeof(UserFunctions)/sizeof(userFunctio
 // Example of a user-written C routine.
 // Try it out with:  call("pass2nums", 5, pi)
 
-int pass2nums(int argc, char **argv)
+ccInt pass2nums(ccInt argc, char **argv)
 {
     ccInt *a;
     ccFloat b;
     
     getArgs(argc, argv, &a, byValue(&b));
-    printf("passed %i by reference and %g by value\n", *a, b);
+    printf("passed %i by reference and %g by value\n", *(int *) a, (double) b);
     
     return passed;
 }
@@ -82,9 +82,9 @@ int pass2nums(int argc, char **argv)
 // 
 // example:
 //
-// int myFunction(int argc, char **argv)
+// ccInt myFunction(ccInt argc, char **argv)
 // {
-//     int *var1;
+//     ccInt *var1;
 //     ccBool var2, *var3;
 //     
 //     getArgs(argc, argv, &var1, byValue(&var2), &var3)
@@ -93,9 +93,9 @@ int pass2nums(int argc, char **argv)
 //     
 // }
 
-void getArgs(int argc, char **argv, ...)
+void getArgs(ccInt argc, char **argv, ...)
 {
-    int loopArg;
+    ccInt loopArg;
     va_list theArgs;
     char **nextarg;
     arg_info *myArgInfo = (arg_info *) argv[argc];
@@ -108,7 +108,7 @@ void getArgs(int argc, char **argv, ...)
         else  {
             nextarg = va_arg(theArgs, char **);
             if (nextarg == NULL)  {
-                loopArg = va_arg(theArgs, int) - 1;
+                loopArg = ((ccInt) va_arg(theArgs, int)) - 1;
                 if (loopArg < -1)  break;       }
             else  {
                 size_t numBytes = (size_t) myArgInfo[loopArg].argIndices*typeSizes[myArgInfo[loopArg].argType];

@@ -253,6 +253,10 @@ extern cc_compile_global_struct cc_compile_globals;
 
 // External prototypes
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern compiler_type *newCompiler(commandTokenType *, ccInt, ccInt *, ccInt, ccInt *);
 extern ccInt addTokenSpec(compiler_type *, char **, char **, ccInt, ccBool, ccBool, ccBool, ccInt, ccInt);
 extern ccInt findToken(compiler_type *, linkedlist *, char **, ccInt *, ccBool, ccBool);
@@ -270,4 +274,9 @@ extern ccInt relinkBestToken(compiler_type *, linkedlist *, ccInt, ccInt, ccInt,
 extern ccInt writeTokenOps(compiler_type *, ccInt, ccBool);
 
 extern ccInt lettertypeArray[256];
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

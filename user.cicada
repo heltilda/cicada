@@ -320,7 +320,16 @@ printl :: {  code, print(args, "\n")  }
 
 | matrix print -- prints a table or list
 
-mprint :: { ; print(writeTable(args[1])) }
+mprint :: {
+    
+    mprintArgs :: *
+    
+    code
+    
+    mprintArgs = @args
+    print(writeTable(args[1]; (this<<mprintArgs)()))
+    mprintArgs = @nothing
+}
 
 
 
@@ -375,10 +384,12 @@ writeTable :: {
     fileWriteString :: string
     theTable :: *
     
-    params :: { fieldWidth := 12, maxDigits := 6, voidString := "*" }
+    params :: { fieldWidth :: maxDigits :: int, voidString :: string }
     
     
     code
+    
+    (params << { ; fieldWidth = 14, maxDigits = 6, voidString = "*" })()
     
     if trap(
         if top(args) /= 1  then throw(1)
@@ -437,7 +448,16 @@ writeTable :: {
 
 | saveTable() outputs table data to a file
 
-saveTable :: {  code, Save(args[1], writeTable(args[2]))  }
+saveTable :: {
+    
+    saveTableArgs :: *
+    
+    code
+    
+    saveTableArgs = @args
+    Save(args[1], writeTable(args[2]; (this<<saveTableArgs)()))
+    saveTableArgs = @nothing
+}
 
 
 
@@ -466,13 +486,13 @@ readTable :: {
         errCode = 1
         theTable =@ *, return       )
     
-    if trap(theTable[*][*]) /= passed  then defaults.resizeRows = false
-    
     if top(theTable) > 0  then (
         if type(theTable[1]) <= 4  then (
-            defaults.resizeColumns = defaults.resizeRows
+            defaults.resizeColumns = that or defaults.resizeRows
             defaults.resizeRows = false
     )   )
+    
+    else if trap(theTable[*][*]) /= passed  then defaults.resizeRows = false
     
     
         | handle resizing of the table here..
@@ -484,35 +504,37 @@ readTable :: {
             | first calculate the number of rows in the table, by counting the number of '\n's
             | (this should work on both UNIX machines and PCs, since they each have one \n per line break)
         
-        numLines = find(tableString, "\n", 0) + 1
-        if tableString[top] == '\n' or tableString[top] == '\r'  then numLines = that-1
-        
-        if defaults.ifHeader  then (
-            numLines = that - 1
-            beginningFirstRow = max(1, find(tableString, "\n", 1)+1)     )
-        
-        
-            | if we're resizing each row, then calculate number of columns by examining the first row
-        
-        endFirstRow = find(tableString, "\n", 1, beginningFirstRow)
-        if endFirstRow == 0  then endFirstRow = top(tableString)+1
-        
-        if loopChar <= size(tableString)  then (
-        if defaults.resizeRows  then (
-            numColumns = 0, loopChar = beginningFirstRow
-            while loopChar < endFirstRow  do (
-                if tableString[loopChar] > 32 and tableString[loopChar] < 127  then (
-                    numColumns = that+1
-                    {  loop  (
-                        if tableString[loopChar] <= 32 or tableString[loopChar] >= 127  then return
+        if tableString == ""  then numLines = 0
+        else  (
+            numLines = find(tableString, "\n", 0) + 1
+            if tableString[top] == '\n' or tableString[top] == '\r'  then numLines = that-1
+            
+            if defaults.ifHeader  then (
+                numLines = that - 1
+                beginningFirstRow = max(1, find(tableString, "\n", 1)+1)     )
+            
+            
+                | if we're resizing each row, then calculate number of columns by examining the first row
+            
+            endFirstRow = find(tableString, "\n", 1, beginningFirstRow)
+            if endFirstRow == 0  then endFirstRow = top(tableString)+1
+            
+            if loopChar <= size(tableString)  then (
+            if defaults.resizeRows  then (
+                numColumns = 0, loopChar = beginningFirstRow
+                while loopChar < endFirstRow  do (
+                    if tableString[loopChar] > 32 and tableString[loopChar] < 127  then (
+                        numColumns = that+1
+                        {  loop  (
+                            if tableString[loopChar] <= 32 or tableString[loopChar] >= 127  then return
+                            loopChar = that+1
+                        ) until loopChar >= endFirstRow   }
+                    )
+                    
+                    {  while loopChar < endFirstRow  do  (
+                        if tableString[loopChar] > 32 and tableString[loopChar] < 127  then return
                         loopChar = that+1
-                    ) until loopChar >= endFirstRow   }
-                )
-                
-                {  while loopChar < endFirstRow  do  (
-                    if tableString[loopChar] > 32 and tableString[loopChar] < 127  then return
-                    loopChar = that+1
-        )}) )   )
+        )   })) )   )
         
         if numLines < 0  then numLines = 0
         
@@ -538,9 +560,10 @@ readTable :: {
         ))
     )
     
-    if trap( ; read_string(tableString[<beginningFirstRow, top>], theTable)  ) /= passed  then (
+    if tableString /= ""  then tableString = that[<beginningFirstRow, top>]
+    if trap( ; read_string(tableString, theTable)  ) /= passed  then (
         print("readTable():  table not read properly\n")
-        if errCode == passed  then errCode = 3     )
+        if errCode == passed  then errCode = 3      )
     
     theTable =@ *
 }

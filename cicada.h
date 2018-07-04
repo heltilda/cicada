@@ -137,9 +137,17 @@
 
 // Prototypes from cicada.c(pp)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern commandTokenType cicadaLanguage[];
 extern ccInt cicadaLanguageAssociativity[];
 extern ccInt cicadaLanguageNumCommands;
 extern ccInt cicadaNumPrecedenceLevels;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

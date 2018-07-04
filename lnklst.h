@@ -82,7 +82,7 @@ typedef struct {                    // all these have to do with the whole linke
     ccInt elementNum;               // number of elements
     sublistHeader *memory;          // first sublist pointer
     ccInt elementSize;              // bytes per element
-    double spareRoom;               // _percentage_ of extra room allocated (for speed if elements are added)
+    ccFloat spareRoom;              // _percentage_ of extra room allocated (for speed if elements are added)
 } linkedlist;
 
 
@@ -107,6 +107,10 @@ typedef struct {
 
 
 // Prototypes
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern ccInt newLinkedList(linkedlist *, ccInt, ccInt, ccFloat, ccBool);
 extern void deleteLinkedList(linkedlist *);
@@ -141,5 +145,9 @@ extern ccInt newStack(stack *, ccInt, ccInt, ccFloat);
 extern void deleteStack(stack *);
 extern ccInt pushStack(stack *, void **);
 extern ccInt popStack(stack *, void **);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

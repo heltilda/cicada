@@ -23,6 +23,8 @@
  *  SOFTWARE.
  */
 
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -206,7 +208,7 @@ void _user_function()
 void _built_in_function()
 {
     view holdBIFArgsView;
-    void(*theBuiltInFunction)();
+    void(*theBuiltInFunction)(void);
     ccInt biFunctionID;
     
     
@@ -637,7 +639,7 @@ void _def_general()
         refWindow(holdDestView.windowPtr);
         
         
-            // OK, we'll have to copy the old-fashioned way.  Get the source variable coordinate and fall through.
+            // get the source variable coordinate
         
         objectCommand = pcCodePtr;
         compareReadArg(callBytecodeFunction, &sourceDataType, &sourceIsScalar);
@@ -800,7 +802,7 @@ void encompassMultiView(view *theView, window *dummyWindow1, window *dummyWindow
 // relinkGLStemMember() sets the member in GL_Path.stemMember to point to a given window.
 // Used when aliasing or voiding a member.
 
-int relinkGLStemMember(view *targetView, ccBool doRelink, ccBool newTarget, ccBool isUnjammable)
+ccInt relinkGLStemMember(view *targetView, ccBool doRelink, ccBool newTarget, ccBool isUnjammable)
 {
     window *newMemberWindow = NULL;
     ccInt rtrn;
@@ -1055,7 +1057,7 @@ void _forced_equate()
                     ( (destStringSize != no_string) || (sourceDataSize % (destDataSize/holdPath.stemMember->indices) == 0) ))  {
                 ccInt formerIndices = holdPath.stemMember->indices; 
                 resizeMember(holdPath.stemMember, holdPath.stemView.width,     // this also rescales seachView.width
-                                                        (holdPath.stemMember->indices*sourceDataSize)/destDataSize);
+                                                        sourceDataSize/(destDataSize/holdPath.stemMember->indices));
                 destDataSize = (holdPath.stemMember->indices*destDataSize)/formerIndices;         }
             
             
@@ -1557,12 +1559,13 @@ void resizeIndices(member *stemMember, ccInt stemWidth, ccInt insertionOffset, c
             else  cboIndices = -newIndices;
             
                 // Checking involves a four-step procedure, calling checkMemberOverlap each time.
-                // Just run it 4 times and pass the counter.  Need to unflagMembers() after each CBO() call.
+                // Just run it 4 times and pass the counter.  Need to unflagWindow() after each CBO() call.
             
             for (count_to_four = 1; count_to_four <= 4; count_to_four++)    {
-                rtrn = checkMemberOverlap(stemMember->memberWindow, c2*stemMember->indices + insertionOffset, cboIndices, count_to_four);
-                unflagMembers(stemMember->memberWindow->variable_ptr, busy_overlap_flag);
-                if (rtrn != passed)  break;         }
+                ccInt onePassRtrn = checkMemberOverlap(stemMember->memberWindow,
+                            c2*stemMember->indices + insertionOffset, cboIndices, count_to_four);
+                unflagWindow(stemMember->memberWindow, busy_overlap_flag);
+                if (onePassRtrn != passed)  {  rtrn = onePassRtrn;  count_to_four = 3;  }     }
             if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }    }
         
         holdGLMember = GL_Path.stemMember;   // delete GLPath.stemMember for safety (AddMem() won't know it stores correct value after resize)
@@ -1731,7 +1734,7 @@ void _if_ne()
 
 // compareReadArg() reads a bytecode argument and determines its type
 
-void compareReadArg(void(*runBytecodeFunction)(), ccInt *dataType, ccBool *argIsScalar)
+void compareReadArg(void(*runBytecodeFunction)(void), ccInt *dataType, ccBool *argIsScalar)
 {
     runBytecodeFunction();
     if (errCode != passed)  return;
@@ -2788,7 +2791,7 @@ void callNumericFunction(ccInt numType)  {
 
 void callSkipFunction()  {  callFunction(skipJumpTable);  }
 
-void callFunction(void(*commandJumpTable[commands_num])())
+void callFunction(void(*commandJumpTable[commands_num])(void))
 {
     ccInt theFunction = *pcCodePtr;
     
@@ -2969,7 +2972,7 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
 // Lastly, the jump tables, which store addresses of the operator-handling functions above in this file, in order of ID number.
 // This is much faster than dynamically searching for the appropriate function.
 
-void(*skipJumpTable[commands_num])() = {     // for skipping over code
+void(*skipJumpTable[commands_num])(void) = {     // for skipping over code
     &_illegal, &skipInt, &skipIntAndOneArg, &skipIntAndOneArg, &skipNoArgs,
         &skipOneArg, &skipTwoArgs, &skipTwoArgs, &skipIntAndTwoArgs, &skipTwoArgs,
     &skipInt, &skipOneArgAndInt, &skipTwoArgs, &skipThreeArgs, &skipOneArg,
@@ -2983,7 +2986,7 @@ void(*skipJumpTable[commands_num])() = {     // for skipping over code
     &skipNoArgs, &skipNoArgs, &skipInt, &skipInt, &skipInt,
         &skipDouble, &skipString, &skipCode      };
 
-void(*sentenceStartJumpTable[commands_num])() = {    // start-of-sentence:  resize/insert will not step
+void(*sentenceStartJumpTable[commands_num])(void) = {    // start-of-sentence:  resize/insert will not step
     &_illegal, &_jump_always, &_jump_if_true, &_jump_if_false, &_code_marker,
         &_func_return, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
     &_search_member, &_step_to_memberID, &_step_to_index, &_step_to_indices, &_step_to_all_indices,
@@ -2997,7 +3000,7 @@ void(*sentenceStartJumpTable[commands_num])() = {    // start-of-sentence:  resi
     &_double_cmd, &_string_cmd, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_constant_string, &_code_block   };
 
-void(*numericJumpTable[commands_num])() = {     // numeric arguments
+void(*numericJumpTable[commands_num])(void) = {     // numeric arguments
     &_illegal, &_illegal, &_illegal, &_illegal, &_illegal,
         &doubleAdapter, &doubleAdapter, &_built_in_function, &doubleAdapter, &doubleAdapter,
     &doubleAdapter, &doubleAdapter, &doubleAdapter, &doubleAdapter, &doubleAdapter,
@@ -3011,7 +3014,7 @@ void(*numericJumpTable[commands_num])() = {     // numeric arguments
     &_illegal, &_illegal, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_illegal, &_illegal    };
 
-void(*codeJumpTable[commands_num])() = {     // right argument of define:  something that denotes the new type
+void(*codeJumpTable[commands_num])(void) = {     // right argument of define:  something that denotes the new type
     &_illegal, &_illegal, &_illegal, &_illegal, &_illegal,
         &_illegal, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
     &_object_search_member, &_object_step_to_memberID, &_object_step_to_index, &_object_step_to_indices, &_step_to_all_indices,
@@ -3025,7 +3028,7 @@ void(*codeJumpTable[commands_num])() = {     // right argument of define:  somet
     &_double_cmd, &_string_cmd, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_constant_string, &_code_block   };
 
-void(*bytecodeJumpTable[commands_num])() = {     // generic jump table for mid-sentence operators
+void(*bytecodeJumpTable[commands_num])(void) = {     // generic jump table for mid-sentence operators
     &_illegal, &_jump_always, &_jump_if_true, &_jump_if_false, &_code_marker,
         &_func_return, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
     &_search_member, &_step_to_memberID, &_step_to_index, &_step_to_indices, &_step_to_all_indices,
@@ -3039,7 +3042,7 @@ void(*bytecodeJumpTable[commands_num])() = {     // generic jump table for mid-s
     &_double_cmd, &_string_cmd, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_constant_string, &_code_block   };
 
-void(*defineJumpTable[commands_num])() = {     // jump table for the left side of a define statement
+void(*defineJumpTable[commands_num])(void) = {     // jump table for the left side of a define statement
     &_illegal, &_jump_always, &_jump_if_true, &_jump_if_false, &_code_marker,
         &_func_return, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
     &_define_search_member, &_define_step_to_memberID, &_define_step_to_index, &_define_step_to_indices, &_define_step_to_all_indices,
