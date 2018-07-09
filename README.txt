@@ -2,9 +2,7 @@ Cicada script is a simple, interpreted language that can be extended with the us
 
 http://heltilda.github.io/cicada
 
-Building Cicada requires a machine with a command prompt, a C or C++ compiler and the 'make' tool.
-
-To compile using the Make tool:
+How to build Cicada on a machine with a command prompt, a C or C++ compiler and the 'Make' tool:
 1. Open the command prompt.
 2. Navigate to the directory in which Cicada's source files are located.
 3. Compile as follows, depending on whether we want to use the C or C++ compiler.
