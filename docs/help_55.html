@@ -44,7 +44,7 @@
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; int doubleString(int argc, char **argv)
+<br>&nbsp;&nbsp;&nbsp; ccInt doubleString(ccInt argc, char **argv)
 
 <br>&nbsp;&nbsp;&nbsp; {
 
@@ -231,7 +231,7 @@
 <P> 
 
 <br><P><b><tt>skipElements()</b></tt><P><P>
- <i>syntax: </i> (void *) <i>element_pointer</i> = <tt>skipElements</tt>((linkedlist *) LL, (sublistHeader *) sublist, (void *) <i>starting_pointer</i>, (int *) <i>sublist_index</i>, (numeric) <i>indices_to_skip</i>)<P><P></b>
+ <i>syntax: </i> (void *) <i>element_pointer</i> = <tt>skipElements</tt>((linkedlist *) LL, (sublistHeader *) sublist, (void *) <i>starting_pointer</i>, (ccInt *) <i>sublist_index</i>, (numeric) <i>indices_to_skip</i>)<P><P></b>
 <P>
 
 <P> Only for real pros.  Starting from a pointer to an element in the linked list, this routine returns the pointer to another element a given number of indices farther down the list.  When canvassing large, heavily-fragmented lists it may be slightly faster to go through the list once using <tt>skipElements()</tt> than to call <tt>element()</tt>, which searches from the first sublist each time it is called.  The first three arguments are the linked list, a pointer to our current sublist and a pointer to the local index of our starting element (beginning at 0 for the first element in the sublist).  The new element must have a higher index than the old; Cicada&rsquo;s linked lists cannot be explored in reverse.<P>
@@ -239,5 +239,6 @@
 <P> 
 
 <P> <ul>
-</ul><a href="https://heltilda.github.io/cicada/help_56.html">Next: Errors</a>
-<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_542.html">Prev: <tt>user.cicada</tt></a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_542.html">Prev: <tt>user.cicada</tt></a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_56.html">Next: Errors</a>
+</div><br><br><P>Last update: July 8, 2018

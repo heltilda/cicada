@@ -66,7 +66,7 @@
 
 <P>  The tricky bit is the fourth line:  since member &lsquo;<tt>a</tt>&rsquo; has been aliased to member &lsquo;<tt>b</tt>&rsquo;, does the command <tt>b =@ c</tt> now drag member <tt>a</tt> along with it?  The answer is no:  aliasing binds one member to another member&rsquo;s variable, not to the other member itself.  If we follow through all the acrobatics, we find that members <tt>a</tt>, <tt>b</tt>, and <tt>c</tt> all end up referring to same the variable storing the number 2, as shown in Figure 2.  (The other two variables are now inaccessible and will eventually be cleared from memory.)
 
-<P> <br><center><div class="image"><img src="https://heltilda.github.io/cicada/aliases.jpg"<div>Figure 2:  Aliasing of members (letters) to variables (boxes)</div></div></center><br>
+<P> <br><center><div class="image"><img src="https://heltilda.github.io/cicada/aliases.jpg"<div><br><br>Figure 2:  Aliasing of members (letters) to variables (boxes)</div></div></center><br>
 
 <P> Cicada clearly makes an important distinction between members and variables.  Until now we have been rather sloppy on this point, so we shall be more careful from now on.  A member is a named object in Cicada:  the name of a variable, or a field in a composite variable.  The variable itself is the data that the member refers to.  In Cicada these two objects are entirely separate, and there is no reason to require a one-to-one correspondence between them.
 
@@ -185,5 +185,6 @@
 
 <P>  Tokens are &lsquo;unjammable&rsquo;, both in the sense that they cannot jam, and that they will become &lsquo;unjammed&rsquo;---i.e. permanently deactivated---if their referent is resized through another member.  An unjammed token becomes unusable until it is redefined (when happens when the line defining the token is rerun).
 
-<P> <a href="https://heltilda.github.io/cicada/help_347.html">Next: The void</a>
-<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_345.html">Prev: This and that</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_345.html">Prev: This and that</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_347.html">Next: The void</a>
+</div><br><br><P>Last update: July 8, 2018

@@ -32,7 +32,7 @@
 
 <P>
 
-<P> Next, we add a new entry to the <tt>UserFunctions</tt> array defined in <tt>userfn.c</tt>.  The name of the C function is <tt>myFunction()</tt>, but earlier in our examples we invoked it by writing <tt>call(&quot;myFunctionInC&quot;, ...)</tt>, so its Cicada name is <tt>myFunctionInC</tt>.  The altered <tt>UserFunctions</tt> array (which already contained two entries) now reads:
+<P> Next, we add a new entry to the <tt>UserFunctions</tt> array defined in <tt>userfn.c</tt>.  The name of the C function is <tt>myFunction()</tt>, but earlier in our examples we invoked it by writing either <tt>call(&quot;myFunctionInC&quot;, ...)</tt> or <tt>$myFunctionInC(...)</tt>, so its Cicada name is <tt>myFunctionInC</tt>.  The altered <tt>UserFunctions</tt> array (which already contained two entries) now reads:
 
 <P> 
 
@@ -70,21 +70,9 @@
 
 <P>
 
-<P> All of the Cicada source files and <tt>.cicada</tt> files should be in the same directory together with <tt>Makefile</tt> and our <tt>myFunctionFile.c</tt> and <tt>myFunctionFile.h</tt> files.  Finally, from the command prompt we can navigate to that directory and type <tt>make cicada</tt>.  Assuming that both the <tt>make</tt> tool and a C/C++ compiler like <tt>gcc</tt> are installed, we will then have an application named <tt>cicada</tt> with <tt>myFunction</tt> as embedded as a command.  
+<P> All of the Cicada source files and <tt>.cicada</tt> files should be in the same directory together with <tt>Makefile</tt> and our <tt>myFunctionFile.c</tt> and <tt>myFunctionFile.h</tt> files.  Finally, from the command prompt we can navigate to that directory and type <tt>make cicada CC=gcc</tt>.  Assuming that both the <tt>make</tt> tool and a C/C++ compiler like <tt>gcc</tt> are installed, we will then have an application named <tt>cicada</tt> with <tt>myFunction</tt> as embedded as a command.  
 
-<P> As mentioned earlier, the other point of interest is the following line in userfn.h:
-
-<P> 
-
-<P><P><tt> 
-
-<br>&nbsp;&nbsp;&nbsp; #define CicadaMainProgram
-
-<br>&nbsp;&nbsp;&nbsp; </tt>
-
-<P>
-
-<P>  This line will causes Cicada&rsquo;s <tt>int main()</tt> function to compile, which is appropriate if Cicada is to be a stand-alone application.  On the other hand, if Cicada is to be embedded within a larger C/C++ application, then we need to comment this line out.  To run Cicada from within another application we need to include <tt>ccmain.h</tt> and make the following function call:
+<P> As mentioned earlier, we can run Cicada from within another application by including <tt>ccmain.h</tt> and making the following function call:
 
 <P> 
 
@@ -98,5 +86,6 @@
 
 <P>  where <tt>argc</tt> is either 0 if Cicada is to run the script <tt>start.cicada</tt> in the default directory, or 1 if the script to run is a file whose name and path are stored in a C string at <tt>argv[0]</tt>.  (Note that <tt>argv[0]</tt> is not the pathname that the command prompt traditionally passes to a C program.)
 
-<P> <a href="https://heltilda.github.io/cicada/help_253.html">Next: A minimal wrapper</a>
-<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_251.html">Prev: C function declaration</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_251.html">Prev: C function declaration</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_253.html">Next: A minimal wrapper</a>
+</div><br><br><P>Last update: July 8, 2018

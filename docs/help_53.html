@@ -152,7 +152,7 @@
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; int myFunction(int argc, char **argv)&nbsp;{&nbsp;...&nbsp;}
+<br>&nbsp;&nbsp;&nbsp; ccInt myFunction(ccInt argc, char **argv)&nbsp;{&nbsp;...&nbsp;}
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
@@ -196,11 +196,21 @@
 
 <P>
 
-<P>  (because <tt>runFunctionInC</tt> is the 3rd C function in <tt>UserFunctions[]</tt>).
+<P>  (because <tt>runFunctionInC</tt> is the 3rd C function in <tt>UserFunctions[]</tt>).  If we are using a string to specify the C function, then we can also use a shorthand syntax where that string follows a dollar-sign:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; result := $runFunctionInC(arg1, 14, &quot;another argument&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
 
 <P> The number of arguments is passed through <tt>argc</tt>, and the address of the array of pointers to the actual arguments is located at <tt>argv</tt>.  So <tt>argv[0]</tt> is the pointer to the first argument, and <tt>argv[0][0]</tt> is the first byte of the first argument; <tt>argv[1][0]</tt> is the pointer to the second argument; etc.
 
-<P> Only primitive variables can compose an argument to the C routine; a composite argument to <tt>call()</tt> generally contains, and is passed as, multiple primitive arguments, one for each primitive component.  In the example above the number of arguments is at least 3, depending on the type of <tt>arg1</tt>.  Suppose <tt>arg1</tt> was an array of <tt>{ bool, double }</tt> -- then the number of arguments is 4.  (The first argument is an array of <tt>bool</tt>s, the second is an array of <tt>double</tt>s, the third contains the integer 14, and the fourth is a string).  Strings are passed as linked lists (see the reference section), and <tt>call()</tt> defragments these lists before running the embedded C code.  Void arguments or members are skipped.
+<P> Only primitive variables can compose an argument to the C routine; a composite argument to <tt>call()</tt> generally contains, and is passed as, multiple primitive arguments, one for each primitive component.  In the example above the number of arguments is at least 3, depending on the type of <tt>arg1</tt>.  Suppose <tt>arg1</tt> was an array of <tt>{ bool, double }</tt> -- then the number of arguments is 4.  (The first argument is an array of <tt>bool</tt>s, the second is an array of <tt>double</tt>s, the third contains the integer 14, and the fourth is a string).  Strings are passed as linked lists (see the reference section).  Void arguments or members are skipped.
 
 <P> <tt>call()</tt> also adds one final argument at the end, in position <tt>argv[argc]</tt>, that can be used for type-checking.  This argument-info array is a list of elements of type <tt>arg_info</tt>, defined in <tt>userfn.h</tt>:
 
@@ -860,5 +870,6 @@
 <P> 
 
 <P> <ul>
-</ul><a href="https://heltilda.github.io/cicada/help_54.html">Next: Functions define in Cicada scripts</a>
-<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_521.html">Prev: Define operator flags</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_521.html">Prev: Define operator flags</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_54.html">Next: Functions define in Cicada scripts</a>
+</div><br><br><P>Last update: July 8, 2018

@@ -9,7 +9,7 @@ CLFLAGS = -O3
 OBJ = lnklst.o cmpile.o cicada.o intrpt.o bytecd.o ciclib.o userfn.o ccmain.o main.o
 
 cicada: $(OBJ)
-    $(CC) $(CLFLAGS) -o cicada $(OBJ) -lm
+	$(CC) $(CLFLAGS) -o cicada $(OBJ) -lm
 
 
 lnklst.o: lnklst.h lnklst.c

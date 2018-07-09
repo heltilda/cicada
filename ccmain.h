@@ -26,7 +26,7 @@
 #ifndef CCMain_h
 #define CCMain_h
 
- #define CicadaTest_ON    /* this line should be commented or nothing will work */
+// #define CicadaTest_ON    /* this line should be commented or nothing will work */
 
 
 #include "lnklst.h"

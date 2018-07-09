@@ -57,12 +57,12 @@ sort :: {
     ) /= passed  then (
         if trap(
             sortedTable =@ *
-            sortedTable[totalIndices] @:: tableToSort[*]
+            sortedTable @:: [totalIndices] tableToSort[1]
             sortedTable = tableToSort
         ) /= passed  then (
             if trap(
                 sortedTable =@ *
-                sortedTable[totalIndices][top(tableToSort[1])] @:: tableToSort[*][*]
+                sortedTable @:: [totalIndices][top(tableToSort[1])] tableToSort[1][1]
                 sortedTable = tableToSort
             ) /= passed  then (
                 printl("sort() error:  tableToSort differs from its original definition; could not be sorted")

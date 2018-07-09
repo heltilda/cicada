@@ -48,7 +48,7 @@
 
 <P>
 
-<P> Now we need to flesh out the &lsquo;set up data types&rsquo; comment in <tt>runNetwork()</tt>.  It turns out that Cicada provides a handy function for reading data from <tt>argv</tt> (an array of pointers to the variables and arrays passed to the C code, as you would expect).  Since the memory is shared between the two environments, our C function can also send data back to a script by writing to these variables.  Cicada also passes a list of array types and sizes at the end of <tt>argv[]</tt>.  Putting all together, we add the following lines of code at the beginning of <tt>runNetwork()</tt> (i.e. in place of the comment).
+<P> Now we need to flesh out the &lsquo;set up data types&rsquo; comment in <tt>runNetwork()</tt>.  It turns out that Cicada provides a handy function for reading data from <tt>argv</tt> (an array of pointers to the variables and arrays passed to the C code, as you would expect).  Since the memory is shared between the two environments, our C function can also send data back to a script by writing to these variables.  Cicada also passes a list of array types and sizes at the end of <tt>argv[]</tt>.  Putting all together, we add the following lines of code at the beginning of <tt>runNetwork()</tt> (i.e. in place of the first comment in <tt>NN.c</tt>).
 
 <P> 
 
@@ -96,7 +96,7 @@
 
 <P> We won&rsquo;t try to save the results of our calculations in the C code.  We can simply delete the &ldquo;save results&rdquo; comment line in NN.c.
 
-<P> The final step is to recompile Cicada with our source files.  First, make sure all source and header files, including NN.c and NN.h, are in the same directory as &lsquo;Makefile&rsquo;; then go to that directory from the command prompt and type &ldquo;<tt>make cicada</tt>&rdquo; (case sensitive).  (The &lsquo;make&rsquo; tool has to be installed for this to work.)  With luck, we&rsquo;ll end up with an executable.  To run it, type either &lsquo;<tt>cicada</tt>&rsquo; or &lsquo;<tt>./cicada</tt>&rsquo;, depending on the system.  We should see:
+<P> The final step is to recompile Cicada with our source files.  First, make sure all source and header files, including NN.c and NN.h, are in the same directory as &lsquo;Makefile&rsquo;; then go to that directory from the command prompt and type &ldquo;<tt>make cicada CC=gcc</tt>&rdquo; (case sensitive).  (The &lsquo;make&rsquo; tool has to be installed for this to work.)  With luck, we&rsquo;ll end up with an executable.  To run it, type either &lsquo;<tt>cicada</tt>&rsquo; or &lsquo;<tt>./cicada</tt>&rsquo;, depending on the system.  We should see:
 
 <P> 
 
@@ -114,7 +114,7 @@
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; call(&quot;RunNetwork&quot;, ...)
+<br>&nbsp;&nbsp;&nbsp; $RunNetwork(...)
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
@@ -125,5 +125,6 @@
 <P> Our custom version of Cicada has fast, native neural network functionality, but it is hidden behind a clunky syntax.  The next task is to write a Cicada class that bundles a neural network&rsquo;s data with user-friendly functions that initialize, run and train that network.
 
 <P> <ul>
-</ul><a href="https://heltilda.github.io/cicada/help_23.html">Next: Writing and debugging a Cicada wrapper</a>
-<br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_21.html">Prev: C implementation</a> &nbsp;&nbsp;</div><br><br><P>Last update: November 12, 2017
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_21.html">Prev: C implementation</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_23.html">Next: Writing and debugging a Cicada wrapper</a>
+</div><br><br><P>Last update: July 8, 2018
