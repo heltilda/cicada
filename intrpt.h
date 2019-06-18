@@ -176,7 +176,7 @@ typedef struct {
 typedef struct {
     window *memberWindow;
     
-    ccInt memberID;         // the name; 0 if cannot be found by step_to_memberID (i.e. no name in Cicada code)
+    ccInt memberID;         // the name; 0 if cannot be found by step_to_member_ID (i.e. no name in Cicada code)
     ccInt indices;          // 1 unless it's an array member
     
     ccInt type;             // the requirements for this member, which may be met and exceeded in the variable

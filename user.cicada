@@ -167,14 +167,14 @@ new :: {
 
 doInAllDirectories :: {
     
-    fileName :: fileString :: fullPathName :: myname :: string
+    fileName :: fileString :: fullPathName :: myname :: myusage :: string
     counter :: errCode :: int
     params :: { printError :: bool }
     
     code
     
     if trap( myargs = args ) /= 0  then (
-        print("usage:  ", myname, "(file_name, file_string)\n")
+        printl("usage:  ", myusage)
         return          )
     
     params.printError = true
@@ -193,11 +193,15 @@ doInAllDirectories :: {
     return myrtrn()
 }
 
-Load :: doInAllDirectories : {  myname = "Load", myargs :: { fileName },
+Load :: doInAllDirectories : {
+        myname = "Load", myusage = "file_string = Load(file_name)",
+        myargs :: { fileName },
         myfunction :: { ; args[2] = load(args[1]) },
         myrtrn :: { ; return new(fileString) }          }
 
-Save :: doInAllDirectories : {  myname = "Save", myargs :: { fileName, fileString },
+Save :: doInAllDirectories : {
+        myname = "Save", myusage = "Save(file_name, file_string)",
+        myargs :: { fileName, fileString },
         myfunction :: { ; save(args[1], args[2]) },
         myrtrn :: { ; return * }        }
 

@@ -36,22 +36,22 @@
 // The bytecode instruction words
 // f denotes floating point (default double-precision) arithmetic; i denotes integer
 
-#define null_cmd 0              /*  do nothing; marks ends of {}  */
+#define end_of_script 0         /*  marks ends of {}  */
 
 #define jump_always 1           /*  relative addressing  */
 #define jump_if_true 2          /*  jump if test is false  */
 #define jump_if_false 3         /*  jump if test is true  */
 
 #define code_marker 4           /*  delineates coding blocks  */
-#define func_return 5           /*  return from the function  */
+#define function_return 5       /*  return from the function  */
 #define user_function 6         /*  (()) call the code of the current variable  */
 #define built_in_function 7     /*  call a built-in function (besides the ones listed here)  */
 
-#define def_general 8           /*  set the code (variable & member)  */
+#define define_equate 8         /*  set the code (variable & member)  */
 #define forced_equate 9         /*  (=!) copy data; only restriction is that data sizes must be the same  */
 
 #define search_member 10        /*  search backwards for var with specified ID  */
-#define step_to_memberID 11     /*  (.) step to a var with specified ID  */
+#define step_to_member_ID 11     /*  (.) step to a var with specified ID  */
 #define step_to_index 12        /*  ([]) step to Nth var  */
 #define step_to_indices 13      /*  return a range of variables  */
 #define step_to_all 14          /*  [*]  */
@@ -60,21 +60,21 @@
 #define insert_indices 17       /*  same as step_to_indices, but create new members/array indices (plural)  */
 #define remove_cmd 18           /*  deletes members or array indices  */
 
-#define if_eq 19                /*  (==)  */
-#define if_ne 20                /*  (/=)  */
-#define if_gt 21                /*  (>)  */
-#define if_ge 22                /*  (>=)  */
-#define if_lt 23                /*  (<)  */
-#define if_le 24                /*  (<=)  */
-#define if_eq_at 25             /*  (== @)  */
-#define if_ne_at 26             /*  (/= @)  */
+#define if_equal 19             /*  (==)  */
+#define if_not_equal 20         /*  (/=)  */
+#define if_greater 21           /*  (>)  */
+#define if_greater_or_equal 22  /*  (>=)  */
+#define if_less 23              /*  (<)  */
+#define if_less_or_equal 24     /*  (<=)  */
+#define if_at 25                /*  (== @)  */
+#define if_not_at 26            /*  (/= @)  */
 
-#define addf 27                 /*  (+)  -- P.S.  all numeric commands must be in a row (for _def_general())  */
-#define subf 28                 /*  (-)  */
-#define mulf 29                 /*  (*)  */
-#define divf 30                 /*  (/)  */
-#define powerf 31               /*  (^)  */
-#define modi 32                 /*  (mod) */
+#define add_num 27              /*  (+)  -- P.S.  all numeric commands must be in a row (for _def_general())  */
+#define subtract_num 28         /*  (-)  */
+#define multiply_num 29         /*  (*)  */
+#define divide_num 30           /*  (/)  */
+#define raise_to_power 31       /*  (^)  */
+#define mod_int 32              /*  (mod) */
 
 #define if_not 33               /*  (not)  */
 #define if_and 34               /*  (and)  */
@@ -82,22 +82,22 @@
 #define if_xor 36               /*  (xor)  */
 
 #define code_number 37          /*  (#) return N'th code block of left arg, where N is given by right arg  */
-#define sub_code 38             /*  (<<) match var (left arg) with code (right arg)  */
+#define substitute_code 38      /*  (<<) match var (left arg) with code (right arg)  */
 #define append_code 39          /*  (:) match left var with right arg code  */
 
-#define get_args 40             /*  call the arguments from the passing routine  */
-#define this_var 41             /*  return the variable that contains the code being executed  */
-#define that_var 42             /*  return the variable to the left of an equate sign  */
-#define parent_var 43           /*  return the next variable up the search path  */
-#define top_var 44              /*  return the top of the variable currently being stepped though  */
-#define no_var 45               /*  returns nothing -- no variable, type, or data  */
+#define args_variable 40        /*  call the arguments from the passing routine  */
+#define this_variable 41        /*  return the variable that contains the code being executed  */
+#define that_variable 42        /*  return the variable to the left of an equate sign  */
+#define parent_variable 43      /*  return the next variable up the search path  */
+#define top_variable 44         /*  return the top of the variable currently being stepped though  */
+#define no_variable 45          /*  returns nothing -- no variable, type, or data  */
 
-#define array_cmd 46            /*  as in myvar :: [dim] vartype  */
-#define bool_cmd 47             /*  bool type  */
-#define char_cmd 48             /*  char type  */
-#define int_cmd 49              /*  int type  */
-#define double_cmd 50           /*  double type  */
-#define string_cmd 51           /*  string type  */
+#define type_array 46           /*  as in myvar :: [dim] vartype  */
+#define type_bool 47            /*  bool type  */
+#define type_char 48            /*  char type  */
+#define type_int 49             /*  int type  */
+#define type_float 50           /*  double type  */
+#define type_string 51          /*  string type  */
 
 #define constant_bool 52        /*  a constant integer entered in the code */
 #define constant_char 53        /*  a constant integer entered in the code */
@@ -123,7 +123,7 @@
 #define no_arg 5
 
 
-// flags used after the def_general command
+// flags used after the define_equate command
 
 #define unjammable 7
 #define hidden_member 6
@@ -149,5 +149,30 @@ extern ccInt cicadaNumPrecedenceLevels;
 #ifdef __cplusplus
 }
 #endif
+
+#define bc_full(arg) #arg
+#define bc(arg) " " bc_full(arg) " "
+#define bc_define(arg) " 8 " bc_full(arg) " "
+#define bc_constant_bool(arg) " 52 " #arg " "
+#define bc_constant_int(arg) " 54 " #arg " "
+#define bc_jump_always(arg) " 1 j" #arg " "
+#define bc_jump_if_true(arg) " 2 j" #arg " "
+#define bc_jump_if_false(arg) " 3 j" #arg " "
+#define bcArg(arg) " a" #arg " "
+#define bcPosition(arg) " p" #arg " "
+
+#define defFlags 46
+#define mdfFlags 6
+#define vdfFlags 44
+#define equFlags 1
+#define deqFlags 47
+#define eqaFlags 16
+#define dqaFlags 22
+#define defxFlags 172
+#define deqxFlags 173
+#define dqaxFlags 148
+#define defxxFlags 236
+#define deqxxFlags 237
+#define defcxxFlags 204
 
 #endif

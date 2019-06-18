@@ -88,7 +88,7 @@ typedef struct {
     const char *cmdString;      // the written character sequence of the operator, including arguments
     ccInt precedence;           // the order-of-operations precedence level of the operator
     const char *rtrnTypeString; // contains the allowed return types of the operator
-    const char *translation; // the bytecode/script translation of the operator
+    const char *translation;    // the bytecode/script translation of the operator
 } commandTokenType;
 
 

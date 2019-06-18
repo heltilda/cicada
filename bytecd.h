@@ -33,7 +33,7 @@
 
 
 
-// object_params describes what kind of object we stepped across; set by various commands: int_cmd, search_var, etc.
+// object_params describes what kind of object we stepped across; set by various commands: type_int, search_var, etc.
 
 typedef struct {
     ccInt type;                   // ccInt, string, composite, etc.
