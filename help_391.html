@@ -1,0 +1,129 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Classes</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_39.html">Classes and Inheritance</a>
+
+<H1> <CENTER> Classes </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> A Cicada class, or class instance, is nothing more than a composite variable having both members to variables and members to methods (functions).
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myClassObject :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;data :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;moreData :: string
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;init :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ data, moreData } = { 1, &quot;blank&quot; }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;otherMethod :: { ... }
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  In a sense, all we have done is point out that functions such as <tt>init()</tt> can be defined inside of composite variables.
+
+<P> To make our class object more C-like we can give it a proper constructor.  All we need to do is take the constructor code from the <tt>init()</tt> method and put it somewhere after the class member definitions.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myClassObject :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;data :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;moreData :: string
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;{ data, moreData } = { 1, &quot;blank&quot; }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;otherMethod :: { ... }
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Now both <tt>myClassObject</tt> and each class instance such as <tt>obj1 :: myClassObject</tt> begins initialized to <tt>{ 1, &quot;blank&quot; }</tt>.  We can even bundle the constructor code together with the member definitions:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myClassObject :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;data := 1
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;moreData := &quot;blank&quot;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;otherMethod :: { ... }
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> We call these bits of code constructors because they run when the object is created.  C++ constructors also run when an object is created, but they can also be rerun by calling a special function.  How can a Cicada constructor be rerun?  One way is simply to redefine the object:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myClassObject :: myClassObject
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  but there is a better way.  Just as in C++, we can also run the constructor as a function.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myClassObject#0()&nbsp;&nbsp;&nbsp;| code #0 is the constructor
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  It turns out that this same trick can also reinitialize members of functions, by rerunning everything up to the <tt>code</tt> marker.  Remember that code number 1, the default function code, begins <i>after</i> the first <tt>code</tt> marker or semicolon; therefore the constructor code, which is code number 0, comprises everything <i>leading up to</i> that first <tt>code</tt> marker.  In the case of a class object, there is no <tt>code</tt> marker, so the constructor is everything inside of the curly braces.
+
+<P> There is no destructor in Cicada.  In fact there isn&rsquo;t even a direct way to delete an object -- we can only <tt>remove</tt> members leading to an object.  Only when Cicada discovers an object to be completely cut off from the user will dispose of the object and free its memory.  (It&rsquo;s not particularly good at finding these objects though -- to help it out use the <tt>springCleaning()</tt> function.)
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_39.html">Prev: Classes and Inheritance</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_392.html">Next: Inheritance</a>
+</div><br><br><P>Last update: June 18, 2019

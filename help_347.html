@@ -1,0 +1,95 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: The void</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_34.html">Variables</a>
+
+<H1> <CENTER> The void </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> There is one last way to define a variable, and that is not to define it as anything at all.  There are two ways of writing this:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; var1 :: nothing
+
+<br>&nbsp;&nbsp;&nbsp; var2 :: *
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <tt>nothing</tt> and <tt>*</tt> are synonyms for the void operator.  If <tt>var1</tt> is defined as void then we will get a void-member error if we try to access its data.  In fact, one of the few things we can do with a void member is to test whether it is void or not, using the reference-comparison operator <tt>==@</tt>.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; if var1 == @nothing&nbsp;then &amp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;out of order..\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> One way to make use of a void member is to redefine it.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; var1 :: nothing
+
+<br>&nbsp;&nbsp;&nbsp; var1 :: [1000] string
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  We could have redefined <tt>var1</tt> as anything:  a primitive or composite variable, function, etc.  But once it&rsquo;s been redefined once <tt>var1</tt> cannot be redefined again except to the same type or a derived type (see inheritance).
+
+<P> What is the use of defining void-typed variables (aside from the fact that they don&rsquo;t take up space until we redefine them)?  The main reason is that 1) members defined this way have no type (unless you redefine them), and 2) members without a type can alias any other member, because in a sense all data types are derived from the void.  This works as long as we don&rsquo;t redefine the alias (i.e. we have to just use the <tt>=@</tt> operator, not <tt>:=@</tt>).
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; any_var :: *
+
+<br>&nbsp;&nbsp;&nbsp; x :: int
+
+<br>&nbsp;&nbsp;&nbsp; y := &quot;some string&quot;
+
+<br>&nbsp;&nbsp;&nbsp; z :: { double, int }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @x
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @y
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @nothing
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @z
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> The fact that the void is the universal parent type also explains why void members can be redefined.  Cicada always permits an existing member&rsquo;s type to be specialized---restricted to a subtype of its original type---but never changed to an unrelated type.  And we cannot un-specialize:  an <tt>int</tt> member cannot be turned it back into <tt>nothing</tt>, except by removing and reallocating the member.
+
+<P> There are actually two uses of the word &lsquo;void&rsquo; in this document that are important to keep logically separate.  A void member is one that has no storage space.  But a void-<i>typed</i> member is one with essentially no type restriction on what it can point to.  A definition like <tt>a :: *</tt> does <i>two</i> things:  it defines a member &lsquo;<tt>a</tt>&rsquo; having no type, and it therefore neglects to give &lsquo;<tt>a</tt>&rsquo; any storage space.
+
+<P> Cicada also distinguishes between member types and variable types.  For example, after <tt>any_var</tt> was aliased to <tt>x</tt>, did <tt>any_var</tt> have a null type or was it an <tt>int</tt>?  Well, that depends on whether you are asking about the member&rsquo;s type (which was void), or the type of the variable it points to (an integer).  Both members and variables have types, and in general (as in the example above) they may be different.  A member&rsquo;s type specification determines which variables it is allowed to point to.  The rule is that a member can only target variables with the same type, or having a sub-type derived from its own.  The only exception is that members of any type can be aliased to &lsquo;<tt>*</tt>&rsquo;, but the void hardly qualifies as a normal variable.<P>
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_346.html">Prev: Aliases</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_35.html">Next: Other define and equate operators</a>
+</div><br><br><P>Last update: June 18, 2019

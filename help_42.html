@@ -1,0 +1,147 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Cicada bytecode</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Customizing the Cicada language</a>
+
+<H1> <CENTER> Cicada bytecode </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Occasionally, we might want to extend the Cicada language in a way that can&rsquo;t be scripted, in which case we have to define our new command directly in Cicada&rsquo;s native &lsquo;bytecode&rsquo;, using <tt>cicada.h</tt> as a dictionary to the command words.  Scripts run much faster from bytecode than they ever could by reading their original text, but it should be emphasized that Cicada&rsquo;s bytecode is <i>different from</i> (and much slower than) raw machine code.  One significant difference is that Cicada&rsquo;s bytecode has a recursive structure, composed of expressions and sub-expressions, just like Cicada script itself.  In fact, there is pretty much a one-to-one correspondence between the symbols (operators) we write in Cicada and bytecode commands, except that the bytecode commands are in a different order.
+
+<P> For example, when we type the following command into the command prompt:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; area = 3.14 * R^2
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Cicada&rsquo;s compiler produces bytecode output that looks roughly like:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; equate [ &lt;area&gt; , product_of ( 3.14, raise_to_power ( &lt;R&gt; , 2 ) ) ]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  where we&rsquo;ve bracketed the arguments of each bytecode operator.  These are just the arguments of each operator in the script, but the compiler has made two changes.  1) Each operator&rsquo;s arguments <i>follow</i> the actual operator command:  for example the equate operator is followed by two immediate arguments which correspond to the expressions to the left and right of the equate symbol in the script.  2) The operators are reordered, in ascending precedence when parentheses don&rsquo;t force otherwise.  The equate is done <i>last</i>, so it becomes the <i>outermost</i> function in the bytecode.  The trick is to think of every operator as a function in bytecode, and write the function command first followed by its arguments.
+
+<P> There&rsquo;s actually a way we can see bytecode from the command prompt:  by using the slightly anachronistic <tt>disassemble()</tt> function (dating from before error messages).
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; bytecodeStr := compile(&quot;area = 3.14 * R^2&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; disassemble(bytecodeStr)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; equ ( sm $area , mul ( 3.14 , pow ( sm $R , 2 ) ) )
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Using this tool we find out that there&rsquo;s a &lsquo;search-for-member&rsquo; (<tt>sm</tt>) operator before each member identifier.  The member identifier is simply an integer ID number:  positive ID numbers for user-defined members (counting upwards from 1), and negative ID numbers (counting downwards from -1) for so-called hidden members which the compiler adds to the bytecode.  The &lsquo;disassembly&rsquo; doesn&rsquo;t show it but there&rsquo;s also a &lsquo;constant-floating-point&rsquo; operator just before the 3.14 constant.  The raw bytecode will look something like:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; bytecd :: [] int
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; bytecd[*] =! compile(&quot;area = 3.14 * R^2&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; bytecd
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; { 8, 1, 10, 309, 29, 55, 1374389535, 1074339512, 31, 10, 310, 54, 2, 0 }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  where each bytecode command is now just a number which we can look up in <tt>cicada.h</tt>.  The two complicated numbers are the bytes of 3.14 broken into integers.  The actual output varies based on machine and also on what has been run beforehand (which determines which member ID numbers are assigned).   Every script ends with a null word, telling the interpreter to either fall back to the enclosing function or else exit the program.
+
+<P> 
+
+<br><P><b>Pathnames</b></b>
+<P> 
+
+<P> Cicada pathnames consist of a sequence of steps starting from some variable.  For example the path 
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myVar.array[5].x
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  takes 3 steps:  to <tt>array</tt>, to the fifth element, and finally to <tt>x</tt>.  In bytecode the final step is the <i>outermost</i> operator, so the entire path looks like
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; step_to_member( step_to_index( step_to_member( &quot;array&quot;, search_member &quot;myVar&quot; ), 5 ), &quot;x&quot; )
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  (For speed reasons the &lsquo;step-to-member&rsquo; operator takes the member-to-step-to as its first argument, which is backwards from the other step operators.)  Notice that step-to-member continues a path, whereas search-member <i>begins</i> a path and so takes one fewer arguments.
+
+<P> 
+
+<br><P><b>Inlined constants</b></b>
+<P>
+
+<P> Each of the five types of inlined constants---Booleans, characters, integers, floating-point numbers and strings---has a unique bytecode operator.  The raw data of the constant follows in subsequent bytecode words (integers).  The data for large constants -- floating-point numbers and many strings -- takes up several bytecode words.
+
+<P> String constants in bytecode use the &lsquo;Pascal&rsquo; string convention rather than the C format:  the constant-string operator is the first bytecode word, followed by the <i>character-length</i> of the string (also 1 bytecode word), followed by the raw string data (<i>N</i>/<tt>size(int)</tt> words rounded up).  There is no terminating character.
+
+<P> 
+
+<br><P><b>Flow control commands</b></b>
+<P>
+
+<P> The four flow-control commands in Cicada---<tt>if</tt>, <tt>for</tt>, <tt>while</tt> and <tt>do</tt>---are all higher-order commands that the compiler expands into expressions involving &lsquo;goto&rsquo;s.  Cicada sports three &lsquo;goto&rsquo;s:  an unconditional jump, and jump-if-true and and jump-if-false operators.  Each goto sequence begins with its bytecode command word followed by a jump offset (1 word).  The jump offset is the number of bytecode words to jump ahead <i>from the jump offset</i>, which is negative if we want to jump backwards.  The jump must be take us to the <i>start of a command</i> -- otherwise <tt>transform()</tt> throws an error.  In the case of the two conditional gotos, there is a final bytecode expression following the jump offset which is the condition on which to jump.
+
+<P> The most complicated flow-control command is the <tt>for</tt> statement, which basically consists of a <tt>while</tt> along with an assignment (to initialize the counter) and a counter-increment command at the end of the loop.  Notice that if we define a variable inside the <tt>for</tt> loop, as in <tt>for (j::int) in &lt;1, 5&gt;</tt>), then Cicada will plunk the whole expression <tt>j::int</tt> into both the initialization and the increment command, which can slow down short loops considerably.
+
+<P> 
+
+<P> <ul>
+<li><a href="https://heltilda.github.io/cicada/help_421.html"><tt>define</tt> flags</a>
+<li><a href="https://heltilda.github.io/cicada/help_422.html">Adapters</a>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_41.html">Prev: <tt>cicada.c</tt></a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_421.html">Next: <tt>define</tt> flags</a>
+</div><br><br><P>Last update: June 18, 2019

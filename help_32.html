@@ -1,0 +1,204 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Basic Cicada syntax</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a>
+
+<H1> <CENTER> Basic Cicada syntax </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Numbers, characters and string constants have pretty much the same syntax in Cicada as they do in C:  characters are flanked by single quotes (<tt>'C'</tt>), strings by double-quotes (<tt>&quot;my_string&quot;</tt>), and numbers are read as either integer or floating-point depending on how they are written.  Likewise, numeric expressions look the same between C and Cicada, with the exception that Cicada provides an exponentiation operator &lsquo;<tt>^</tt>&rsquo;:  for example <tt>2^3</tt> gives 8.  In Cicada the standard six trig functions along with <tt>log()</tt>, <tt>floor()</tt> and <tt>ceil()</tt> can be used without including a math library.
+
+<P> The usual way to define variables in Cicada is to use the &lsquo;<tt>::</tt>&rsquo; operator, as in:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; x :: int
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Here <tt>x</tt> was the variable and <tt>int</tt> was the type.  The other possible allowed types are <tt>double</tt>, <tt>char</tt>, <tt>string</tt> and <tt>bool</tt>.  All Cicada variables <i>must</i> be defined before they can be used.
+
+<P> In order to define an array, add the size of each dimension in square brackets just before the type definition.  For example,
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myTable :: [5] [7] double
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  defines a two-dimensional (5x7) array of floating-point numbers.  The syntax for accessing an array element again uses square brackets, in the same way as in C:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; print(myTable[2][3])
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The only difference is that in Cicada array indexing begins at 1.
+
+<P> It&rsquo;s usually convenient to define several variables or arrays of the same type together in one long command.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; x :: y :: z :: int
+
+<br>&nbsp;&nbsp;&nbsp; table1 :: table2 :: [5] double
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> This example script shows basic usage of variables and arrays.  It&rsquo;s easiest to type this into a file: say, &rdquo;pythagoras.cicada&rdquo;..
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; | program to find the length of the hypotenuse of a right triangle
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; sides :: [2] double
+
+<br>&nbsp;&nbsp;&nbsp; hypotenuse :: double
+
+<br>&nbsp;&nbsp;&nbsp; response :: string
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; print(&quot;Side 1:&nbsp;&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; response = input()
+
+<br>&nbsp;&nbsp;&nbsp; read_string(response, sides[1])
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; print(&quot;Side 2:&nbsp;&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; response = input()
+
+<br>&nbsp;&nbsp;&nbsp; read_string(response, sides[2])
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; hypotenuse = (sides[1]^2 + sides[2]^2)^0.5
+
+<br>&nbsp;&nbsp;&nbsp; print(&quot;The hypotenuse has length &quot;, hypotenuse, &quot;.\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  (The first line in this example is a comment, because of the vertical bar <tt>|</tt>.  <tt>print()</tt>, <tt>input()</tt> and <tt>read_string()</tt> are three of Cicada&rsquo;s 30-odd built-in functions.)  To run our script from Cicada&rsquo;s command prompt we type
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; run(&quot;pythagoras&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> If we want to define our own functions we again use the <tt>::</tt> operator, but with curly braces containing the function code in place of a variable type.  A standard Cicada function consists of three parts:  1) variable definitions; 2) a <tt>code</tt> command; 3) the executable code of the function.  Unlike C functions, a Cicada function doesn&rsquo;t predefine either its arguments or its return value.  Its arguments are accessed through an <tt>args</tt> variable, and they can be overwritten by the function.  The <tt>return</tt> command works the same way as in C.  Finally, the basic syntax for <i>calling</i> a function is the same as in C, although in Cicada fancier kinds of function calls are also possible.
+
+<P> Here is a more elaborate version of our previous example that uses functions, as well as <tt>if</tt> statements and <tt>for</tt> loops whose syntax is a bit different from C.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; | program to find the length of the hypotenuse of a right triangle
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; GetSide :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;response :: string
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;side_length :: double
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;side_length = 0
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;Side &quot;, args[1], &quot;:&nbsp;&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;response = input()
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;read_string(response, side_length)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if side_length &gt; 0&nbsp;then (
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return side_length&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;else&nbsp;(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(&quot;Side length must be positive\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; sides :: [2] double
+
+<br>&nbsp;&nbsp;&nbsp; hypotenuse :: double
+
+<br>&nbsp;&nbsp;&nbsp; counter :: int
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 2&gt;&nbsp;(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;sides[counter] = GetSide(counter)&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; hypotenuse = (sides[1]^2 + sides[2]^2)^0.5
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; print(&quot;The hypotenuse has length &quot;, hypotenuse, &quot;.\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Cicada also has <tt>while</tt> and <tt>loop ... until</tt> loops.  Notice that although the equality test &lsquo;<tt>==</tt>&rsquo; is the same as in C, the not-equal test uses the symbol &lsquo;<tt>/=</tt>&rsquo; which is different from C.  There is no &lsquo;goto&rsquo; statement.
+
+<P> To exit Cicada type &ldquo;<tt>exit</tt>&rdquo; at the command prompt.  If there is no command prompt then Cicada is probably stuck (e.g. in an infinite loop), in which case we need to hit Ctrl-C (UNIX/Mac) or Ctrl-Alt-Delete (Windows).
+
+<P> 
+
+<P> <ul>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_31.html">Prev: Building and running Cicada</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_33.html">Next: Expressions</a>
+</div><br><br><P>Last update: June 18, 2019

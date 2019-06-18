@@ -1,0 +1,237 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Function arguments</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_38.html">Functions</a>
+
+<H1> <CENTER> Function arguments </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+ 
+
+<P> Notice that the definition of a Cicada function doesn&rsquo;t specify any argument list.  That means functions in Cicada are automatically able to handle different argument types, variable numbers of arguments, etc.  Here is a simple function that can take any arguments whatsoever, as long as there are at least 2 of them.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; arg2 :: {&nbsp;code, return args[2]&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; arg2(5, 3+9, 'C')&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| return a number
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 12
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; arg2(pi, { a := 3, b := 4; return a*b })&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| return a function! 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; { 3, 4 }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Cicada functions also don&rsquo;t specify return types, and as our last example shows a single function can return different kinds of values even from the same <tt>return</tt> statement.  And of course different <tt>return</tt> statements within the same function can return different types of objects.<P>
+
+<P> What happens if we stick a <tt>code</tt> marker (or semicolon) <i>inside the function&rsquo;s argument list</i>?  When we try this experiment, we&rsquo;ll find out is that anything after the function arguments&rsquo; <tt>code</tt> marker isn&rsquo;t created, or doesn&rsquo;t run, until the function <i>runs its arguments</i>.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; PrintArgs :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;Before running args:&nbsp;&quot;, args, &quot;\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;args()
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;Afterwards:&nbsp;&quot;, args, &quot;\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  If we call
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; PrintArgs( 0.3, &quot; 4&quot;, code, &quot; word &quot;, 10 )
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then the function prints
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; Before running args:&nbsp;0.3 4
+
+<br>&nbsp;&nbsp;&nbsp; Afterwards:&nbsp;0.3 4 word 10
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  We can even put coding statements in the function arguments.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; PrintArgs( &quot; *** announcement *** &quot;, code, print(&quot;I am an argument list.\n&quot;) )
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  which causes the output
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; Before running args:&nbsp;*** announcement *** 
+
+<br>&nbsp;&nbsp;&nbsp; I am an argument list.
+
+<br>&nbsp;&nbsp;&nbsp; Afterwards: *** announcement *** 
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  In fact an argument list can run any code whatsoever.  A few tricky points:  if we define variables, etc. inside of an argument list then they will only exist inside that function&rsquo;s <tt>args</tt> variable; <tt>this</tt> inside the argument list refers to <tt>args</tt>, not the variable space where the function was called (that will be <tt>parent</tt>); and <tt>return</tt> inside of <tt>args</tt> only stops execution of <tt>args</tt>&rsquo;s code.
+
+<P> If we can <i>run</i> the <tt>args</tt> list, surely we can also pass it parameters?  Write a new function to test this:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; doArgs :: {&nbsp;code, args(9, &quot;lives&quot;), return args&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; doArgs( args, code, print(top(args), &quot; arguments were passed\n&quot;) )
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 2 arguments were passed
+
+<br>&nbsp;&nbsp;&nbsp; { {&nbsp;} }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This example is complicated, particularly the function call (2nd command entered at the prompt).  On this line, within the parentheses, &lsquo;<tt>args</tt>&rsquo; refers to two different things depending on which side of the <tt>code</tt> marker it falls on.  Before the <tt>code</tt> marker, <tt>args</tt> holds the same value it had when the function was called, except wrapped in a second layer of curly braces.  But <i>after</i> the <tt>code</tt> marker, &lsquo;<tt>args</tt>&rsquo; was the parameter list that ran <tt>doArgs</tt> passed to its arguments, containing the number 9 and the string <tt>&quot;lives&quot;</tt>.  Each function call temporarily replaces the existing <tt>args</tt> variable with its own argument list; the old <tt>args</tt> comes back when each function exits.
+
+<P> Here&rsquo;s another example showing more explicitly how <tt>args</tt> changes across the <tt>code</tt> marker.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;g( print(args, &quot; --&gt; &quot;), code, print(args) )
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; g :: {&nbsp;code, args(&quot;B&quot;)&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  That is, <tt>f()</tt> runs <tt>g()</tt>, which in turn runs its own arguments.  Now run <tt>f()</tt>.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; f(&quot;A&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; A --&gt; B
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Focus on the line in which function <tt>f()</tt> calls function <tt>g()</tt>.  The part of <tt>args</tt> <i>before</i> the <tt>code</tt> marker is built before <tt>g()</tt> is run, so here <tt>args</tt> still has its old value &lsquo;<tt>A</tt>&rsquo;.  The part of <tt>args</tt> <i>after</i> the <tt>code</tt> marker is called by <tt>g()</tt>, so here <tt>args</tt> is &lsquo;<tt>B</tt>&rsquo;.
+
+<P> Finally, function arguments can contain <tt>return</tt> statements just like normal functions.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; doTwice :: {&nbsp;num :: double, code, num = args[1], return args(args(num))&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; doTwice(3, code, return new(args[1]^2))&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| calculate (3^2)^2
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 81
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> To summarize, Cicada&rsquo;s function arguments are themselves functions.  If the syntax for function calls were not so standardized the author would have chosen curly braces, so imagine:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; ***&nbsp;doTwice{ 3, code, return new(args[1]^2) }&nbsp;***
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This way of writing a function makes it clear how the arguments are just some function object that&rsquo;s ordinarily invisible, but appears as <tt>args</tt> when we run <tt>doTwice()</tt>.  This syntax is not legal by the way --- but if you want to allow it, just duplicate the line defining function calls in <tt>cicada.c</tt> and change the parentheses to curly braces.
+
+<P>  
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_381.html">Prev: Defining functions (properly)</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_383.html">Next: Code substitution</a>
+</div><br><br><P>Last update: June 18, 2019

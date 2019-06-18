@@ -1,0 +1,107 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Resizing arrays (and composite variables)</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_34.html">Variables</a>
+
+<H1> <CENTER> Resizing arrays (and composite variables) </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+ 
+
+<P> All arrays in Cicada that are not &lsquo;jammed&rsquo; may be resized, and there are a number of ways to accomplish this.  The most straightforward method is to use the modified index operator <tt>[^...]</tt> which sets the size of a single dimension of the array, as in
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; coordinates[^9]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The effect can be either to increase or reduce the size of the array.
+
+<P> Another way to resize an array is to use the all-indices operator <tt>[]</tt> or <tt>*</tt> for the <i>last dimension</i> of an array that is being copied to.  The last dimension of the array will be resized only if necessary to prevent a mismatched-indices error.  So
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; numDays[*] = coordinates[*].x
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  should always work, whereas
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; numDays[&lt;1, 5&gt;] = coordinates[*].x
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  will only work if <tt>coordinates</tt> has 5 elements.
+
+<P> Finally, we can insert an array index somewhere in the middle of an array using the <tt>[+...]</tt> operator, or the <tt>[+&lt;..., ...&gt;]</tt> operator for multiple indices.  We can also delete array indices using either the <tt>[-...]</tt>/<tt>[-&lt;..., ...&gt;]</tt> operators or the <tt>remove</tt> command.  Here are some examples:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myArray[+5]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| insert a new element before index 5
+
+<br>&nbsp;&nbsp;&nbsp; myArray[+&lt;3, 6&gt;]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| insert 4 new elements before index 3
+
+<br>&nbsp;&nbsp;&nbsp; myArray[+&lt;top+1, top+9&gt;] = 17&nbsp;&nbsp;&nbsp;| add 9 new elements at the end, and set them all to 17
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; myArray[-13]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| delete array element #13
+
+<br>&nbsp;&nbsp;&nbsp; myArray[-&lt;2, 4&gt;]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| delete array elements 2, 3 and 4
+
+<br>&nbsp;&nbsp;&nbsp; remove myArray[&lt;2, 4&gt;]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| same -- nix elements 2, 3 and 4
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  New array elements are always initialized in the same way as new arrays are:  for example if it is a numeric array the new elements are set to zero.
+
+<P> All of the operators for accessing, adding and deleting array elements also work on composite variables.  The difference is that, with composite variables, these operators access, add or delete members instead of array elements.  For example, if we define
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; threeNums :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;a := 2
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;b := 5
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;c := pi
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then <tt>threeNums.b</tt> is the same as <tt>threeNums[2]</tt>.  If we want to delete the third member we can type either <tt>remove threeNums.c</tt> or <tt>remove threeNums[3]</tt>.  And we can add two members <i>between</i> <tt>a</tt> and <tt>b</tt> by typing <tt>threeNums[+&lt;2, 3&gt;]</tt>.  Those two new members will have no name, and initially will also have no data (see the forthcoming section on the void).  If we enter &lsquo;<tt>threeNums</tt>&rsquo; after all these operations Cicada will print <tt>{ 2, *, *, 5 }</tt>, showing that <tt>threeNums.b</tt> is now <tt>threeNums[4]</tt>.  In contrast, the old way of adding an extra member, say by typing <tt>threeNums.d :: int</tt>, sticks the new member <tt>d</tt> at the end of <tt>threeNums</tt>.
+
+<P> We can never reference multiple elements of a composite variable except when removing them.  So <tt>threeNums[&lt;2, 3&gt;]</tt> is not allowed.  Again, the technical reason is the storage of these two members&rsquo; data is not contiguous, because each member is stored separately,.
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_343.html">Prev: Array variables</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_345.html">Next: This and that</a>
+</div><br><br><P>Last update: June 18, 2019

@@ -1,0 +1,282 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: The Anagrambler</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a>
+
+<H1> <CENTER> The Anagrambler </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> After running a few more tests we eventually convince ourselves that <tt>NN.cicada</tt> is working, so we open a new file in our Cicada directory and start thinking about how to put our networks to use.
+
+<P> The particular learning algorithm we are using is well suited to the task of pattern completion.  We will demonstrate by building a network to unscramble anagrams.  The inputs to this network will be the number of times each of the 26 letters appears in a word, encoded in the activity levels of 26 input neurons.  The outputs will be the ordering of those letters relative to alphabetical, using <i>n</i> output neurons for a maximum word length <i>n</i>.  (For example, a lowest-to-highest ranking of outputs of 3-2-4-1-5 for the input &lsquo;ortob&rsquo; would imply the ordering 3-2-4-1-5 of the characters &lsquo;b-o-o-r-t&rsquo;, which spells &lsquo;robot&rsquo;.)<P>
+
+<P>  <u>anagrambler.cicada</u>
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; forEach :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;counter :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;for counter in &lt;1, top(args[1])&gt;&nbsp;&amp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args(args[1][counter], counter)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; anagrambler :: neural_network : {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;setupNN :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ltr :: string
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;params :: { step_size :: learning_rate :: double }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;params = { .5, .1 }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if trap(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the_word = args[1]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(params&lt;&lt;args)()
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) /= passed&nbsp;then (
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printl(&quot;Error: optional params are step_size, learning_rate&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forEach(NN_in;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ltr =! alph[args[2]]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args[1] = find(the_word, ltr, 0)&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[^size(the_word)]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[*].letter =! the_word
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ask :: setupNN : {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputString :: string
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run(NN_in, params.step_size)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sort(NN_out, 2)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[^numOutputs]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[*].order = activity[&lt;numInputs+2, numInputs+numOutputs+1&gt;]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if size(the_word) &lt; numOutputs&nbsp;then NN_out[^size(the_word)]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sort(NN_out, 1)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputString =! NN_out[*].letter
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(outputString)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;teach :: setupNN : {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c1 :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;forEach(NN_out; args[1].order = args[2]/size(the_word))
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sort(NN_out, 2)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[^numOutputs]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for c1 in &lt;1, args[2]&gt;&nbsp;&amp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run(NN_in, NN_out[*].order, params.step_size, params.learning_rate)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; the_word :: string
+
+<br>&nbsp;&nbsp;&nbsp; NN_in :: [26] double
+
+<br>&nbsp;&nbsp;&nbsp; NN_out :: [anagrambler.numOutputs] { order :: double, letter :: char }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; alph := &quot;abcdefghijklmnopqrstuvwxyz&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> At last, we&rsquo;re ready to build a digital brain and put it to the task of unscrambling anagrams.  We run Cicada, then load each of the two <tt>.cicada</tt> source files.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; run(&quot;NN&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; run(&quot;anagrambler&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Next we specify how big of a brain we need.  Let&rsquo;s decide to work with words of 6 or fewer characters (so, 6 output neurons), and of course we expect a 26-character alphabet (lowercase only please).  So we enter the following line at the command prompt.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; anagrambler.init(26, 6, 0)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> With the custom brain built and ready, we can try
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; anagrambler.ask(&quot;lleoh&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; ehllo
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Hardly a surprise; we haven&rsquo;t taught it its first word yet.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; anagrambler.teach(&quot;hello&quot;, 10)&nbsp;&nbsp;&nbsp;| 10 = # training cycles
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; anagrambler.ask(&quot;lleoh&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; hello
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Thus concludes our Cicada demonstration.  Of course we&rsquo;ve barely probed our anagrambler&rsquo;s intelligence, but a great virtue of the interactive command prompt is that the experimental cycles are very short.  For example, the author was taught it to perfectly recall three words (<tt>hello</tt>, <tt>tomato</tt> and <tt>yazoo</tt>, the former name of Cicada) within a minute of coaching.  But maybe the network can learn even faster -- is 10 rounds of training on each word too many?  Will our network learn faster if we increase higher learning rate, or will it become unstable?  It&rsquo;s simple to test.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; anagrambler.teach(&quot;hello&quot;, 5; learning_rate = that*2)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  We might also play around with the network architecture, for example by increasing the number of output neurons to allow the anagrambler to memorize longer words.  Most intriguingly of all, we could add hidden neurons to increase the complexity of its calculations, using the third argument of <tt>init()</tt>.
+
+<P> That is the last that we shall say about neural networks -- this is, after all, a Cicada help file.  Hopefully this example shows the great advantage of marrying C code to an interpreted environment.  The final section of this chapter explains the general procedure for bringing C/C++ into Cicada.
+
+<P> <ul>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_23.html">Prev: Writing and debugging a Cicada wrapper</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_25.html">Next: Rules for embedding C/C++ code</a>
+</div><br><br><P>Last update: June 18, 2019

@@ -1,0 +1,194 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: cicada.c</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Customizing the Cicada language</a>
+
+<H1> <CENTER> <tt>cicada.c</tt> </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Inside the file <tt>cicada.c</tt> (or <tt>cicada.cpp</tt>) lives an array called <tt>cicadaLanguage[]</tt> which defines basically every symbol we find inside of a script.  Each array element is a <tt>commandTokenType</tt> structure variable that defines one operator in the Cicada language:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; typedef struct {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;const char *cmdString;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccInt precedence;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;const char *rtrnTypeString;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;const char *translation;
+
+<br>&nbsp;&nbsp;&nbsp; } commandTokenType;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The first string, <tt>cmdString</tt>, is the operator symbol or name as written in Cicada.  Then we give the precedence level of the operator (see Table 2).  Next comes a string that explains to the Cicada compiler what type(s) of object this operator &lsquo;returns&rsquo; to the surrounding expression.  The final string, <tt>translation</tt>, either encodes the operator directly as bytecode (Cicada&rsquo;s native language), or else &lsquo;expands&rsquo; the operator in terms of other Cicada commands.  The first batch of operators have direct bytecode translation, indicated by the fact that their <tt>translation</tt> begins with a <tt>inbytecode</tt> marker (which concatenates to the following string as an unprintable character).  But for the second group of operators, towards the end and lacking a <tt>inbytecode</tt> marker, the <tt>translation</tt> is just a fragment of a script built from the previous operators.
+
+<P> To add a <i>new operator</i> into the language, simply add a new entry to the end of the <tt>cicadaLanguage[]</tt> array, in the indicated space, and fill in the four fields.
+
+<P> 
+
+<br><P><b><tt>cmdString:</b></tt></b>
+<P>  The command string defines what sort of object in the script will be recognized as the operator.  For most operators, operators are recognized by some string of letters, symbols, etc. that marks the operator in the script.  (There is really no restriction on this string other than it consist of printable characters.)  For example, looking through the array we find simple operators like <tt>\</tt> (written with two backslashes in the C string) and <tt>exit</tt>.
+
+<P> Many of the operators take left-hand and/or right-hand arguments, as indicated by keywords like <tt>type3arg</tt> to the left and/or right of the operator string.  These keywords are part of the command string -- they are just unprintable characters that get concatenated to the operator strings (because they are only separated by a space).  For example, the full command string of the define operator is
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; type2arg &quot;::&quot; type6arg
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The define operator requires both a left-hand expression or argument (the member to define) and a right-hand argument, which can be a member name but also a type like <tt>bool</tt>.  The two arguments therefore have a different &lsquo;type&rsquo;.  Looking at the comment before the <tt>cicadaLanguage[]</tt> array, we see that a type 2 argument represents a variable or function, and a type 6 argument represents a code-containing expression, as expected.  Having different types allows the compiler to throw type-mismatch errors when expressions don&rsquo;t make sense.
+
+<P> In some cases two different operators will have the same operator string.  For example, compare &lsquo;<tt>*</tt>&rsquo; as a multiplication operator versus the void, or &lsquo;<tt>-</tt>&rsquo; as either subtraction or negation.  This is <i>only allowed</i> if one of the operators expects a left-hand argument and the other doesn&rsquo;t, so that the compiler will immediately know which of the two operators it is looking at when it sees the operator string in a script.  For example, when it stumbles upon a &lsquo;<tt>-</tt>&rsquo;, that symbol will be interpreted as a subtraction if there is a dangling expression just to the left, and a negation otherwise.
+
+<P> More complex definitions like <tt>while ... do</tt> can involve several operator strings.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &quot;while&quot; type5arg &quot;do&quot; type1arg
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The pattern is always:  operator strings like &lsquo;<tt>do</tt>&rsquo; alternating with arguments.  Sometimes, these complex definitions involve a <tt>optionalargs</tt> keyword:  everything before the keyword is required, but everything afterwards is optional.  For example, the <tt>if</tt> command
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &quot;if&quot; type5arg &quot;then&quot; type1arg optionalargs &quot;else&quot; type1arg
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <i>requires</i> an <tt>if</tt> and a <tt>then</tt>, but the <tt>else</tt> is optional.
+
+<P> There are 10 allowed argument types:  <tt>type0arg</tt> through <tt>type9arg</tt>.  (Cicada only uses 9 of these types).  There are also a few special types.  A <tt>typeXarg</tt> accepts any type of argument, and is used by the <tt>(...)</tt> operator with <i>no</i> left-hand argument (i.e. the grouping operator, not a function call) to allow the user to group any sort of expression, even entire commands.  The <tt>commentarg</tt> keyword denotes an block of text to be entirely ignored until the next operator string is encountered (i.e. everything from a comment bar &lsquo;<tt>|</tt>&rsquo; to an end-of-line is skipped).  <tt>chararg</tt> and <tt>stringarg</tt> treat the argument as text containing one or several characters respectively.
+
+<P> Finally, there are several special operators that don&rsquo;t have any operator string at all.  If the operator string is simply <tt>int_constant</tt>, then the operator is read when the compiler encounters a number that it deems to be an integer; and the operator whose operator string is <tt>double_constant</tt> corresponds to a floating-point number.  The <tt>variable_name</tt> operator is assumed to apply whenever the compiler encounters a novel word beginning with a letter (which may be followed by underscores and numbers).  In these three cases the number or word should be thought of as an argument, insofar as the bytecode is concerned.
+
+<P> The final class of special operator strings is the adapters, an important element of Cicada scripting that is explained in the next section.  Suffice to say that there is an adapter for each of the 10 argument types, <tt>type0arg_adapter</tt> through <tt>type9arg_adapter</tt>, along with a <tt>noarg_adapter</tt>.
+
+<P> 
+
+<br><P><b><tt>precedence:</b></tt></b>
+<P>  The precedence level determines how operators are bound into expressions.  The high-precedence operators are grouped most tightly to their neighbors, and evaluated before the low-precedence operators.  Thus <tt>A = 2 * B - 2</tt> is grouped:  <tt>A = ( (2*B) - 2)</tt> because of the three gluing operators &lsquo;<tt>= * -</tt>&rsquo;, multiplication &lsquo;<tt>*</tt>&rsquo; has the highest precedence and assignment &lsquo;<tt>=</tt>&rsquo; has the lowest precedence.  The precedence level is just an integer, although notice that <tt>cicada.c</tt> predefines a keyword for each precedence level and uses that names instead in the operator definitions.
+
+<P> The <tt>cicadaLanguageAssociativity[]</tt> array in <tt>cicada.c</tt> explains how to group operators of the same precedence level, when there are no parentheses to break the tie.  This can be important.  For example, multiplication and division operators have precedence level 11, and the eleventh entry of the associativity array (i.e. <tt>cicadaLanguageAssociativity[10]</tt>) is <tt>l_to_r</tt> signifying left-to-right grouping.  Therefore the expression <tt>8/2/4</tt> groups as <tt>(8/2)/4</tt> which equals 1, as opposed to <tt>8/(2/4)</tt> which equals 16.  On the other hand, assignment works at precedence level 5, which has <tt>r_to_l</tt> or right-to-left grouping.  Therefore <tt>A = B = C = 2</tt> groups as <tt>A = (B = (C = 2))</tt>, so that 2 copies to <tt>C</tt>, then to <tt>B</tt>, then to <tt>A</tt>.  If the grouping were the other way, then each assignment would rewrite <tt>A</tt>.
+
+<P> The size of the <tt>cicadaLanguageAssociativity[]</tt> array determines the allowed precedence levels.  So by adding an entry the maximum allowable operator precedence level will be 16.  Anything outside the interval [1, <i>max_precedence</i>] will cause an out-of-range compiler error.
+
+<P> 
+
+<br><P><b><tt>rtrnTypeString:</b></tt></b>
+<P>  Many operators &lsquo;return&rsquo; a value to the enclosing expression, and which type(s) of value they are allowed to return is encoded in the return-types string.  For example, the addition operator has the return-types string <tt>&quot;456&quot;</tt>, so its return value can be construed as being of type 4, 5 or 6.  The return types correspond to the argument types from the <tt>cmdString</tt> field, so the expression <tt>A = 2+5</tt> is legal (because the assignment operator expects a type-5 right-hand argument) but <tt>2 + 5 = A</tt> is <i>illegal</i> (because the left-hand argument of the assignment operator should be type 2).  Notice how each &lsquo;type&rsquo; is really an operator <i>argument type</i>:  arguments have one type and entire operators have many, which is maybe backwards to the way we usually think.
+
+<P> There is a special <tt>argXtype</tt> return type which is paired with a <tt>typeXarg</tt> argument type.  This is used by the grouping operator <tt>(...)</tt>, causing the type inside the parentheses (its &lsquo;argument&rsquo;) to be the type returned back to the enclosing expression.  The parentheses only force a grouping, without affecting the type of the enclosed expression.
+
+<P> An entire script must be of type 0 -- Cicada enforces this using adapters (see below).
+
+<P> 
+
+<br><P><b><tt>translation:</b></tt></b>
+<P>  The last field of an operator definition explains how it will be translated into bytecode.  If the bytecode string begins with a <tt>inbytecode</tt> keyword, then the string contains a list of integers which are the bytecode representation of the operator.  For ease of reading, the bytecode translations in <tt>cicada.c</tt> are built from string macros defined in <tt>cicada.h</tt>.  If there is no <tt>inbytecode</tt> keyword, then the string is interpreted as a fragment of Cicada code that will be translated into bytecode using <i>previously-defined</i> operators -- so it is best to define these operators last.
+
+<P> The translation strings of bytecode-coded operators have strings of numbers separated by spaces in their translation strings, but also some funny letters:  &lsquo;<tt>a</tt>&rsquo;, &lsquo;<tt>j</tt>&rsquo; and &lsquo;<tt>p</tt>&rsquo;.  The &lsquo;<tt>a</tt>&rsquo; letter stands for an argument that is to be substituted into the bytecode at the given location, and is followed immediately (no space) by a number from 1 to 9 indicating <i>which</i> argument.  (Cicada only supports up to 9 arguments in an operator.)  For example, the assignment operator has a bytecode string
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; inbytecode &quot;8 1 a1 a2&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  meaning that the operation consists of two integers (8 followed by 1), then the first (left-hand) argument, and last the second (right-hand) argument.  Each of these arguments can themselves be expressions (think <tt>f().a = 5+cos(b)</tt>), in which case the entire expression translated into bytecode is substituted for the argument.  In <tt>cicada.c</tt> the macro <tt>bcArg(x)</tt> produces the &ldquo;<tt>ax</tt>&rdquo; string, so the assignment operator reads
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; inbytecode bc_define(equFlags) bcArg(1) bcArg(2)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  where <tt>bc_define(equFlags)</tt> produces a define operator with equate flags:  <tt>&quot;8 1&quot;</tt>.
+
+<P> The &lsquo;<tt>j</tt>&rsquo; and &lsquo;<tt>p</tt>&rsquo; bytecode symbols are used to specify jump offsets (&lsquo;<tt>j</tt>&rsquo; -- effectively gotos) and jump positions (&lsquo;<tt>p</tt>&rsquo;) in the bytecode.  Offsets are the number of code words to jump ahead <i>from the offset word</i> (negative offsets jump backwards), and the cicada compiler calculates these as the difference between a jump (<tt>j</tt>) marker and a target position (<tt>p</tt>) marker.  Each of position/jump marker is followed immediately by a number 1-9 indicating which position to define/jump to.  For example, the bytecode string of the <tt>if</tt>-<tt>then</tt>-<tt>else</tt> command which potentially takes 3 arguments is:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; inbytecode &quot;3 j1 a1 a2 1 j2 p1 a3 p2&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  In <tt>cicada.c</tt> the position markers are produced using <tt>bcPosition()</tt> macros, and the jump operators have dedicated macros taking the jump offsets as arguments, so this same operator definition reads
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  In this case the first bytecode command -- bytecode operator 3 which is the jump-if-false command -- jumps to the position of the first position marker, so the compiler calculates this offset by taking the difference in the code position between the <tt>j1</tt> command and <tt>p1</tt> (which is effectively the beginning of argument 3 because <tt>p1</tt> is not a code word) and puts that value in place of the <tt>j1</tt> word.  Likewise, there is an unconditional jump later on to the end (<tt>j2</tt>).  The third argument <tt>a3</tt> may or may not exist because the third argument is in the optional <tt>else</tt> block:  if there is no <tt>else</tt> then <tt>a3</tt> is basically ignored, but the second position marker is still defined.
+
+<P> Many of the adapter operators (explained in the next section) have <tt>anonymousmember</tt> keywords in their bytecode.  These are replaced by unique (and negative) member IDs that are found nowhere else in the script:  the first use of a <tt>anonymousmember</tt> in the bytecode becomes the number -1, the second use represents a -2 in the bytecode, etc.  These are used to construct hidden members that won&rsquo;t bother anyone by conflicting with user-defined members.
+
+<P> Scripted operators -- those without <tt>inbytecode</tt> keywords -- work basically the same as bytecoded operators except that unfortunately the arguments have to be encoded with special keywords (<tt>arg1</tt> through <tt>arg9</tt>) rather than directly in the string.  For example, a <tt>cicadaLibraryFunction()</tt> function is defined at the beginning of <tt>cicada.c</tt> in bytecode, and the <tt>call()</tt> function uses its definition in its script translation:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &quot;cicadaLibraryFunction#0(&quot; arg1 &quot;)&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  So the command <tt>call(&quot;myF&quot;, 12)</tt> is first translated into <tt>cicadaLibraryFunction#0(&quot;myF&quot;, 12)</tt> before being converted into bytecode.
+
+<P> Some operators (usually comments) have no effect on the bytecode whatsoever, and for those we give neither bytecode nor a script translation but instead write <tt>removedexpression</tt> for their translation string.  The <tt>|* ... *|</tt> comment block uses this keyword, as does the line-continuation operator <tt>&amp;</tt> which ignores everything to the end of the line.  Oddly enough the single-line comment <tt>| ...</tt> doesn&rsquo;t use this keyword, and the reason is that it always breaks two separate commands -- so in terms of bytecode it works a lot like a comma or end-of-line. 
+
+<P> 
+
+<P> <ul>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_4.html">Prev: Customizing the Cicada language</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_42.html">Next: Cicada bytecode</a>
+</div><br><br><P>Last update: June 18, 2019

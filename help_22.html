@@ -1,0 +1,130 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Putting the C in Cicada</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a>
+
+<H1> <CENTER> Putting the C in Cicada </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Notice that our C code doesn&rsquo;t allocate/deallocate memory, load or prepare the data sets, save the results, or do any of the other miscellaneous operations that don&rsquo;t need to happen thousands of times per second.  We will script the remainder of our program, not only because Cicada automates most of these housekeeping functions but also because scripted functions can be controlled from the command line.
+
+<P> We bring our C functions into Cicada by referencing them in a Cicada file called <tt>userfn.c</tt>.  (This assumes we&rsquo;re using the C version of Cicada.  If we&rsquo;re using the C++ version we modify <tt>userfn.cpp</tt>.  The extension on the source files is the only difference between the two versions of Cicada.)  First, make sure the C compiler knows about our neural network routines.  It&rsquo;s sloppy, but the easiest way to do this is to put <tt>NN.c</tt> and <tt>NN.h</tt> into the Cicada directory, and then add the following line to <tt>userfn.c</tt>.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; ...
+
+<br>&nbsp;&nbsp;&nbsp; // #include any user-defined header files here
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; #include &quot;NN.c&quot;
+
+<br>&nbsp;&nbsp;&nbsp; ...
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Next, we need to tell Cicada about our C routine in <tt>userfn.c</tt>, by adding it to the <tt>UserFunctions[]</tt> array.  We provide both a name and a function address.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; userFunction UserFunctions[] = { { &quot;pass2nums&quot;, &amp;pass2nums }, { &quot;cicada&quot;, &amp;runCicada },
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ &quot;RunNetwork&quot;, &amp;runNetwork } };
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Now we need to flesh out the &lsquo;set up data types&rsquo; comment in <tt>runNetwork()</tt>.  It turns out that Cicada provides a handy function for reading data from <tt>argv</tt> (an array of pointers to the variables and arrays passed to the C code, as you would expect).  Since the memory is shared between the two environments, our C function can also send data back to a script by writing to these variables.  Cicada also passes a list of array types and sizes at the end of <tt>argv[]</tt>.  Putting all together, we add the following lines of code at the beginning of <tt>runNetwork()</tt> (i.e. in place of the first comment in <tt>NN.c</tt>).
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;arg_info *argInfo = (arg_info *) argv[argc];
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;myNN.numNeurons = argInfo[1].argIndices;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;numInputs = argInfo[2].argIndices;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;getArgs(argc, argv, &amp;myNN.weights, &amp;myNN.activity, &amp;inputs, byValue(&amp;step_size), endArgs);
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if (argc == 6)&nbsp;{
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numOutputs = argInfo[4].argIndices;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;getArgs(argc, argv, fromArg(4), &amp;target_outputs, byValue(&amp;learning_rate));&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This code uses the <tt>arg_info</tt> data type, so we also need to add
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; #include &quot;userfn.h&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  at the beginning of NN.c.
+
+<P> Notice that we assigned <tt>myNN.weights</tt>, <tt>myNN.activity</tt> and <tt>inputs</tt> by reference rather than by value.  One reason is that they are arrays and copying them would be time-consuming.  The other reason is that the job of our routine is to modify <tt>activity</tt> and, if we are training our network, the <tt>weights</tt> array as well.  On the other hand <tt>step_size</tt> is not a pointer variable, so we passed its value using the <tt>byValue()</tt> function.
+
+<P> We won&rsquo;t try to save the results of our calculations in the C code.  We can simply delete the &ldquo;save results&rdquo; comment line in NN.c.
+
+<P> The final step is to recompile Cicada with our source files.  First, make sure all source and header files, including NN.c and NN.h, are in the same directory as &lsquo;Makefile&rsquo;; then go to that directory from the command prompt and type &ldquo;<tt>make cicada CC=gcc</tt>&rdquo; (case sensitive).  (The &lsquo;make&rsquo; tool has to be installed for this to work.)  With luck, we&rsquo;ll end up with an executable.  To run it, type either &lsquo;<tt>cicada</tt>&rsquo; or &lsquo;<tt>./cicada</tt>&rsquo;, depending on the system.  We should see:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; 
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Once inside Cicada, we can call our neural network function by typing
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; $RunNetwork(...)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  with the function&rsquo;s arguments listed in place of the dots.
+
+<P> Our custom version of Cicada has fast, native neural network functionality, but it is hidden behind a clunky syntax.  The next task is to write a Cicada class that bundles a neural network&rsquo;s data with user-friendly functions that initialize, run and train that network.
+
+<P> <ul>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_21.html">Prev: C implementation</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_23.html">Next: Writing and debugging a Cicada wrapper</a>
+</div><br><br><P>Last update: June 18, 2019

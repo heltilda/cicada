@@ -1,0 +1,153 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: A minimal wrapper</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a> ---> <a href="https://heltilda.github.io/cicada/help_25.html">Rules for embedding C/C++ code</a>
+
+<H1> <CENTER> A minimal wrapper </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> To finish off, we&rsquo;ll show how to a write a pretty generic Cicada wrapper for our C function.  This will let us run our C code by typing something like
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; z = f(x, y)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  rather than
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; $myFunctionInC(x, y, z)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The wrapper will also allocate data storage for our function, and prevent us from crashing the C code by passing in bad arguments.
+
+<P> Don&rsquo;t ask me what our C function does, but here is a pretty generic wrapper for it.<P>
+
+<P>  <u>myFunctionWrapper.cicada</u>
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;x :: char
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;y :: double
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;answer :: string
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;calc_table :: [] int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;error_code :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calcSize :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doRecalc :: bool&nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params = { 100, true }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if trap(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ x, y } = args&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| mandatory arguments
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(params &lt;&lt; args)()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| optional arguments
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;) /= passed&nbsp;then (
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(&quot;usage:&nbsp;[string] = f(char, double [; calcSize/doRecalc = ...])\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;calc_table[^params.calcSize]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;error_code = $myFunctionInC(params.doRecalc, x, calc_table, y, answer)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if error_code == 0&nbsp;then return new(answer)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;else&nbsp;(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(&quot;Error &quot;, error_code, &quot; in function f()\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return *&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  We load our wrapper by going to Cicada&rsquo;s command prompt and typing:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; run(&quot;myFunctionWrapper.cicada&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Here are some examples of function calls we can make once we&rsquo;ve loaded our wrapper:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; result := f('a', 5)
+
+<br>&nbsp;&nbsp;&nbsp; print( f('z', 5.78; doRecalc = false) )
+
+<br>&nbsp;&nbsp;&nbsp; result := f('a', 5; calcSize = that*2, doRecalc = false)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> We&rsquo;ll quickly go through the different parts of our wrapper function.  First, everything before the <tt>code</tt> command just defines the variables used by our function.  These include the input and output arguments, optional parameters and even a calculation table used internally by our C code.  Importantly, by explicitly defining variables that we pass to the C code we ensure that our function call will communicate with C properly.  For example, when we write <tt>f('a', 5)</tt> the integer argument 5 will be converted to a floating-point number before handing it off to C, because the input variable <tt>x</tt> is defined to be of type <tt>double</tt>.
+
+<P> The executable part of <tt>f()</tt> begins <i>after</i> the <tt>code</tt> marker.  The first bit of code reads the arguments of the function.  (We enclose the actual reading commands in a <tt>trap()</tt> statement so that we can fail gracefully with an error message if the function wasn&rsquo;t called properly.)  Notice the two sorts of argument that the user passes.  The mandatory arguments <tt>x</tt> and <tt>y</tt> are copied straightforwardly from the predefined <tt>args</tt> variable.  The optional arguments, stored in <tt>params</tt> with the default values of 100 and <tt>true</tt>, can be changed using a very peculiar Cicada trick:  <tt>f()</tt> <i>runs its own arguments</i> , as a function, inside of its own <tt>params</tt> variable.  How this works is explained in the next chapter.  For now, we&rsquo;ll just point out that in calling <tt>f()</tt> we separate the mandatory and optional parameters using a semicolon (which is effectively a <tt>code</tt> command), and use ordinary scripting commands separated by commas to change the optional parameters.
+
+<P> 
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_252.html">Prev: Cicada&rsquo;s <tt>userfn</tt> source files</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_3.html">Next: Cicada scripting</a>
+</div><br><br><P>Last update: June 18, 2019

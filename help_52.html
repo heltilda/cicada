@@ -1,0 +1,97 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Bytecode operators</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_5.html">Reference</a>
+
+<H1> <CENTER> Bytecode operators </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+  
+
+<P> Each entry in the following list consists of:  a bytecode command word (which is a number), a name in brackets, and then the arguments for that operator separated by commas.  Arguments in plain text take up a defined number of bytecode words.  Unless otherwise indicated, a fixed-width argument is one word long and should be read as a signed integer.  Arguments in italics are themselves bytecode expressions, which can span arbitrary word-lengths.<P>
+
+<P> <ul>
+<li>0  [ null ] :  marks the end of a code block
+
+<P> <li>1  [ jump ], offset : jumps the program counter to the position of the offset word plus <i>offset</i> bytecode words
+<li>2  [ jump-if-true ], offset, <i>condition</i> : jumps the program counter to the position of the offset word plus <i>offset</i> bytecode words, if the conditional expression evaluates to true
+<li>3  [ jump-if-false ], offset, <i>condition</i> : moves the program counter to the position of the offset word plus offset byetcode words, if <i>condition</i> is false
+
+<P> <li>4  [ code ] : delineates the boundary between two code blocks
+<li>5  [ return ], <i>return_variable</i> :  exits the function and returns the specified variable
+<li>6  [ user function ], <i>function_variable</i>, <i>args_variable</i> : runs the given user function with the specified arguments, and returns the return variable (if any).
+<li>7  [ built-in function ], <i>function_ID</i>, <i>args_variable</i> : runs the built-in Cicada function with the given ID and arguments, and sends back any return value
+
+<P> <li>8  [ define ], flags, <i>LH_var</i>, <i>RH_var</i> : applies the define/equate/equate-at command specified by the flags from the source <i>RH_var</i> to the target <i>LH_var</i>
+<li>9  [ forced_equate ], <i>LH_var</i>, <i>RH_var</i> : copies the raw data from the source <i>RH_var</i> into the target <i>LH_var</i> if their byte-sizes match
+
+<P> <li>10  [ search member ], ID : searches backwards from the current function for the member having the given ID
+<li>11  [ step to member ], ID, <i>starting_variable</i> : steps to the member with the given ID from the given starting variable
+<li>12  [ step to index ], <i>starting_variable</i>, <i>index</i> : steps into the given index of the starting variable
+<li>13  [ step to indices ], <i>starting_variable</i>, <i>low_index</i>, <i>high_index</i> : steps simultaneously into the given range of indices from the starting variable
+<li>14  [ step to all indices ], <i>starting_variable</i> : steps into all indices of the starting variable
+<li>15  [ resize ], <i>variable</i>, <i>top_index</i> : resizes the variable&rsquo;s member to have the given number of indices, and steps into these indices
+<li>16  [ insert index ], <i>variable</i>, <i>new_index</i> : adds a new index to <i>variable</i> at position <i>new_index</i>
+<li>17  [ insert indices ], <i>variable</i>, <i>new_low_index</i>, <i>new_high_index</i> : adds the new range of indices to <i>variable</i> beginning at <i>low_index</i>
+<li>18  [ remove ], <i>member</i> : deletes the member or part of the member that was stepped into
+
+<P> <li>19  [ if equal ], <i>expr1</i>, <i>expr2</i> : returns true if the two expressions&rsquo; data are equal; false otherwise
+<li>20  [ if not equal ], <i>expr1</i>, <i>expr2</i> : returns false if the two expressions&rsquo; data are equal and true otherwise
+<li>21  [ if greater-than ], <i>num1</i>, <i>num2</i> : returns true if and only if <i>num1</i> is greater than <i>num2</i>
+<li>22  [ if greater-than-or-equal ], <i>num1</i>, <i>num2</i> : returns true if and only if <i>num1</i> is greater than or equal to <i>num2</i>
+<li>23  [ if less-than ], <i>num1</i>, <i>num2</i> : returns true if and only if <i>num1</i> is less than <i>num2</i>
+<li>24  [ if less-than-or-equal ], <i>num1</i>, <i>num2</i> : returns true if and only if <i>num1</i> is less than or equal to <i>num2</i>
+<li>25  [ if same reference ], <i>expr1</i>, <i>expr2</i> : returns true if the two members point to the same data; false otherwise
+<li>26  [ if different reference ], <i>expr1</i>, <i>expr2</i> : returns false if the two members point to the same data and true otherwise
+
+<P> <li>27  [ add ], <i>num1</i>, <i>num2</i> : returns the sum of its numeric arguments
+<li>28  [ subtract ], <i>num1</i>, <i>num2</i> : returns <i>num1</i> minus <i>num2</i>
+<li>29  [ multiply ], <i>num1</i>, <i>num2</i> : returns the product of its numeric arguments
+<li>30  [ divide ], <i>num1</i>, <i>num2</i> : returns <i>num1</i> divided by <i>num2</i>
+<li>31  [ power ], <i>num1</i>, <i>num2</i> : returns <i>num1</i> raised to the power <i>num2</i>
+<li>32  [ modulo ], <i>num1</i>, <i>num2</i> : returns the remainder of <i>num1</i> divided by <i>num2</i> after they have been truncated to integers
+
+<P> <li>33  [ not ], <i>condition</i> : returns true if the condition is false and false if the condition is true
+<li>34  [ and ], <i>condition1</i>, <i>condition2</i> : returns true if and only if both conditions are true (both are always evaluated)
+<li>35  [ or ], <i>condition1</i>, <i>condition2</i> : returns true if and only if one or both of the conditions are true (both are always evaluated)
+<li>36  [ xor ], <i>condition1</i>, <i>condition2</i> : returns true if and only if one, but not both, conditions are true
+
+<P> <li>37  [  code number ], <i>code number</i>,  <i>var</i> : causes an enclosing function call to execute the given <i>code number</i> of <i>var</i>
+<li>38  [ substitute code ], <i>code</i>,  <i>var</i> : returns <i>var</i> but paired with the given <i>code</i> instead of its native code
+<li>39  [ append code ],  <i>f1</i>, <i>f2</i> : returns <i>f1</i> but with the concatenated code <i>f1</i> + <i>f2</i> instead of its native code
+
+<P> <li>40  [ args ] : returns the <tt>args</tt> variable for the current function
+<li>41  [ this ] : returns the function variable that is currently running
+<li>42  [ that ] : returns the variable on the left-hand side of the equate statement
+<li>43  [ parent ] : returns the parent of the currently-running function
+<li>44  [ top ] : returns the highest index of the enclosing array brackets
+<li>45  [ nothing ] : returns no variable
+
+<P> <li>46  [ array ],  <i>num_indices</i>, <i>type</i> : an array of <i>num_indices</i> elements of <i>type</i>
+<li>47  [ bool ] : Boolean data type
+<li>48  [ char ] : character data type
+<li>49  [ int ] : integer data type
+<li>50  [ double ] : floating-point data type
+<li>51  [ string ] : string data type
+
+<P> <li>52  [ constant bool ], num : returns the Boolean stored in <i>num</i> (one bytecode word)
+<li>53  [ constant char ], num : returns the character stored in <i>num</i> (one bytecode word)
+<li>54  [ constant int ], num : returns the integer stored in <i>num</i> (one bytecode word)
+<li>55  [ constant double ], num : returns the floating-point number stored in <i>num</i> (<i>num</i> is <tt>sizeof(double)/sizeof(int)</tt> bytecode words long)
+<li>56  [ constant string ], characters_num, string_data : returns an inlined string having the given number of characters.  The string_data field occupies one bytecode word for every four characters.
+<li>57  [ code block ] : returns the inlined code beginning with the next bytecode sentence and ending with a 0 bytecode word
+
+<P> </ul>
+
+
+<P> 
+
+<P> <ul>
+<li><a href="https://heltilda.github.io/cicada/help_521.html">Define operator flags</a>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_51.html">Prev: Operators and reserved words</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_521.html">Next: Define operator flags</a>
+</div><br><br><P>Last update: June 18, 2019
