@@ -2,7 +2,7 @@ InFileName := "/Users/clark/Desktop/cicada/Help/CicadaHelp.tex"
 OutFilePath := "/Users/clark/Desktop/cicada/WebPage/WebHelp/"
 |url := "file:///Users/clark/Desktop/cicada/WebPage/WebHelp/"
 url := "https://heltilda.github.io/cicada/"
-update_date := "July 8, 2018"
+update_date := "June 18, 2019"
 
 |* SFLogo := "<a href=\"http://sourceforge.net/projects/yazoo\"><img src=\"http://sflogo.sourceforge.net/sflogo.php?group_id=148821&amp;type=13\" width=\"120\" height=\"30\" alt=\"Get Cicada scripting language at SourceForge.net. Fast, secure and Free Open Source software downloads\" /></a>"
 piwiks := "<!-- Piwik -->\n<script type=\"text/javascript\">\nvar pkBaseURL = ((\"https:\" == document.location.protocol) ? \"https://sourceforge.net/apps/piwik/yazoo/\" : \"http://sourceforge.net/apps/piwik/yazoo/\");\ndocument.write(unescape(\"%3Cscript src='\" + pkBaseURL + \"piwik.js' type='text/javascript'%3E%3C/script%3E\"));\n</script><script type=\"text/javascript\">\npiwik_action_name = '';\npiwik_idsite = 1;\npiwik_url = pkBaseURL + \"piwik.php\";\npiwik_log(piwik_action_name, piwik_idsite, piwik_url);\n</script>\n<object><noscript><p><img src=\"http://sourceforge.net/apps/piwik/yazoo/piwik.php?idsite=1\" alt=\"piwik\"/></p></noscript></object>\n<!-- End Piwik Tag -->" *|

@@ -103,7 +103,7 @@
 <P> 
 
 <br><P><b><tt>rtrnTypeString:</b></tt></b>
-<P>  Many operator &lsquo;return&rsquo; a value to the enclosing expression, and which type(s) of value they are allowed to return is encoded in the return-types string.  For example the addition operator has the return-types string <tt>&quot;456&quot;</tt> so its return value can be construed as being of type 4, 5 or 6.  The return types correspond to the argument types from the <tt>cmdString</tt> field, so the expression <tt>A = 2+5</tt> is legal (because the assignment operator expects a type-5 right-hand argument) but <tt>2 + 5 = A</tt> is <i>illegal</i> (because the left-hand argument of the assignment operator should be type 2).  Notice how each &lsquo;type&rsquo; is really an operator <i>argument type</i>:  arguments have one type and entire operators have many, which is maybe backwards to the way we usually think.
+<P>  Many operators &lsquo;return&rsquo; a value to the enclosing expression, and which type(s) of value they are allowed to return is encoded in the return-types string.  For example, the addition operator has the return-types string <tt>&quot;456&quot;</tt>, so its return value can be construed as being of type 4, 5 or 6.  The return types correspond to the argument types from the <tt>cmdString</tt> field, so the expression <tt>A = 2+5</tt> is legal (because the assignment operator expects a type-5 right-hand argument) but <tt>2 + 5 = A</tt> is <i>illegal</i> (because the left-hand argument of the assignment operator should be type 2).  Notice how each &lsquo;type&rsquo; is really an operator <i>argument type</i>:  arguments have one type and entire operators have many, which is maybe backwards to the way we usually think.
 
 <P> There is a special <tt>argXtype</tt> return type which is paired with a <tt>typeXarg</tt> argument type.  This is used by the grouping operator <tt>(...)</tt>, causing the type inside the parentheses (its &lsquo;argument&rsquo;) to be the type returned back to the enclosing expression.  The parentheses only force a grouping, without affecting the type of the enclosed expression.
 
@@ -112,9 +112,9 @@
 <P> 
 
 <br><P><b><tt>translation:</b></tt></b>
-<P>  The last field of an operator definition explains how it will be translated into bytecode.  If the bytecode string begins with a <tt>inbytecode</tt> keyword, then the string contains a list of numbers which are the bytecode representation of the operator.  (Bytecode is just a list of integers.)  If there is no <tt>inbytecode</tt> keyword, then the string is interpreted as a fragment of Cicada code that will be translated into bytecode using <i>earlier-defined</i> operators (which is scripted operators are defined last).  Every operator has an ultimate bytecode translation.
+<P>  The last field of an operator definition explains how it will be translated into bytecode.  If the bytecode string begins with a <tt>inbytecode</tt> keyword, then the string contains a list of integers which are the bytecode representation of the operator.  For ease of reading, the bytecode translations in <tt>cicada.c</tt> are built from string macros defined in <tt>cicada.h</tt>.  If there is no <tt>inbytecode</tt> keyword, then the string is interpreted as a fragment of Cicada code that will be translated into bytecode using <i>previously-defined</i> operators -- so it is best to define these operators last.
 
-<P> Operators coded directly in bytecode have strings of numbers separated by spaces in their translation strings, but also some funny letters:  &lsquo;<tt>a</tt>&rsquo;, &lsquo;<tt>j</tt>&rsquo; and &lsquo;<tt>p</tt>&rsquo;.  The &lsquo;<tt>a</tt>&rsquo; letter stands for an argument that is to be substituted into the bytecode at the given location, and is followed immediately (no space) by a number from 1 to 9 indicating <i>which</i> argument.  (Cicada only supports up to 9 arguments in an operator.)  For example, the assignment operator has a bytecode string
+<P> The translation strings of bytecode-coded operators have strings of numbers separated by spaces in their translation strings, but also some funny letters:  &lsquo;<tt>a</tt>&rsquo;, &lsquo;<tt>j</tt>&rsquo; and &lsquo;<tt>p</tt>&rsquo;.  The &lsquo;<tt>a</tt>&rsquo; letter stands for an argument that is to be substituted into the bytecode at the given location, and is followed immediately (no space) by a number from 1 to 9 indicating <i>which</i> argument.  (Cicada only supports up to 9 arguments in an operator.)  For example, the assignment operator has a bytecode string
 
 <P> 
 
@@ -126,9 +126,21 @@
 
 <P>
 
-<P>  meaning that the operation consists of two integers (8 followed by 1), then the first (left-hand) argument, and last the second (right-hand) argument.  Each of these arguments can themselves be expressions (think <tt>f().a = 5+cos(b)</tt>), in which case the entire expression translated into bytecode is substituted for the argument.
+<P>  meaning that the operation consists of two integers (8 followed by 1), then the first (left-hand) argument, and last the second (right-hand) argument.  Each of these arguments can themselves be expressions (think <tt>f().a = 5+cos(b)</tt>), in which case the entire expression translated into bytecode is substituted for the argument.  In <tt>cicada.c</tt> the macro <tt>bcArg(x)</tt> produces the &ldquo;<tt>ax</tt>&rdquo; string, so the assignment operator reads
 
-<P> The &lsquo;<tt>j</tt>&rsquo; and &lsquo;<tt>p</tt>&rsquo; bytecode symbols are used to specify jump offsets (&lsquo;<tt>j</tt>&rsquo; -- effectively gotos) and jump positions (&lsquo;<tt>p</tt>&rsquo;) in the bytecode.  (Offsets are the number of code words to jump ahead <i>from the offset word</i>; negative offsets jump backwards.)  Each of these commands is followed immediately by a number 1-9 indicating which jump position to use or define.  For example, the bytecode string of the <tt>if</tt> command which potentially takes 3 arguments is:
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; inbytecode bc_define(equFlags) bcArg(1) bcArg(2)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  where <tt>bc_define(equFlags)</tt> produces a define operator with equate flags:  <tt>&quot;8 1&quot;</tt>.
+
+<P> The &lsquo;<tt>j</tt>&rsquo; and &lsquo;<tt>p</tt>&rsquo; bytecode symbols are used to specify jump offsets (&lsquo;<tt>j</tt>&rsquo; -- effectively gotos) and jump positions (&lsquo;<tt>p</tt>&rsquo;) in the bytecode.  Offsets are the number of code words to jump ahead <i>from the offset word</i> (negative offsets jump backwards), and the cicada compiler calculates these as the difference between a jump (<tt>j</tt>) marker and a target position (<tt>p</tt>) marker.  Each of position/jump marker is followed immediately by a number 1-9 indicating which position to define/jump to.  For example, the bytecode string of the <tt>if</tt>-<tt>then</tt>-<tt>else</tt> command which potentially takes 3 arguments is:
 
 <P> 
 
@@ -140,7 +152,21 @@
 
 <P>
 
-<P>  The first bytecode command -- bytecode operator 3 -- is a jump-if-false command which is always followed by an offset to increase the &lsquo;program counter&rsquo; by.  In this case the jump is <tt>j1</tt> indicating that we want to jump to position <tt>p1</tt>, so the compiler calculates this offset by taking the difference in the code position between the <tt>j1</tt> command and <tt>p1</tt> or equivalently the beginning of argument 3 (because <tt>p1</tt> is not a code word) and puts that value in place of the <tt>j1</tt> word.  Likewise, there is an unconditional jump later on to the end (<tt>j2</tt>).  Notice that <tt>a3</tt> may or may not exist because the third argument is in the optional <tt>else</tt> block -- if there is no <tt>else</tt> then <tt>a3</tt> is basically ignored.
+<P>  In <tt>cicada.c</tt> the position markers are produced using <tt>bcPosition()</tt> macros, and the jump operators have dedicated macros taking the jump offsets as arguments, so this same operator definition reads
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  In this case the first bytecode command -- bytecode operator 3 which is the jump-if-false command -- jumps to the position of the first position marker, so the compiler calculates this offset by taking the difference in the code position between the <tt>j1</tt> command and <tt>p1</tt> (which is effectively the beginning of argument 3 because <tt>p1</tt> is not a code word) and puts that value in place of the <tt>j1</tt> word.  Likewise, there is an unconditional jump later on to the end (<tt>j2</tt>).  The third argument <tt>a3</tt> may or may not exist because the third argument is in the optional <tt>else</tt> block:  if there is no <tt>else</tt> then <tt>a3</tt> is basically ignored, but the second position marker is still defined.
 
 <P> Many of the adapter operators (explained in the next section) have <tt>anonymousmember</tt> keywords in their bytecode.  These are replaced by unique (and negative) member IDs that are found nowhere else in the script:  the first use of a <tt>anonymousmember</tt> in the bytecode becomes the number -1, the second use represents a -2 in the bytecode, etc.  These are used to construct hidden members that won&rsquo;t bother anyone by conflicting with user-defined members.
 
@@ -165,4 +191,4 @@
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_4.html">Prev: Customizing the Cicada language</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_42.html">Next: Cicada bytecode</a>
-</div><br><br><P>Last update: July 8, 2018
+</div><br><br><P>Last update: June 18, 2019

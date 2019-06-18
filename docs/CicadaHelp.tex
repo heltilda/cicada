@@ -54,7 +54,7 @@
 %	\item[]}
 %	{ \end{list}   }
 
-\title{Cicada Script}
+\title{Cicada Scripting Language}
 \author{Brian Ross}
 \makeindex
 
@@ -1951,7 +1951,17 @@ Once we have written the function, we can run it in the normal way.
 72
 \end{verbatim} \end{code}
 
-\noindent But in Cicada we can also treat functions as if they were variables, peek at all their internal members, and even fiddle around inside them.  This is useful for debugging.
+\noindent From the command line we can also just type the function name and read off the output:
+
+\begin{code} \begin{verbatim}
+> SwapDigits(27)
+
+72
+\end{verbatim} \end{code}
+
+\noindent Sometimes the automatic output can be annoying:  the function may be performing an important task but we don't care about the return value.  To throw away the return value, append a `$\sim$' operator to the function call:  \texttt{SwapDigits(27)}$\sim$.
+
+In Cicada we can treat functions as if they were variables, peek at all their internal members, and even fiddle around inside them.  This is useful for debugging.
 
 \begin{code} \begin{verbatim}
 > SwapDigits.tensDigit            | did it do what we wanted?
@@ -2611,7 +2621,7 @@ The size of the \verb#cicadaLanguageAssociativity[]# array determines the allowe
 
 
 
-\paragraph{\texttt{rtrnTypeString:}}  Many operator `return' a value to the enclosing expression, and which type(s) of value they are allowed to return is encoded in the return-types string.  For example the addition operator has the return-types string \verb#"456"# so its return value can be construed as being of type 4, 5 or 6.  The return types correspond to the argument types from the \verb#cmdString# field, so the expression \verb#A = 2+5# is legal (because the assignment operator expects a type-5 right-hand argument) but \verb#2 + 5 = A# is \emph{illegal} (because the left-hand argument of the assignment operator should be type 2).  Notice how each `type' is really an operator \emph{argument type}:  arguments have one type and entire operators have many, which is maybe backwards to the way we usually think.
+\paragraph{\texttt{rtrnTypeString:}}  Many operators `return' a value to the enclosing expression, and which type(s) of value they are allowed to return is encoded in the return-types string.  For example, the addition operator has the return-types string \verb#"456"#, so its return value can be construed as being of type 4, 5 or 6.  The return types correspond to the argument types from the \verb#cmdString# field, so the expression \verb#A = 2+5# is legal (because the assignment operator expects a type-5 right-hand argument) but \verb#2 + 5 = A# is \emph{illegal} (because the left-hand argument of the assignment operator should be type 2).  Notice how each `type' is really an operator \emph{argument type}:  arguments have one type and entire operators have many, which is maybe backwards to the way we usually think.
 
 There is a special \verb#argXtype# return type which is paired with a \verb#typeXarg# argument type.  This is used by the grouping operator \verb#(...)#, causing the type inside the parentheses (its `argument') to be the type returned back to the enclosing expression.  The parentheses only force a grouping, without affecting the type of the enclosed expression.
 
@@ -2619,23 +2629,36 @@ An entire script must be of type 0 -- Cicada enforces this using adapters (see b
 
 
 
-\paragraph{\texttt{translation:}}  The last field of an operator definition explains how it will be translated into bytecode.  If the bytecode string begins with a \verb#inbytecode# keyword, then the string contains a list of numbers which are the bytecode representation of the operator.  (Bytecode is just a list of integers.)  If there is no \verb#inbytecode# keyword, then the string is interpreted as a fragment of Cicada code that will be translated into bytecode using \emph{earlier-defined} operators (which is scripted operators are defined last).  Every operator has an ultimate bytecode translation.
+\paragraph{\texttt{translation:}}  The last field of an operator definition explains how it will be translated into bytecode.  If the bytecode string begins with a \verb#inbytecode# keyword, then the string contains a list of integers which are the bytecode representation of the operator.  For ease of reading, the bytecode translations in \verb#cicada.c# are built from string macros defined in \verb#cicada.h#.  If there is no \verb#inbytecode# keyword, then the string is interpreted as a fragment of Cicada code that will be translated into bytecode using \emph{previously-defined} operators -- so it is best to define these operators last.
 
-Operators coded directly in bytecode have strings of numbers separated by spaces in their translation strings, but also some funny letters:  `\verb#a#', `\verb#j#' and `\verb#p#'.  The `\verb#a#' letter stands for an argument that is to be substituted into the bytecode at the given location, and is followed immediately (no space) by a number from 1 to 9 indicating \emph{which} argument.  (Cicada only supports up to 9 arguments in an operator.)  For example, the assignment operator has a bytecode string
+The translation strings of bytecode-coded operators have strings of numbers separated by spaces in their translation strings, but also some funny letters:  `\verb#a#', `\verb#j#' and `\verb#p#'.  The `\verb#a#' letter stands for an argument that is to be substituted into the bytecode at the given location, and is followed immediately (no space) by a number from 1 to 9 indicating \emph{which} argument.  (Cicada only supports up to 9 arguments in an operator.)  For example, the assignment operator has a bytecode string
 
 \begin{code} \begin{verbatim}
 inbytecode "8 1 a1 a2"
 \end{verbatim} \end{code}
 
-\noindent meaning that the operation consists of two integers (8 followed by 1), then the first (left-hand) argument, and last the second (right-hand) argument.  Each of these arguments can themselves be expressions (think \verb#f().a = 5+cos(b)#), in which case the entire expression translated into bytecode is substituted for the argument.
+\noindent meaning that the operation consists of two integers (8 followed by 1), then the first (left-hand) argument, and last the second (right-hand) argument.  Each of these arguments can themselves be expressions (think \verb#f().a = 5+cos(b)#), in which case the entire expression translated into bytecode is substituted for the argument.  In \verb#cicada.c# the macro \verb#bcArg(x)# produces the ``\verb#ax#" string, so the assignment operator reads
 
-The `\verb#j#' and `\verb#p#' bytecode symbols are used to specify jump offsets (`\verb#j#' -- effectively gotos) and jump positions (`\verb#p#') in the bytecode.  (Offsets are the number of code words to jump ahead \emph{from the offset word}; negative offsets jump backwards.)  Each of these commands is followed immediately by a number 1-9 indicating which jump position to use or define.  For example, the bytecode string of the \verb#if# command which potentially takes 3 arguments is:
+\begin{code} \begin{verbatim}
+inbytecode bc_define(equFlags) bcArg(1) bcArg(2)
+\end{verbatim} \end{code}
+
+\noindent where \verb#bc_define(equFlags)# produces a define operator with equate flags:  \verb#"8 1"#.
+
+The `\verb#j#' and `\verb#p#' bytecode symbols are used to specify jump offsets (`\verb#j#' -- effectively gotos) and jump positions (`\verb#p#') in the bytecode.  Offsets are the number of code words to jump ahead \emph{from the offset word} (negative offsets jump backwards), and the cicada compiler calculates these as the difference between a jump (\verb#j#) marker and a target position (\verb#p#) marker.  Each of position/jump marker is followed immediately by a number 1-9 indicating which position to define/jump to.  For example, the bytecode string of the \verb#if#-\verb#then#-\verb#else# command which potentially takes 3 arguments is:
 
 \begin{code} \begin{verbatim}
 inbytecode "3 j1 a1 a2 1 j2 p1 a3 p2"
 \end{verbatim} \end{code}
 
-\noindent The first bytecode command -- bytecode operator 3 -- is a jump-if-false command which is always followed by an offset to increase the `program counter' by.  In this case the jump is \verb#j1# indicating that we want to jump to position \verb#p1#, so the compiler calculates this offset by taking the difference in the code position between the \verb#j1# command and \verb#p1# or equivalently the beginning of argument 3 (because \verb#p1# is not a code word) and puts that value in place of the \verb#j1# word.  Likewise, there is an unconditional jump later on to the end (\verb#j2#).  Notice that \verb#a3# may or may not exist because the third argument is in the optional \verb#else# block -- if there is no \verb#else# then \verb#a3# is basically ignored.
+\noindent In \verb#cicada.c# the position markers are produced using \verb#bcPosition()# macros, and the jump operators have dedicated macros taking the jump offsets as arguments, so this same operator definition reads
+
+\begin{code} \begin{verbatim}
+inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
+                    bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2)
+\end{verbatim} \end{code}
+
+\noindent In this case the first bytecode command -- bytecode operator 3 which is the jump-if-false command -- jumps to the position of the first position marker, so the compiler calculates this offset by taking the difference in the code position between the \verb#j1# command and \verb#p1# (which is effectively the beginning of argument 3 because \verb#p1# is not a code word) and puts that value in place of the \verb#j1# word.  Likewise, there is an unconditional jump later on to the end (\verb#j2#).  The third argument \verb#a3# may or may not exist because the third argument is in the optional \verb#else# block:  if there is no \verb#else# then \verb#a3# is basically ignored, but the second position marker is still defined.
 
 Many of the adapter operators (explained in the next section) have \verb#anonymousmember# keywords in their bytecode.  These are replaced by unique (and negative) member IDs that are found nowhere else in the script:  the first use of a \verb#anonymousmember# in the bytecode becomes the number -1, the second use represents a -2 in the bytecode, etc.  These are used to construct hidden members that won't bother anyone by conflicting with user-defined members.
 
@@ -2657,7 +2680,7 @@ Some operators (usually comments) have no effect on the bytecode whatsoever, and
 
 \subsection{Cicada bytecode}
 
-Occasionally, we might want to extend the Cicada language in a way that can't be scripted, in which case we have to define our new command directly in Cicada's native dialect of `bytecode', using \verb#cicada.h# as a dictionary to the command words.  Scripts run much faster from bytecode than they ever could by reading their original text, but it should be emphasized that Cicada's bytecode is \emph{different from} (and much slower than) raw machine code.  One significant difference is that Cicada's bytecode has a recursive structure, composed of expressions and sub-expressions, just like Cicada script itself.  In fact, there is pretty much a one-to-one correspondence between the symbols (operators) we write in Cicada and bytecode commands, except that the bytecode commands are in a different order.
+Occasionally, we might want to extend the Cicada language in a way that can't be scripted, in which case we have to define our new command directly in Cicada's native `bytecode', using \verb#cicada.h# as a dictionary to the command words.  Scripts run much faster from bytecode than they ever could by reading their original text, but it should be emphasized that Cicada's bytecode is \emph{different from} (and much slower than) raw machine code.  One significant difference is that Cicada's bytecode has a recursive structure, composed of expressions and sub-expressions, just like Cicada script itself.  In fact, there is pretty much a one-to-one correspondence between the symbols (operators) we write in Cicada and bytecode commands, except that the bytecode commands are in a different order.
 
 For example, when we type the following command into the command prompt:
 
@@ -2834,9 +2857,9 @@ rock
 [That which I want to draw your attention to] [is] the rock.
 \end{verbatim} \end{code}
 
-\noindent In other words if an utterance only consists of a noun, we fill out the rest of the sentence using some stock subject and verb.  Cicada works exactly the same way:  the stock `subjects and verbs' to use in different situations are the so-called adapters defined in \verb#cicada.c#.  Each adapter allows the compiler to convert an expression from one type (say, something resembling a bare noun) to another type (perhaps a `sentence' type), at the price of adding a few bytecode words.  This prevents a type-mismatch error from being thrown by incomplete expressions.
+\noindent In other words, if a sentence only contains an object, the cave man's brain fills it out by adding some stock subject and verb.  Cicada works exactly the same way:  the stock `subjects and verbs' to use in different situations are the so-called adapters defined in \verb#cicada.c#.  Each adapter allows the compiler to convert some bare expression (analogous to the object of a sentence) to another type (perhaps a `sentence' type), at the price of adding a few bytecode words.  This prevents a type-mismatch error from being thrown by incomplete expressions.
 
-For example, when the compiler sees the command `\verb#2#' it rolls its eyes and reaches for the type-mismatch error button, because it expected a complete command (a type 1 expression) whereas an \verb#int_constant# can only be construed as types 4, 5 or 6 based on its return-types string.  But then Cicada notices an adapter that works on type-5 objects (called \verb#type5arg_adapter# in \verb#cicada.c#), and moreover that adapter's return-types string includes a ``1" which is what we want.  So the adapter adds its code and the error never happens.  Here is the adapter's bytecode:
+For example, when the user enters the command `\verb#2#', the compiler rolls its eyes and reaches for the type-mismatch error button, because it expected a complete command (a type 1 expression) whereas an \verb#int_constant# can only be construed as types 4, 5 or 6 based on its return-types string in the \verb#cicadaLanguage[]# array.  But then Cicada notices an adapter that works on type-5 objects (called \verb#type5arg_adapter# in \verb#cicada.c#), and moreover that adapter's return-types string includes a ``1" which is what we want.  So the adapter adds its code and the error never happens.  Here is the adapter's bytecode:
 
 \begin{code} \begin{verbatim}
 inbytecode "8 173 10" anonymousmember "a1"
@@ -2858,7 +2881,9 @@ var2 := @pi
 
 The \verb#anonymousmember# keyword is a unique member `name', which is inexpressible by any user.  (The reason is that members the user types are translated into positive member ID numbers in bytecode, whereas anonymous members are assigned sequential negative ID numbers.)  Thus the members we represented as \verb#var1# and \verb#var2# in the last paragraph really don't have those names or any other, so they can only be accessed by index using the bracket operators \verb#[...]#.  (Or by `name'/ID number if we are willing to write our own bytecode.)
 
-Incidentally, anonymous members are also used in ordinary function calls, and in this case those members are also `hidden' because their define operators have the hidden-member flag set.  A hidden member is invisible to the array-index operators:  one can only access them by name (which is difficult when the members are also anonymous).  The variables behind these members become the \verb#args# variables when functions are run.  Remember, think of a function call \verb#f(2, pi)# as if the syntax were:  \verb#f{2, pi}#.  The exotic define operators used by function calls are listed in Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}.  The rarest bird in this collection, abbreviated \verb#def-c**# (`hidden-define-minus-constructor' in the ponderous taxonomy of the disassembler), lives exclusively in the function call of a \verb#trap()#\index{trap@\texttt{trap()}} function, defining the \verb#args# variable \emph{without running its constructor} so that \verb#trap()# can do this in a controlled way.
+Incidentally, anonymous members are also used in ordinary function calls, and in this case those members are also `hidden' because their define operators have the hidden-member flag set.  The hidden flag causes these members to be invisible to the array-index operators:  they can only be accessed by `name' (a.k.a. ID number).  The variables behind these members become the \verb#args# variables when functions are run.  If it helps, think of a function call \verb#f(2, pi)# as if the syntax were \verb#f{2, pi}#, having braces denoting the argument variable.
+
+The exotic define operator flags used by function calls are listed in Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}.  The rarest bird in this collection, abbreviated \verb#def-c**# (`hidden-define-minus-constructor'), lives exclusively in the function call of a \verb#trap()#\index{trap@\texttt{trap()}} function, defining the \verb#args# variable \emph{without running its constructor} so that \verb#trap()# can do this in a controlled way.
 
 The adapters consistently set the unjammable flag of their define/equate-at operators, preventing them from jamming arrays.  For example, if we call \verb#f(myArray[<2, 4>])# we will still be able to resize \verb#myArray# in the future, and the broken link will be refreshed next time that call to \verb#f()# is made because that reruns the argument constructor.  (In sets this can cause a problem, because the set's constructor is not usually rerun after an array resize.  We can get around this by manually aliasing a member to certain array indices.)  Also, the update-members flag is cleared by all of the adapters, so that the anonymous member can be re-assigned to a variable of a different type (for example if between two iterations of the command \verb#f(a)# member `\verb#a#' gets removed and redefined).
 
@@ -2890,7 +2915,8 @@ Another situation where we will want to compile scripts manually is when we want
 \begin{code} \begin{verbatim}
 newLanguage :: [] compiledCommandType
 newLanguage[*] = {
-    { cat("add  ", type1arg, "to", type1arg), 1, "0", cat(inbytecode, "8 173 10", anonymousmember, "27 a1 a2 0") },
+    { cat("add  ", type1arg, "to", type1arg), 1, "0",
+            cat(inbytecode, "8 173 10", anonymousmember, "27 a1 a2 0") },
     { cat("negative", type1arg), 2, "1", cat(inbytecode, "29 54 -1 a1") },
     { int_constant, 0, "1", cat(inbytecode, "54 a1") },
     { double_constant, 0, "1", cat(inbytecode, "55 a1") }
@@ -2932,6 +2958,7 @@ Functions produced by different compilers live in different namespaces, because 
 \begin{description}
 \item{\verb#,# or line break} :  demarcate commands
 \item{\verb#( ... )#} :  group terms in an expression
+\item{\verb#X#$\sim$} :  ignore output of expression \verb#X#
 \item{\verb#|#} :  single-line comment
 \item{\verb#|* ... *|#} :  multiple-line comment
 \item{\verb#&#} :  continue command on next line\\
