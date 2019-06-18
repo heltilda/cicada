@@ -70,166 +70,181 @@ commandTokenType cicadaLanguage[] = {
         
         // First, the basics
     
-    { type1arg "\n" type1arg, sentenceLevel, "1", inbytecode "a1 a2" },
-    { type1arg "," type1arg, sentenceLevel, "1", inbytecode "a1 a2" },
+    { type1arg "\n" type1arg, sentenceLevel, "1", inbytecode bcArg(1) bcArg(2) },
+    { type1arg "," type1arg, sentenceLevel, "1", inbytecode bcArg(1) bcArg(2) },
     
-    { "(" typeXarg ")", 0, argXtype, inbytecode "a1" },
+    { "(" typeXarg ")", 0, argXtype, inbytecode bcArg(1) },
     
-    { type1arg "|" commentarg optionalargs "\n" type1arg, sentenceLevel, "1", inbytecode "a1 a3" },
+    { type1arg "|" commentarg optionalargs "\n" type1arg, sentenceLevel, "1", inbytecode bcArg(1) bcArg(3) },
     { "&" commentarg "\n", 0, "", removedexpression },
     { "|*" commentarg "*|", 0, "", removedexpression },
+    
+    { type2arg "~", sentenceLevel, "1", inbytecode bcArg(1) },
     
     
         // Flow control and function calling
     
-    { type1arg ";" type1arg, sentenceLevel, "1", inbytecode "a1 4 a2" },
-    { "code", 0, "1", inbytecode "4" },
+    { type1arg ";" type1arg, sentenceLevel, "1", inbytecode bcArg(1) bc(code_marker) bcArg(2) },
+    { "code", 0, "1", inbytecode bc(code_marker) },
     
-    { "return" type3arg, commandLevel, "1", inbytecode "5 a1" },
-    { type2arg "(" type1arg ")", stepVarLevel, "23456", inbytecode "6 a1 8 236 10" anonymousmember "57 a2 0" },
+    { "return" type3arg, commandLevel, "1", inbytecode bc(function_return) bcArg(1) },
+    { type2arg "(" type1arg ")", stepVarLevel, "23456", inbytecode bc(user_function) bcArg(1)
+                    bc_define(defxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script) },
     
-    { "cicadaLibraryFunction # " type4arg " (" type1arg ")", stepVarLevel, "123456", inbytecode "7 a1 8 236 10" anonymousmember "57 a2 0" },
+    { "cicadaLibraryFunction # " type4arg " (" type1arg ")", stepVarLevel, "123456",
+                    inbytecode bc(built_in_function) bcArg(1) bc_define(defxxFlags) bc(search_member) anonymousmember
+                    bc(code_block) bcArg(2) bc(end_of_script) },
     { "$" stringarg "(" type1arg ")", stepVarLevel, "123456",
-                    inbytecode "7 54 0 8 236 10" anonymousmember "57 8 173 10" anonymousmember "56 a1 a2 0" },
+                    inbytecode bc(built_in_function) bc_constant_int(0) bc_define(defxxFlags) bc(search_member) anonymousmember
+                    bc(code_block) bc_define(deqxFlags) bc(search_member) anonymousmember bc(constant_string) bcArg(1)
+                    bcArg(2) bc(end_of_script) },
     
     
         // Define, equate and forced-equate operators
     
-    { type2arg "::" type6arg, defineLevel, "123456", inbytecode "8 46 a1 a2" },
-    { type2arg ":= @" type2arg, defineLevel, "123456", inbytecode "8 22 a1 a2" },
-    { type2arg "= @" type2arg, defineLevel, "123456", inbytecode "8 16 a1 a2" },
-    { type2arg "<- @" type2arg, defineLevel, "123456", inbytecode "8 16 a1 a2" },
-    { type2arg "=" type5arg, defineLevel, "123456", inbytecode "8 1 a1 a2" },
-    { type2arg "<-" type5arg, defineLevel, "123456", inbytecode "8 1 a1 a2" },
-    { type2arg ":=" type5arg, defineLevel, "123456", inbytecode "8 47 a1 a2" },
-    { type2arg "@ ::" type6arg, defineLevel, "123456", inbytecode "8 44 a1 a2" },
-    { type2arg "* ::" type6arg, defineLevel, "123456", inbytecode "8 6 a1 a2" },
-    { type2arg "= !" type5arg, defineLevel, "123456", inbytecode "9 a1 a2" },
-    { type2arg "<- !" type5arg, defineLevel, "123456", inbytecode "9 a1 a2" },
+    { type2arg "::" type6arg, defineLevel, "123456", inbytecode bc_define(defFlags) bcArg(1) bcArg(2) },
+    { type2arg ":= @" type2arg, defineLevel, "123456", inbytecode bc_define(dqaFlags) bcArg(1) bcArg(2) },
+    { type2arg "= @" type2arg, defineLevel, "123456", inbytecode bc_define(eqaFlags) bcArg(1) bcArg(2) },
+    { type2arg "<- @" type2arg, defineLevel, "123456", inbytecode bc_define(eqaFlags) bcArg(1) bcArg(2) },
+    { type2arg "=" type5arg, defineLevel, "123456", inbytecode bc_define(equFlags) bcArg(1) bcArg(2) },
+    { type2arg "<-" type5arg, defineLevel, "123456", inbytecode bc_define(equFlags) bcArg(1) bcArg(2) },
+    { type2arg ":=" type5arg, defineLevel, "123456", inbytecode bc_define(deqFlags) bcArg(1) bcArg(2) },
+    { type2arg "@ ::" type6arg, defineLevel, "123456", inbytecode bc_define(vdfFlags) bcArg(1) bcArg(2) },
+    { type2arg "* ::" type6arg, defineLevel, "123456", inbytecode bc_define(mdfFlags) bcArg(1) bcArg(2) },
+    { type2arg "= !" type5arg, defineLevel, "123456", inbytecode bc(forced_equate) bcArg(1) bcArg(2) },
+    { type2arg "<- !" type5arg, defineLevel, "123456", inbytecode bc(forced_equate) bcArg(1) bcArg(2) },
     
     
         // Member and array index operators
     
-    { type2arg "." type9arg, stepVarLevel, "23456", inbytecode "11 a2 a1" },
-    { type2arg "[" type4arg "]", stepVarLevel, "23456", inbytecode "12 a1 a2" },
-    { type2arg "[ <" type4arg "," type4arg "> ]", stepVarLevel, "23456", inbytecode "13 a1 a2 a3" },
-    { type2arg "[ * ]", stepVarLevel, "23456", inbytecode "14 a1" },
-    { type2arg "[ ]", stepVarLevel, "23456", inbytecode "14 a1" },
-    { type2arg "[^" type4arg "]", stepVarLevel, "123456", inbytecode "15 a1 a2" },
-    { type2arg "[ +" type4arg "]", stepVarLevel, "123456", inbytecode "16 a1 a2" },
-    { type2arg "[ + <" type4arg "," type4arg "> ]", stepVarLevel, "123456", inbytecode "17 a1 a2 a3" },
+    { type2arg "." type9arg, stepVarLevel, "23456", inbytecode bc(step_to_member_ID) bcArg(2) bcArg(1) },
+    { type2arg "[" type4arg "]", stepVarLevel, "23456", inbytecode bc(step_to_index) bcArg(1) bcArg(2) },
+    { type2arg "[ <" type4arg "," type4arg "> ]", stepVarLevel, "23456", inbytecode bc(step_to_indices) bcArg(1) bcArg(2) bcArg(3) },
+    { type2arg "[ * ]", stepVarLevel, "23456", inbytecode bc(step_to_all) bcArg(1) },
+    { type2arg "[ ]", stepVarLevel, "23456", inbytecode bc(step_to_all) bcArg(1) },
+    { type2arg "[^" type4arg "]", stepVarLevel, "123456", inbytecode bc(resize_cmd) bcArg(1) bcArg(2) },
+    { type2arg "[ +" type4arg "]", stepVarLevel, "123456", inbytecode bc(insert_index) bcArg(1) bcArg(2) },
+    { type2arg "[ + <" type4arg "," type4arg "> ]", stepVarLevel, "123456", inbytecode bc(insert_indices) bcArg(1) bcArg(2) bcArg(3) },
     
-    { "remove" type2arg, commandLevel, "1", inbytecode "18 a1" },
+    { "remove" type2arg, commandLevel, "1", inbytecode bc(remove_cmd) bcArg(1) },
     
     
         // Comparison operators
     
-    { type5arg "==" type5arg, compareLevel, "5", inbytecode "19 a1 a2" },
-    { type5arg "/=" type5arg, compareLevel, "5", inbytecode "20 a1 a2" },
-    { type4arg ">" type4arg, compareLevel, "5", inbytecode "21 a1 a2" },
-    { type4arg ">=" type4arg, compareLevel, "5", inbytecode "22 a1 a2" },
-    { type4arg "<" type4arg, compareLevel, "5", inbytecode "23 a1 a2" },
-    { type4arg "<=" type4arg, compareLevel, "5", inbytecode "24 a1 a2" },
-    { type2arg "== @" type2arg, compareLevel, "5", inbytecode "25 a1 a2" },
-    { type2arg "/= @" type2arg, compareLevel, "5", inbytecode "26 a1 a2" },
+    { type5arg "==" type5arg, compareLevel, "5", inbytecode bc(if_equal) bcArg(1) bcArg(2) },
+    { type5arg "/=" type5arg, compareLevel, "5", inbytecode bc(if_not_equal) bcArg(1) bcArg(2) },
+    { type4arg ">" type4arg, compareLevel, "5", inbytecode bc(if_greater) bcArg(1) bcArg(2) },
+    { type4arg ">=" type4arg, compareLevel, "5", inbytecode bc(if_greater_or_equal) bcArg(1) bcArg(2) },
+    { type4arg "<" type4arg, compareLevel, "5", inbytecode bc(if_less) bcArg(1) bcArg(2) },
+    { type4arg "<=" type4arg, compareLevel, "5", inbytecode bc(if_less_or_equal) bcArg(1) bcArg(2) },
+    { type2arg "== @" type2arg, compareLevel, "5", inbytecode bc(if_at) bcArg(1) bcArg(2) },
+    { type2arg "/= @" type2arg, compareLevel, "5", inbytecode bc(if_not_at) bcArg(1) bcArg(2) },
     
     
         // Arithmetic operators
     
-    { type4arg "+" type4arg, addsubLevel, "456", inbytecode "27 a1 a2" },
-    { type4arg "-" type4arg, addsubLevel, "456", inbytecode "28 a1 a2" },
-    { type4arg "*" type4arg, multdivLevel, "456", inbytecode "29 a1 a2" },
-    { type4arg "/" type4arg, multdivLevel, "456", inbytecode "30 a1 a2" },
-    { type4arg "^" type4arg, expLevel, "456", inbytecode "31 a1 a2" },
-    { "-" type4arg, negationLevel, "456", inbytecode "29 54 -1 a1" },
-    { type4arg "mod" type4arg, multdivLevel, "456", inbytecode "32 a1 a2" },
+    { type4arg "+" type4arg, addsubLevel, "456", inbytecode bc(add_num) bcArg(1) bcArg(2) },
+    { type4arg "-" type4arg, addsubLevel, "456", inbytecode bc(subtract_num) bcArg(1) bcArg(2) },
+    { type4arg "*" type4arg, multdivLevel, "456", inbytecode bc(multiply_num) bcArg(1) bcArg(2) },
+    { type4arg "/" type4arg, multdivLevel, "456", inbytecode bc(divide_num) bcArg(1) bcArg(2) },
+    { type4arg "^" type4arg, expLevel, "456", inbytecode bc(raise_to_power) bcArg(1) bcArg(2) },
+    { "-" type4arg, negationLevel, "456", inbytecode bc(multiply_num) bc_constant_int(-1) bcArg(1) },
+    { type4arg "mod" type4arg, multdivLevel, "456", inbytecode bc(mod_int) bcArg(1) bcArg(2) },
     
     
         // Logical operators
     
-    { "not" type5arg, notBoolLevel, "5", inbytecode "33 a1" },
-    { type5arg "and" type5arg, binaryBoolLevel, "5", inbytecode "34 a1 a2" },
-    { type5arg "or" type5arg, binaryBoolLevel, "5", inbytecode "35 a1 a2" },
-    { type5arg "xor" type5arg, binaryBoolLevel, "5", inbytecode "36 a1 a2" },
+    { "not" type5arg, notBoolLevel, "5", inbytecode bc(if_not) bcArg(1) },
+    { type5arg "and" type5arg, binaryBoolLevel, "5", inbytecode bc(if_and) bcArg(1) bcArg(2) },
+    { type5arg "or" type5arg, binaryBoolLevel, "5", inbytecode bc(if_or) bcArg(1) bcArg(2) },
+    { type5arg "xor" type5arg, binaryBoolLevel, "5", inbytecode bc(if_xor) bcArg(1) bcArg(2) },
     
     
         // Operators on code
     
-    { type2arg "#" type4arg, stepVarLevel, "23456", inbytecode "37 a2 a1" },
-    { type2arg "<<" type6arg, codeSubstitutionLevel, "23456", inbytecode "38 a2 a1" },
-    { type6arg ":" type6arg, inheritanceLevel, "6", inbytecode "39 a1 a2" },
+    { type2arg "#" type4arg, stepVarLevel, "23456", inbytecode bc(code_number) bcArg(2) bcArg(1) },
+    { type2arg "<<" type6arg, codeSubstitutionLevel, "23456", inbytecode bc(substitute_code) bcArg(2) bcArg(1) },
+    { type6arg ":" type6arg, inheritanceLevel, "6", inbytecode bc(append_code) bcArg(1) bcArg(2) },
     
     
         // Predefined variables
     
-    { "args", 0, "23456", inbytecode "40" },
-    { "this", 0, "23456", inbytecode "41" },
-    { "that", 0, "23456", inbytecode "42" },
-    { "parent", 0, "23456", inbytecode "43" },
-    { "\\", 0, "23456", inbytecode "43" },
-    { type2arg ".parent", backstepVarLevel, "23456", inbytecode "a1 43" },
-    { type2arg ".\\", backstepVarLevel, "23456", inbytecode "a1 43" },
-    { "top", 0, "23456", inbytecode "44" },
-    { "*", 0, "236", inbytecode "45" },
-    { "nothing", 0, "236", inbytecode "45" },
+    { "args", 0, "23456", inbytecode bc(args_variable) },
+    { "this", 0, "23456", inbytecode bc(this_variable) },
+    { "that", 0, "23456", inbytecode bc(that_variable) },
+    { "parent", 0, "23456", inbytecode bc(parent_variable) },
+    { "\\", 0, "23456", inbytecode bc(parent_variable) },
+    { type2arg ".parent", backstepVarLevel, "23456", inbytecode bcArg(1) bc(parent_variable) },
+    { type2arg ".\\", backstepVarLevel, "23456", inbytecode bcArg(1) bc(parent_variable) },
+    { "top", 0, "23456", inbytecode bc(top_variable) },
+    { "*", 0, "236", inbytecode bc(no_variable) },
+    { "nothing", 0, "236", inbytecode bc(no_variable) },
     
     
         // Data types
     
-    { "[" type4arg "]" type6arg, arrayLevel, "6", inbytecode "46 a1 a2" },
-    { "[ * ]" type6arg, arrayLevel, "6", inbytecode "46 54 0 a1" },
-    { "[ ]" type6arg, arrayLevel, "6", inbytecode "46 54 0 a1" },
+    { "[" type4arg "]" type6arg, arrayLevel, "6", inbytecode bc(type_array) bcArg(1) bcArg(2) },
+    { "[ * ]" type6arg, arrayLevel, "6", inbytecode bc(type_array) bc_constant_int(0) bcArg(1) },
+    { "[ ]" type6arg, arrayLevel, "6", inbytecode bc(type_array) bc_constant_int(0) bcArg(1) },
     
-    { "bool", 0, "6", inbytecode "47" },
-    { "char", 0, "6", inbytecode "48" },
-    { "int", 0, "6", inbytecode "49" },
-    { "double", 0, "6", inbytecode "50" },
-    { "string", 0, "6", inbytecode "51" },
+    { "bool", 0, "6", inbytecode bc(type_bool) },
+    { "char", 0, "6", inbytecode bc(type_char) },
+    { "int", 0, "6", inbytecode bc(type_int) },
+    { "double", 0, "6", inbytecode bc(type_float) },
+    { "string", 0, "6", inbytecode bc(type_string) },
     
     
         // Hard-coded constants
     
-    { "false", 0, "56", inbytecode "52 0" },
-    { "true", 0, "56", inbytecode "52 1" },
+    { "false", 0, "56", inbytecode bc_constant_bool(0) },
+    { "true", 0, "56", inbytecode bc_constant_bool(1) },
     
-    { "'" chararg "'", 0, "56", inbytecode "53 a1" },
-    { int_constant, 0, "456", inbytecode "54 a1" },
-    { double_constant, 0, "456", inbytecode "55 a1" },
-    { "\"" stringarg "\"", 0, "56", inbytecode "56 a1" },
-    { "{" type1arg "}", 0, "67", inbytecode "57 a1 0" },
+    { "'" chararg "'", 0, "56", inbytecode bc(constant_char) bcArg(1) },
+    { int_constant, 0, "456", inbytecode bc(constant_int) bcArg(1) },
+    { double_constant, 0, "456", inbytecode bc(constant_double) bcArg(1) },
+    { "\"" stringarg "\"", 0, "56", inbytecode bc(constant_string) bcArg(1) },
+    { "{" type1arg "}", 0, "67", inbytecode bc(code_block) bcArg(1) bc(end_of_script) },
     
-    { variable_name, 0, "9", inbytecode "a1" },
+    { variable_name, 0, "9", inbytecode bcArg(1) },
     
     
         // High-level flow control commands, each several bytecode 'sentences' long
     
     { "for" type2arg "in <" type4arg "," type4arg ">" type1arg, commandLevel, "1",
-                    inbytecode "8 1 a1 a2 p1 2 j2 21 a1 a3 a4 8 1 a1 27 42 54 1 1 j1 p2" },
-    { "if" type5arg "then" type1arg optionalargs "else" type1arg, commandLevel, "1", inbytecode "3 j1 a1 a2 1 j2 p1 a3 p2" },
-    { "while" type5arg "do" type1arg, commandLevel, "1", inbytecode "p2 3 j1 a1 a2 1 j2 p1" },
-    { "loop" type1arg "until" type5arg, commandLevel, "1", inbytecode "p1 a1 3 j1 a2" },
+                    inbytecode bc_define(equFlags) bcArg(1) bcArg(2)
+                    bcPosition(1) bc_jump_if_true(2) bc(if_greater) bcArg(1)
+                    bcArg(3) bcArg(4) bc_define(equFlags) bcArg(1) bc(add_num) bc(that_variable) bc_constant_int(1)
+                    bc_jump_always(1) bcPosition(2) },
+    { "if" type5arg "then" type1arg optionalargs "else" type1arg, commandLevel, "1",
+                    inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
+                    bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2) },
+    { "while" type5arg "do" type1arg, commandLevel, "1",
+                    inbytecode bcPosition(2) bc_jump_if_false(1) bcArg(1) bcArg(2)
+                    bc_jump_always(2) bcPosition(1) },
+    { "loop" type1arg "until" type5arg, commandLevel, "1",
+                    inbytecode bcPosition(1) bcArg(1) bc_jump_if_false(1) bcArg(2) },
     
     
         // The 'adapters':  wee bits of unscripted bytecode that make the Cicada syntax work
     
-    { noarg_adapter, 0, "0", inbytecode "0" },
-    { noarg_adapter, 0, "1", inbytecode "" },
-    { noarg_adapter, 0, "3", inbytecode "45" },
+    { noarg_adapter, 0, "0", inbytecode bc(end_of_script) },
+    { noarg_adapter, 0, "1", inbytecode },
+    { noarg_adapter, 0, "3", inbytecode bc(no_variable) },
     
-    { type2arg_adapter, 0, "1", inbytecode "8 148 10" anonymousmember "a1" },
-    { type5arg_adapter, 0, "1", inbytecode "8 173 10" anonymousmember "a1" },
-    { type6arg_adapter, 0, "1", inbytecode "8 172 10" anonymousmember "a1" },
-    { type5arg_adapter, 0, "3", inbytecode "8 237 10" anonymousmember "a1" },
-    { type6arg_adapter, 0, "35", inbytecode "8 236 10" anonymousmember "a1" },
-    { type7arg_adapter, 0, "2", inbytecode "8 236 10" anonymousmember "a1" },
-    { type9arg_adapter, 0, "1", inbytecode "8 148 10" anonymousmember "10 a1" },
-    { type9arg_adapter, 0, "23456", inbytecode "10 a1" },
+    { type2arg_adapter, 0, "1", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { type5arg_adapter, 0, "1", inbytecode bc_define(deqxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { type6arg_adapter, 0, "1", inbytecode bc_define(defxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { type5arg_adapter, 0, "3", inbytecode bc_define(deqxxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { type6arg_adapter, 0, "35", inbytecode bc_define(defxxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { type7arg_adapter, 0, "2", inbytecode bc_define(defxxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { type9arg_adapter, 0, "1", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bc(search_member) bcArg(1) },
+    { type9arg_adapter, 0, "23456", inbytecode bc(search_member) bcArg(1) },
     
-    { type1arg_adapter, 0, "0", inbytecode "a1 0" },
-    { type2arg_adapter, 0, "0", inbytecode "8 148 10" anonymousmember "a1 0" },
-    { type5arg_adapter, 0, "0", inbytecode "8 173 10" anonymousmember "a1 0" },
-    { type6arg_adapter, 0, "0", inbytecode "8 172 10" anonymousmember "a1 0" },
-    { type9arg_adapter, 0, "0", inbytecode "8 148 10" anonymousmember "10 a1 0" },
+    { type1arg_adapter, 0, "0", inbytecode bcArg(1) bc(end_of_script) },
+    { type2arg_adapter, 0, "0", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bcArg(1) bc(end_of_script) },
+    { type5arg_adapter, 0, "0", inbytecode bc_define(deqxFlags) bc(search_member) anonymousmember bcArg(1) bc(end_of_script) },
+    { type6arg_adapter, 0, "0", inbytecode bc_define(defxFlags) bc(search_member) anonymousmember bcArg(1) bc(end_of_script) },
+    { type9arg_adapter, 0, "0", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bc(search_member) bcArg(1) bc(end_of_script) },
     
     
         // *************************************************************************************
@@ -248,7 +263,9 @@ commandTokenType cicadaLanguage[] = {
     { "print (" type1arg ")", stepVarLevel, "1", "cicadaLibraryFunction#7(" arg1 ")" },
     { "read_string (" type1arg ")", stepVarLevel, "1", "cicadaLibraryFunction#8(" arg1 ")" },
     { "print_string (" type1arg ")", stepVarLevel, "1", "cicadaLibraryFunction#9(" arg1 ")" },
-    { "trap (" type1arg ")", stepVarLevel, "1456", inbytecode "7 54 10 8 204 10" anonymousmember "57 a1 0" },   // trap() is special
+    { "trap (" type1arg ")", stepVarLevel, "1456", inbytecode bc(built_in_function) bc_constant_int(10)
+                bc_define(defcxxFlags) bc(search_member) anonymousmember
+                bc(code_block) bcArg(1) bc(end_of_script) },   // trap() is special
     { "throw (" type1arg ")", stepVarLevel, "1", "cicadaLibraryFunction#11(" arg1 ")" },
     { "top (" type1arg ")", stepVarLevel, "456", "cicadaLibraryFunction#12(" arg1 ")" },
     { "size (" type1arg ")", stepVarLevel, "456", "cicadaLibraryFunction#13(" arg1 ")" },

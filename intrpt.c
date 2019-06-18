@@ -691,7 +691,8 @@ void passDataView(view *theView, void *ptrHandle, void *infoHandle)
     rtrn = defragmentLinkedList(&(theVar->mem.data));
     if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
 
-    if (theVar->mem.data.elementNum == 0)  **(char ***) ptrHandle = NULL;
+    if (theView->offset == theVar->mem.data.elementNum)  
+        **(char ***) ptrHandle = ((char *) theVar->mem.data.memory) + sublistHeaderSize;
     else  **(char ***) ptrHandle = (char *) element(&(theVar->mem.data), theView->offset+1);
     (*(arg_info **) infoHandle)->argType = theVar->type;
     (*(arg_info **) infoHandle)->argIndices = theView->width;
@@ -730,7 +731,7 @@ void passString(view *theView, ccInt stringDummyIndex, void *ptrHandle, void *in
             rtrn = addMemory(theStringWindow, theStringWindow->width, theStringWindow->width-theStringWindow->variable_ptr->instances);
         if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
         
-        stringListCopy[stringIndex-1] = *theStringLL;
+        stringListCopy[stringIndex-theView->offset-1] = *theStringLL;
     }
     
     **(char ***) ptrHandle = (char *) stringListCopy;
@@ -763,7 +764,7 @@ void fixString(view *theView, ccInt stringDummyIndex, void *ptrHandle, void *inf
         member *theStringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
         linkedlist *theStringLL = &(theStringMember->memberWindow->variable_ptr->mem.data);
         
-        *theStringLL = stringListCopy[stringIndex-1];
+        *theStringLL = stringListCopy[stringIndex-theView->offset-1];
         
         theStringMember->indices = theStringLL->elementNum;
         theStringMember->memberWindow->width = theStringLL->elementNum;

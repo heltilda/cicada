@@ -519,9 +519,12 @@ void cclib_transform()
         tempString = &(tempStringWindow->variable_ptr->mem.data);
         rtrn = defragmentLinkedList(tempString);
         if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
-        if (tempStringWindow->width > 0)  {
+        
+        *lastArgLengths[loopArg-4] = tempStringWindow->width;
+        if (tempStringWindow->width == 0)  {
+            *lastArgs[loopArg-4] = (char *) element(tempString, 0);     }
+        else  {
             *lastArgs[loopArg-4] = (char *) element(tempString, tempStringWindow->offset+1);
-            *lastArgLengths[loopArg-4] = tempStringWindow->width;
     }}  }
     
     if (opCharNum != NULL)  {
@@ -529,9 +532,10 @@ void cclib_transform()
         if (inputStringWindow->width != opCharNumLength)  {  setError(out_of_range_err, pcCodePtr-1);  return;  }
         for (loopCodeWord = 0; loopCodeWord < opCharNumLength/sizeof(ccInt); loopCodeWord++)  {
         if ((opCharNum[loopCodeWord] < 1) || (opCharNum[loopCodeWord] > sourceCodeLength))  {
+        if (sourceCodeLength > 0)  {            // even a blank script has an end-of-file token --> char #1 
             setError(out_of_range_err, pcCodePtr-1);
             return;
-    }   }}
+    }   }}}
     
     else if (sourceCode != NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
     

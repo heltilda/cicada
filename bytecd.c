@@ -266,7 +266,7 @@ void _def_general()
     view sourceView, destView, holdThatView, holdDestView, searchViewToReturn;
     code_ref *loopCodeRef;
     linkedlist *theCodeList = NULL;
-    step_params holdPath;
+    step_params destPath;
     void *toCopy = NULL;
     
     
@@ -311,7 +311,7 @@ void _def_general()
         holdDestView = searchView;
         holdCodeNumber = codeNumber;
         if (holdDestView.windowPtr != NULL)  refWindow(holdDestView.windowPtr);
-        holdPath = GL_Path;        // important -- the last step will not be taken
+        destPath = GL_Path;        // important -- the last step will not be taken
         if (GL_Path.stemMember != NULL)  holdMemberID = GL_Path.stemMember->memberID;
         else  holdMemberID = 0;
         
@@ -325,27 +325,27 @@ void _def_general()
         
             // fix the target member if that's broken
         
-        if (holdPath.stemMember != NULL)  {
+        if (destPath.stemMember != NULL)  {
             ccBool linkBroken = ccTrue;
-            variable *pathStemVar = holdPath.stemView.windowPtr->variable_ptr;
-            if (holdPath.stemMemberNumber <= pathStemVar->mem.members.elementNum)  {
-            if ((LL_member(pathStemVar, holdPath.stemMemberNumber) == holdPath.stemMember)
-                        && (holdPath.stemMember->memberID == holdMemberID))  {
+            variable *pathStemVar = destPath.stemView.windowPtr->variable_ptr;
+            if (destPath.stemMemberNumber <= pathStemVar->mem.members.elementNum)  {
+            if ((LL_member(pathStemVar, destPath.stemMemberNumber) == destPath.stemMember)
+                        && (destPath.stemMember->memberID == holdMemberID))  {
                 linkBroken = ccFalse;
             }}
             
             if (linkBroken)  {
                 rtrn = findMemberID(pathStemVar, holdMemberID,
-                                &holdPath.stemMember, &holdPath.stemMemberNumber, canAddMembers, isHiddenMember);
+                                &destPath.stemMember, &destPath.stemMemberNumber, canAddMembers, isHiddenMember);
                 if (rtrn != passed)  setError(rtrn, subjectCommand);
         }   }
         
         
             // restore the target-variable path info
         
-        GL_Path = holdPath;
+        GL_Path = destPath;
         sourceView = searchView;
-        searchView = holdPath.stemView;
+        searchView = destPath.stemView;
         if (holdDestView.windowPtr != NULL)  {
             derefWindow(&(holdDestView.windowPtr));
             if (*(searchView.windowPtr->variable_ptr->references) == 0)  return;   }
@@ -630,7 +630,7 @@ void _def_general()
             // store important info; make sure we don't crash if we delete our destination variable from under our feet
         
         destView = searchView;
-        holdPath = GL_Path;
+        destPath = GL_Path;
         holdThatView = thatView;
         holdCodeNumber = codeNumber;
         thatView = searchView;
@@ -650,7 +650,7 @@ void _def_general()
         thatView = holdThatView;
         sourceView = searchView;
         searchView = destView;
-        GL_Path = holdPath;
+        GL_Path = destPath;
         codeNumber = holdCodeNumber;
         
         derefWindow(&(holdDestView.windowPtr));
@@ -942,7 +942,7 @@ void updateType(linkedlist *destLL, ccInt *sourceType, ccInt *eventualSourceType
 void _forced_equate()
 {
     view sourceView, holdThatView, destView;
-    step_params holdPath;
+    step_params destPath;
     void *objectCopy = NULL, *stringPtr;
     ccInt sourceDataSize = 0, destDataSize = 0, sourceStringSize = no_string, destStringSize = no_string;
     ccInt sourceType, holdCodeNumber;
@@ -966,7 +966,7 @@ void _forced_equate()
     destView = searchView;
     refWindow(destView.windowPtr);
     
-    holdPath = GL_Path;
+    destPath = GL_Path;
     holdCodeNumber = codeNumber;
     
     
@@ -1034,16 +1034,16 @@ void _forced_equate()
         
                       // zero indices in source -- hard to deal with, so just throw an error
         
-        if (GL_Path.stemView.width == 0)  setError(unequal_data_size_err, pcCodePtr-1);
-        else if (holdPath.stemMember == NULL)  setError(undefined_member_err, pcCodePtr-1);
+        if (destPath.stemView.width == 0)  setError(unequal_data_size_err, pcCodePtr-1);
+        else if (destPath.stemMember == NULL)  setError(undefined_member_err, pcCodePtr-1);
         
         
             // if [*] was present and current top of that list is zero, then size it to 1 so we can measure its byte-size per index
         
-        if ((canResizeDestination) && (holdPath.stemMember->indices == 0) && (GL_Path.stemView.width > 0) && (errCode == passed))     {        
-            resizeMember(holdPath.stemMember, holdPath.stemView.width, 1);
+        if ((canResizeDestination) && (destPath.stemMember->indices == 0) && (GL_Path.stemView.width > 0) && (errCode == passed))     {        
+            resizeMember(destPath.stemMember, destPath.stemView.width, 1);
             if (errCode == passed)  {
-                searchView.width = GL_Path.stemView.width;
+                searchView.width = destPath.stemView.width;
                 sizeView(&searchView, &destDataSize, &destStringSize);
                 resizedFromZero = ccTrue;
         }   }
@@ -1054,16 +1054,15 @@ void _forced_equate()
         if (errCode == passed)  {
         if (((sourceDataSize > destDataSize) && (destStringSize == no_string)) || (sourceDataSize < destDataSize))  {
             if ((destDataSize > 0) && (canResizeDestination) && 
-                    ( (destStringSize != no_string) || (sourceDataSize % (destDataSize/holdPath.stemMember->indices) == 0) ))  {
-                ccInt formerIndices = holdPath.stemMember->indices; 
-                resizeMember(holdPath.stemMember, holdPath.stemView.width,     // this also rescales seachView.width
-                                                        sourceDataSize/(destDataSize/holdPath.stemMember->indices));
-                destDataSize = (holdPath.stemMember->indices*destDataSize)/formerIndices;         }
+                    ( (destStringSize != no_string) || (sourceDataSize % (destDataSize/destPath.stemMember->indices) == 0) ))  {
+                resizeMember(destPath.stemMember, destPath.stemView.width,     // this also rescales seachView.width
+                                                        sourceDataSize/(destDataSize/destPath.stemMember->indices));
+                destDataSize = sourceDataSize;         }
             
             
                 // either we can't resize, or we tried and the dest. variable is still size-0 so there's no hope
             
-            else if (resizedFromZero)  resizeMember(holdPath.stemMember, holdPath.stemView.width, 0);
+            else if (resizedFromZero)  resizeMember(destPath.stemMember, destPath.stemView.width, 0);
     }   }}
     
     if (destStringSize != no_string)  {
@@ -1081,7 +1080,7 @@ void _forced_equate()
     
     if (objectCopy != NULL)  free(objectCopy);
     
-    GL_Path = holdPath;
+    GL_Path = destPath;
     
     GL_Object.type = var_type;
     GL_Object.codeList = &(searchView.windowPtr->variable_ptr->codeList);
@@ -1213,12 +1212,14 @@ void sticsStep(ccBool allowAddMember)
     
         // special case:  allow us to step into 0 indices of a size-0 array
     
-    if ((firstIndex == 1) && (GL_Path.indices == 0) && (searchView.windowPtr->variable_ptr->type == array_type))  {
+    if ((GL_Path.indices == 0) && (searchView.windowPtr->variable_ptr->type == array_type))  {
         GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, 1);
-        GL_Path.stemMemberNumber = 1;
-        GL_Path.offset = 0;
-        
-        return;         }
+        if ((firstIndex >= 1) && (lastIndex <= GL_Path.stemMember->indices))  {
+            GL_Path.stemMemberNumber = 1;
+            GL_Path.offset = firstIndex - 1;
+            
+            return;
+    }   }
     
     
         // otherwise find the first and last indices, and make sure they're in the same member
@@ -1969,10 +1970,10 @@ void _sub_code()
         
         numIndices = 1;
         if (stemPath != NULL)  {
-            if (searchView.windowPtr->width % stemPath->jamb->width != 0)  {  setError(mismatched_indices_err, pcCodePtr-1);  return;  }
+            if (searchView.windowPtr->width % stemPath->jamb->width != 0)
+                {  setError(mismatched_indices_err, pcCodePtr-1);  return;  }
             numIndices = searchView.windowPtr->width / stemPath->jamb->width;       }
         
-//        rtrn = drawPath(loopPath, searchView.windowPtr, stemPath, GL_Path.stemMember->indices, PCCodeRef.PLL_index);
         rtrn = drawPath(loopPath, searchView.windowPtr, stemPath, numIndices, PCCodeRef.PLL_index);  // in case GL_P.sM == NULL 
         if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
         
@@ -2098,6 +2099,7 @@ void _parent_var()
     searchPath *searchPosition = pcSearchPath;
     
     pcCodePtr--;
+    searchView.width = baseView.width;          // in case the first stem is NULL
     do  {
         searchView.windowPtr = searchPosition->jamb;
         if (searchPosition->stemIndices == 0)  {
@@ -2111,7 +2113,7 @@ void _parent_var()
         searchPosition = searchPosition->stem;
         if (searchPosition == NULL)  {  setError(no_parent_err, pcCodePtr-1);  return;  }
         pcCodePtr++;
-    }  while (*pcCodePtr == parent_var);
+    }  while (*pcCodePtr == parent_variable);
     
     searchView.windowPtr = searchPosition->jamb;
     searchView.multipleIndices = ccFalse;
@@ -2370,7 +2372,7 @@ void skipNoArgs()  {  }
 void skipOneArg()  {  callSkipFunction();  }
 void skipTwoArgs()  {  callSkipFunction();  callSkipFunction();  }
 void skipThreeArgs() {  callSkipFunction();  callSkipFunction();  callSkipFunction();  }
-void skipBackArgs() {  while (*pcCodePtr == parent_var)  pcCodePtr++;  }
+void skipBackArgs() {  while (*pcCodePtr == parent_variable)  pcCodePtr++;  }
 
 void skipInt()  {  pcCodePtr++;  }
 void skipDouble()  {  pcCodePtr += sizeof(ccFloat)/sizeof(ccInt);  }
@@ -2442,7 +2444,7 @@ void checkBytecodeSentences()
 {
     ccInt rtrn;
     
-    while (*pcCodePtr != null_cmd)   {
+    while (*pcCodePtr != end_of_script)   {
         
         
             // keep track of our sentence beginnings for checkBytecode()
@@ -2473,8 +2475,8 @@ void checkBytecodeSentences()
 
 void checkCommand(ccInt theCmd)      // checks bread-and-butter operators
 {
-    if (theCmd == def_general)  pcCodePtr++;
-    if ((theCmd == code_number) || (theCmd == sub_code))  {
+    if (theCmd == define_equate)  pcCodePtr++;
+    if ((theCmd == code_number) || (theCmd == substitute_code))  {
         if ((rightArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(rightArgs[theCmd]);
         if ((leftArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(leftArgs[theCmd]);     }
     else  {
@@ -2484,7 +2486,7 @@ void checkCommand(ccInt theCmd)      // checks bread-and-butter operators
 
 void checkBackCommand(ccInt theCmd)
 {
-    while (*pcCodePtr == parent_var)  {
+    while (*pcCodePtr == parent_variable)  {
         pcCodePtr++;
         if (pcCodePtr >= endCodePtr)  {  pcCodePtr = endCodePtr;  setError(code_overflow_err, pcCodePtr);  }        }
 }
@@ -2555,11 +2557,11 @@ void checkJump(ccInt theCmd)     // cheks conditional/unconditional jumps
 
 void checkIndices(ccInt theCmd)     // checks array operators [] of various sorts
 {
-    if (theCmd == array_cmd)  checkBytecodeArg(data_arg);
+    if (theCmd == type_array)  checkBytecodeArg(data_arg);
     if ((leftArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(leftArgs[theCmd]);
     if ((rightArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(rightArgs[theCmd]);
     
-    if (theCmd != array_cmd)  {
+    if (theCmd != type_array)  {
         checkBytecodeArg(data_arg);
         if (((theCmd == step_to_indices) || (theCmd == insert_indices)) && (errCode == passed))  {
             checkBytecodeArg(data_arg);     }   }
@@ -2698,7 +2700,7 @@ void beginExecution(code_ref *theCode, ccBool ifStorePC, ccInt newPCOffset, ccIn
 
 void runBytecode()
 {
-    while (*pcCodePtr != null_cmd)   {
+    while (*pcCodePtr != end_of_script)   {
         callSentenceStartFunction();
         if (errCode != passed)  return;         }
     
@@ -2711,7 +2713,7 @@ void runBytecode()
 
 void runSkipMode(ccInt codesToSkip)
 {
-    while (*pcCodePtr != null_cmd)  {
+    while (*pcCodePtr != end_of_script)  {
         if ((*pcCodePtr == code_marker) && (codesToSkip != 0))    {
             codesToSkip--;
             if (codesToSkip == 0)  return;    }
@@ -2805,7 +2807,7 @@ void callCodeFunction()
     
     callFunction(codeJumpTable);
     
-    if ((*commandPtr != array_cmd) && (*commandPtr != def_general))  {
+    if ((*commandPtr != type_array) && (*commandPtr != define_equate))  {
         resizeLinkedList(&(GL_Object.arrayDimList), 0, ccFalse);        }
 }
 
