@@ -79,7 +79,7 @@ commandTokenType cicadaLanguage[] = {
     { "&" commentarg "\n", 0, "", removedexpression },
     { "|*" commentarg "*|", 0, "", removedexpression },
     
-    { type2arg "~", sentenceLevel, "1", inbytecode bcArg(1) },
+    { type6arg "~", sentenceLevel, "1", inbytecode bcArg(1) },
     
     
         // Flow control and function calling

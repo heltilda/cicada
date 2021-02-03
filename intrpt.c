@@ -243,10 +243,9 @@ void doCopyCompare(view *sourceView, view *destView,
             view nextSourceView = *sourceView, nextDestView = *destView;
             
             if (destMemberNumber > destVar->mem.members.elementNum)  setError(type_mismatch_err, pcCodePtr-1);
-//            else if (loopSourceMember->indices != loopDestMember->indices)  setError(type_mismatch_err, pcCodePtr-1);
             if (errCode != passed)  return;
             
-            if (sourceType == destType)  {
+            if ((sourceType == destType) && (sourceVar->eventualType == destVar->eventualType))  {
                 sourceWidth = loopSourceMember->indices;
                 destWidth = loopDestMember->indices;        }
             else  {
@@ -324,14 +323,15 @@ void doCopyCompare(view *sourceView, view *destView,
                     sublistHeader *sourceLLsublist = sourceLL->memory, *destLLsublist = destLL->memory;
                     ccInt sourceSublistLocalIndex = 0, destSublistLocalIndex = 0;
                     
-                    ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, sourceView->offset),
-                                skipElements(destLL, &destLLsublist, &destSublistLocalIndex, destView->offset));
-                    if (errCode == passed)  {
-                    for (indexCounter = 2; indexCounter <= sourceView->width; indexCounter++)  {
-                        ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, 1),
-                                    skipElements(destLL, &destLLsublist, &destSublistLocalIndex, 1)  );
-                        if (errCode != passed)  break;
-        }   }   }   }}
+                    if (sourceView->width > 0)  {       // skipElements() will crash if sourceLL or destLL has 0 elements
+                        ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, sourceView->offset),
+                                    skipElements(destLL, &destLLsublist, &destSublistLocalIndex, destView->offset));
+                        if (errCode == passed)  {
+                        for (indexCounter = 2; indexCounter <= sourceView->width; indexCounter++)  {
+                            ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, 1),
+                                        skipElements(destLL, &destLLsublist, &destSublistLocalIndex, 1)  );
+                            if (errCode != passed)  break;
+        }   }   }   }   }}
     }
 }
 

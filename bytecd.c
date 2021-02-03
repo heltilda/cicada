@@ -701,6 +701,9 @@ void _def_general()
                             && (sourceWidth % GL_Path.stemView.width == 0) && (GL_Path.stemMember != NULL))     {
                 
                 
+                if (searchView.width != searchView.windowPtr->variable_ptr->instances)  setError(incomplete_variable_err, subjectCommand);
+                
+                
                     // if we're reading from the same window we're writing to (for example, myvar[*] = myvar[<2, 5>]),
                     // then just resize the window instead of copying anything -- this avoids conflicts 
                 
@@ -1429,13 +1432,14 @@ void masterInsert(ccBool multipleIndices, ccBool allowAddMember)
         // 2nd condition on next line:  a([+top(a)+1]) is legal
     
     if ((errCode == invalid_index_err) && (firstIndex == GL_Path.offset))   {
+        errCode = passed;
         if (firstIndex == 1)  {      // if all indices have been deleted, fix the error as long as there is a member to add to
-            GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, 1);
-            GL_Path.stemMemberNumber = 1;
-            GL_Path.offset = 0;
-            errCode = passed;     }
+            if (searchView.windowPtr->variable_ptr->type == string_type)
+                GL_Path.stemMemberNumber = searchView.offset+1;
+            else  GL_Path.stemMemberNumber = 1;
+            GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, GL_Path.stemMemberNumber);
+            GL_Path.offset = 0;     }
         else  {
-            errCode = passed;
             rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, firstIndex-1, &(GL_Path.stemMember),
                                                                         &(GL_Path.stemMemberNumber), &(GL_Path.offset), ccFalse);
             if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }

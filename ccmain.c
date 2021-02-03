@@ -36,7 +36,8 @@
 // CicadaTest_ON (in ccmain.h) should always be commented out
 
 #ifdef CicadaTest_ON
-#include "Test/Test.c"
+extern void TestCicada(void);
+extern void test_MM_CountRefs(void);
 #endif
 
 
