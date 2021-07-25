@@ -20,7 +20,7 @@
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; f(2, pi)
+<br>&nbsp;&nbsp;&nbsp; f(2, pi, { 1, int })
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
@@ -38,13 +38,15 @@
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;pi
 
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;{ 1, int }
+
 <br>&nbsp;&nbsp;&nbsp; )
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
-<P>  which shows that <tt>2</tt> and <tt>pi</tt> are somehow valid commands.  How can this be?
+<P>  which shows that <tt>2</tt>, <tt>pi</tt>, and <tt>{ 1, int }</tt> are somehow all valid commands.  How can this be?
 
 <P> Let&rsquo;s draw an analogy.  Back in the cave man days, there were probably a lot of sentences like
 
@@ -70,9 +72,9 @@
 
 <P>
 
-<P>  In other words, if a sentence only contains an object, the cave man&rsquo;s brain fills it out by adding some stock subject and verb.  Cicada works exactly the same way:  the stock &lsquo;subjects and verbs&rsquo; to use in different situations are the so-called adapters defined in <tt>cicada.c</tt>.  Each adapter allows the compiler to convert some bare expression (analogous to the object of a sentence) to another type (perhaps a &lsquo;sentence&rsquo; type), at the price of adding a few bytecode words.  This prevents a type-mismatch error from being thrown by incomplete expressions.
+<P>  In other words, if a sentence only contains an object, the cave man&rsquo;s brain fills it out by adding some stock subject and verb.  Cicada works exactly the same way:  the stock subjects and verbs to use in different situations are the so-called adapters defined in <tt>cicada.c</tt>.  Each adapter allows the compiler to convert some bare expression (e.g. the object of a sentence) to another type (a full sentence) by throwing in a few extra bytecode words.
 
-<P> For example, when the user enters the command &lsquo;<tt>2</tt>&rsquo;, the compiler rolls its eyes and reaches for the type-mismatch error button, because it expected a complete command (a type 1 expression) whereas an <tt>int_constant</tt> can only be construed as types 4, 5 or 6 based on its return-types string in the <tt>cicadaLanguage[]</tt> array.  But then Cicada notices an adapter that works on type-5 objects (called <tt>type5arg_adapter</tt> in <tt>cicada.c</tt>), and moreover that adapter&rsquo;s return-types string includes a &ldquo;1&rdquo; which is what we want.  So the adapter adds its code and the error never happens.  Here is the adapter&rsquo;s bytecode:
+<P> When the user enters the command &lsquo;<tt>2</tt>&rsquo;, the compiler rolls its eyes and reaches for the type-mismatch error button, because it a complete command is a type 1 expression whereas an <tt>int_constant</tt> can only be construed as types 4, 5 or 6 based on its return-types string in the <tt>cicadaLanguage[]</tt> array.  But then Cicada notices an adapter that works on type-5 objects (named <tt>type5arg_adapter</tt> in <tt>cicada.c</tt>), and moreover that adapter&rsquo;s return-types string includes a &ldquo;1&rdquo; which is what we want.  So the adapter adds its code and the error never happens.  Here is the adapter&rsquo;s bytecode:
 
 <P> 
 
@@ -84,7 +86,7 @@
 
 <P>
 
-<P>  The expression to adapt is considered the &lsquo;argument&rsquo; and goes in place of <tt>a1</tt>.  Looking at <tt>cicada.h</tt> or the reference section, we could figure out that this adapter turns our expression into something looking like
+<P>  The expression to adapt is considered the argument and goes in place of <tt>a1</tt>.  Looking at <tt>cicada.h</tt> or the reference section, we could figure out that this adapter turns our expression into something looking like
 
 <P> 
 
@@ -96,7 +98,9 @@
 
 <P>
 
-<P>  except that the define-equate operator has slightly different define flags (173 instead of 47).  Likewise the expression &lsquo;<tt>pi</tt>&rsquo; requires a different adapter that looks like
+<P>  except that the define-equate operator has slightly different define flags (173 instead of 47).
+
+<P> Other types of objects use different adapters when they appear by themselves.  Variables use an adapter that creates an alias:  for example the expression &lsquo;<tt>pi</tt>&rsquo; becomes something like
 
 <P> 
 
@@ -108,22 +112,40 @@
 
 <P>
 
-<P>  though again with slightly different flags on the aliasing operator.  A third adapter with a define-like operator creates composite objects, and allows statements like <tt>myVar = { 1, false }</tt>.
+<P>  though again using slightly different flags from a normal aliasing operator.  Finally, type-objects are assigned turned into full commands using a third adapter that adds a define-like operator.  Thus &lsquo;<tt>{ 1, int }</tt>&rsquo; turns into a modified version of
 
-<P> The <tt>anonymousmember</tt> keyword is a unique member &lsquo;name&rsquo;, which is inexpressible by any user.  (The reason is that members the user types are translated into positive member ID numbers in bytecode, whereas anonymous members are assigned sequential negative ID numbers.)  Thus the members we represented as <tt>var1</tt> and <tt>var2</tt> in the last paragraph really don&rsquo;t have those names or any other, so they can only be accessed by index using the bracket operators <tt>[...]</tt>.  (Or by &lsquo;name&rsquo;/ID number if we are willing to write our own bytecode.)
+<P> 
 
-<P> Incidentally, anonymous members are also used in ordinary function calls, and in this case those members are also &lsquo;hidden&rsquo; because their define operators have the hidden-member flag set.  The hidden flag causes these members to be invisible to the array-index operators:  they can only be accessed by &lsquo;name&rsquo; (a.k.a. ID number).  The variables behind these members become the <tt>args</tt> variables when functions are run.  If it helps, think of a function call <tt>f(2, pi)</tt> as if the syntax were <tt>f{2, pi}</tt>, having braces denoting the argument variable.
+<P><P><tt> 
 
-<P> The exotic define operator flags used by function calls are listed in Table 3.  The rarest bird in this collection, abbreviated <tt>def-c**</tt> (&lsquo;hidden-define-minus-constructor&rsquo;), lives exclusively in the function call of a <tt>trap()</tt> function, defining the <tt>args</tt> variable <i>without running its constructor</i> so that <tt>trap()</tt> can do this in a controlled way.
+<br>&nbsp;&nbsp;&nbsp; var3 :: { 1, int }
 
-<P> The adapters consistently set the unjammable flag of their define/equate-at operators, preventing them from jamming arrays.  For example, if we call <tt>f(myArray[&lt;2, 4&gt;])</tt> we will still be able to resize <tt>myArray</tt> in the future, and the broken link will be refreshed next time that call to <tt>f()</tt> is made because that reruns the argument constructor.  (In sets this can cause a problem, because the set&rsquo;s constructor is not usually rerun after an array resize.  We can get around this by manually aliasing a member to certain array indices.)  Also, the update-members flag is cleared by all of the adapters, so that the anonymous member can be re-assigned to a variable of a different type (for example if between two iterations of the command <tt>f(a)</tt> member &lsquo;<tt>a</tt>&rsquo; gets removed and redefined).
+<br>&nbsp;&nbsp;&nbsp; </tt>
 
-<P> One last type of adapter called <tt>noarg_adapter</tt> replaces missing expressions altogether.  These adapters are necessary to allow blank scripts, or expressions like &lsquo;<tt>,,</tt>&rsquo; where no command appeared between the commas, since each comma expects a sentence-type argument.  A final no-argument-adapter allows a script to contain a <tt>return</tt> command without a variable.
+<P>
 
-<P> Notice that the final set of adapters in <tt>cicada.c/cpp</tt> is used to convert a sentences-type expression (type 1) to a script expression (type 0), by adding a null bytecode word at the end.<P>
+<P>  or more precisely:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; var3 :: { var3a := 1, var3b :: int }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> The <tt>anonymousmember</tt> keyword produces a unique member &lsquo;name&rsquo; that is inexpressible by the user.  (Names become ID numbers in the bytecode:  user-typed names become positive ID numbers, whereas anonymous members get assigned sequential negative ID numbers as they are encountered.  The namespace consists of both the name-ID list and the negative ID counter.)  Thus <tt>var1</tt>, <tt>var2</tt>, etc. in the last paragraph don&rsquo;t really don&rsquo;t have those names or any other, so function <tt>f()</tt> will access those members using the bracket operators (<tt>args[1]</tt>, <tt>args[2]</tt>, etc.).  It&rsquo;s technically possible to write bytecode having hardcoded negative IDs to access anonymous members, but that&rsquo;s a last resort usually used for anonymous members that are also, in the lingo, hidden.
+
+<P> Hidden members are invisible to the array-index operators.  In bytecode-speak, these are produced using define operators whose hidden-member flags are set (flag 6 in Table 3).  Members that are both hidden and anonymous get sprinkled discreetly around the code for a variety of reasons, but there are two situation where the user explicitly interacts with the variable behind an anonymous hidden member.  In the first situation, a function&rsquo;s arguments lie within a hidden member in the calling space, but within the function itself are referenced directly by the pseudo-member called <tt>args</tt>.  (A better notation would have been to use braces for function calls as in <tt>f{x, y}</tt>, in order to show the hidden member explicitly.).  The rarest bird of all the hidden define operators, abbreviated <tt>def-c**</tt> (&lsquo;hidden-define-minus-constructor&rsquo;), lives exclusively in the function call of a <tt>trap()</tt> function, defining the <tt>args</tt> variable <i>without running its constructor</i> so that <tt>trap()</tt> can do this in a controlled way. The second notable situation is the return value of a function, whose variable lies behind an anonymous hidden member in the function space.
+
+<P> The other define-operator flag used by (in this case all) adapters is the unjammable flag (flag 7; see Table 3), which prevents members from jamming arrays.  Consider the function call <tt>f(myArray[&lt;2, 4&gt;])</tt>, which produces a hidden <tt>args</tt> variable consisting of <tt>{ myArray[&lt;2, 4&gt;] }</tt>, which compiles to something like <tt>{ anon1 := @myArray[&lt;2, 4&gt;] }</tt>.  Ordinarily <tt>anon1[]</tt> would jam <tt>myArray[]</tt>, and the actual array could not be resized from either member since doing so would also force a resize of the other.  But in this case <tt>anon1</tt> was defined as unjammable, as in unjam-able (can be unjammed), so any array resize (e.g. <tt>myArray[+3]</tt>) is allowed because the now-out-of-date <tt>anon1</tt> gets de-aliased rather than causing a jammed-member error.  That&rsquo;s OK because the alias will be restored the next time that same function call happens, since the argument constructor will be rerun.  (However there can be a problem in other contexts where the constructor is not rerun each time it is used, for example in sets containing aliases to array subsets.  Use hard-coded aliases for these cases.)  As an aside, these adapters also clear their update-member-type flags (flag 1), so that their anonymous members can be re-assigned to variables of different type (in case, for example, between two iterations of the command <tt>f(a)</tt> member &lsquo;<tt>a</tt>&rsquo; gets removed and redefined).
+
+<P> One last type of adapter called <tt>noarg_adapter</tt> replaces missing expressions altogether.  These adapters are necessary to allow blank scripts, or situations like two consecutive end-of-lines (command-conjoining operators) which lack a command between them to conjoin.  Another no-argument-adapter allows a script to contain a <tt>return</tt> command without a variable.  The final set of adapters in <tt>cicada.c</tt> is used to convert a sentences-type expression (type 1) to a script expression (type 0), by adding a null bytecode word at the end.<P>
 
 <P>  
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_421.html">Prev: <tt>define</tt> flags</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_43.html">Next: Custom-compiling within a script</a>
-</div><br><br><P>Last update: June 18, 2019
+</div><br><br><P>Last update: July 25, 2021

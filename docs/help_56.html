@@ -74,7 +74,7 @@
 <br><P><b><tt>call()</b></tt> can&rsquo;t find C function (#44)<P><P></b>
 <P>
 
-<P> A <tt>call()</tt> statement or <tt>$myCFunction()</tt> command was instructed to run a C/C++ function that does not seem to exist.  <tt>call()</tt> takes either a function name or a function ID.  If it is a name, a string corresponding to that name must appear in the <tt>UserFunctionSet</tt> array (in userfn.c/cpp).  If it is an ID, it must be on the interval 1-<i>N</i> (if there are <i>N</i> user-defined C/C++ functions).  Thus
+<P> A <tt>call()</tt> statement or <tt>$myCFunction()</tt> command was instructed to run a C/C++ function that does not seem to exist.  <tt>call()</tt> takes either a function name or a function ID.  If it is a name, a string corresponding to that name must appear in the <tt>UserFunctionSet</tt> array (in userfn.c).  If it is an ID, it must be on the interval 1-<i>N</i> (if there are <i>N</i> user-defined C/C++ functions).  Thus
 
 <P> 
 
@@ -641,7 +641,7 @@
 
 <P>  This warning is <i>not</i> caused by rounding-off errors:  for example, we can assign the value 1.9 to an integer variable, and Cicada will quietly round it off to 1 without raising any warning flag.
 
-<P> <tt>transform()</tt> can throw at out-of-range error (an actual error, not a warning) if some element of the character-positions list (optional 6th argument) is not within [1, <i>num_chars</i>].  It can also be caused by certain defective numbers passed to <tt>newCompiler()</tt>:  a negative number of commands or precedence levels (2nd/4th arguments); a precedence level outside of bounds; an operator direction other than <tt>l_to_r</tt> or <tt>r_to_l</tt>; or an argument number or jump-to number in the bytecode (e.g. &lsquo;<tt>a5</tt>&rsquo; or &lsquo;<tt>j4</tt>&rsquo;) beyond the number of arguments/jump positions (or outside the range 1-9).  Finally, this error can be thrown by the linked list routines if a nonexistent/nonsensical element number of a list is passed (although <tt>InsertElements()</tt> allows the insertion point to be one greater than the top element).  Remember that linked list indices begin at 1, not 0.<P>
+<P> <tt>transform()</tt> can throw at out-of-range error (an actual error, not a warning) if some element of the character-positions list (optional 6th argument) is not within [1, <i>num_chars</i>].  It can also be caused by certain defective numbers passed to <tt>setCompiler()</tt>:  a negative number of commands or precedence levels (2nd/4th arguments); a precedence level outside of bounds; an operator direction other than <tt>l_to_r</tt> or <tt>r_to_l</tt>; or an argument number or jump-to number in the bytecode (e.g. &lsquo;<tt>a5</tt>&rsquo; or &lsquo;<tt>j4</tt>&rsquo;) beyond the number of arguments/jump positions (or outside the range 1-9).  Finally, this error can be thrown by the linked list routines if a nonexistent/nonsensical element number of a list is passed (although <tt>InsertElements()</tt> allows the insertion point to be one greater than the top element).  Remember that linked list indices begin at 1, not 0.<P>
 
 <P> 
 
@@ -939,4 +939,4 @@
 
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_55.html">Prev: Linked list routines for handling Cicada strings in C</a> &nbsp;&nbsp;
-</div><br><br><P>Last update: June 18, 2019
+</div><br><br><P>Last update: July 25, 2021

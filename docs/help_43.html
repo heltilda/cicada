@@ -34,7 +34,7 @@
 
 <P>  Manual compilation and transformation is necessary when <tt>user.cicada</tt> has not been loaded, for example when running Cicada from the command prompt with a script-file argument.
 
-<P> Another situation where we will want to compile scripts manually is when we want to run a script that uses a <i>different syntax</i> from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  We don&rsquo;t want to change <tt>cicada.c</tt> because then none of the other scripts like <tt>start.cicada</tt> will work.  Instead we will need to use the <tt>newCompiler()</tt> function to process the user&rsquo;s input differently from our own scripts.  Here is an example, relying on language-constant definitions in <tt>user.cicada</tt>.
+<P> Another situation where we will want to compile scripts manually is when we want to run a script that uses a <i>different syntax</i> from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  In that case we won&rsquo;t want to change <tt>cicada.c</tt> since doing so would break our other scripts like <tt>start.cicada</tt>.  Instead we will use the <tt>setCompiler()</tt> function to process the user&rsquo;s input using a different syntax from that of our own scripts.  Here is an example, relying on language-constant definitions in <tt>user.cicada</tt>.
 
 <P> 
 
@@ -78,9 +78,9 @@
 
 <P>
 
-<P>  Notice how the two array arguments to <tt>newCompilerID()</tt> are exactly the same as the two arrays that specify the language in <tt>cicada.c/cpp</tt>.  For consistency, all of the constants used in the C file (such as <tt>int_constant</tt> and <tt>inbytecode</tt>) are also defined in <tt>user.cicada</tt>.  The main difference is that we have to use the <tt>cat()</tt> function to concatenate strings.  Also, make sure to define both arguments as arrays -- <tt>setCompiler()</tt> will not understand anything inside of curly braces.  As always, any script must have an overall type of 0, which in this case means that any valid script is an &lsquo;<tt>add</tt>&rsquo; command.
+<P>  Notice how the two array arguments to <tt>setCompiler()</tt> are exactly the same as the two arrays that specify the language in <tt>cicada.c</tt>.  For consistency, all of the constants used in the C file (such as <tt>int_constant</tt> and <tt>inbytecode</tt>) are also defined in <tt>user.cicada</tt>.  The main difference is that we have to use the <tt>cat()</tt> function to concatenate strings.  Also, make sure to define both arguments as arrays -- <tt>setCompiler()</tt> will not understand anything inside of curly braces.  As always, any script must have an overall type of 0.  In this primitive example the only possible valid script is an <tt>add</tt> command.
 
-<P> Cicada always opens with a single compiler -- compiler ID 1 -- so to switch back we can just type the command <tt>newCompiler(1)</tt>.  Calling <tt>newCompiler()</tt> with no arguments returns the ID of the current compiler, without changing which compiler is active.
+<P> Cicada always opens with a single compiler -- compiler ID 1 -- so to switch back just type <tt>setCompiler(1)</tt>.  Calling <tt>setCompiler()</tt> with no arguments returns the ID of the current compiler, without changing the active compiler.
 
 <P> Functions produced by different compilers live in different namespaces, because each compiler which keeps its own running tally of all member names it has encountered (and how many anonymous members have been made).  But the use of separate compilers does <i>not</i> prevent collisions of member names between these functions:  if anything switching compilers makes collisions more likely.  (Any new compiler member will assign member IDs starting from 1 and counting upwards, and that ID is the only thing Cicada sees when the function runs.)  To avoid problems, use <tt>transform()</tt>&rsquo;s ability to customize the search path so that the calling script is hidden from any transformed bytecode that it produces.
 
@@ -91,4 +91,4 @@
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_422.html">Prev: Adapters</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_5.html">Next: Reference</a>
-</div><br><br><P>Last update: June 18, 2019
+</div><br><br><P>Last update: July 25, 2021

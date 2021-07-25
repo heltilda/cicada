@@ -1695,7 +1695,7 @@ var3 =! var1   | OK, surprisingly!
 
 \subsection{Loops and \texttt{if} blocks} \index{flow control|(}
 
-Cicada has four commands for controlling the program flow:  \texttt{if} statements, \texttt{for} loops, and \texttt{while} and the related \texttt{do} loops.
+Cicada has five commands for controlling the program flow:  \texttt{if} statements, \texttt{for} and \verb$backfor$ loops, and \texttt{while} and the related \texttt{do} loops.
 
 
 \subsubsection{\texttt{if}} \index{if@\texttt{if}|(}
@@ -1804,6 +1804,21 @@ while counter <= 10-counter  do (
 \index{for@\texttt{for}|)}
 
 
+\subsubsection{\texttt{backfor}} \index{backfor@\texttt{backfor}|(}
+
+This is a \verb$for$ loop that counts backwards (since \verb$for$ does not have this capability).  For example,
+
+\begin{code} \begin{verbatim}
+counter :: int
+backfor counter in <1, 9>  print(counter, " ")
+\end{verbatim} \end{code}
+
+\noindent produces the output \verb$9 8 7 6 5 4 3 2 1$.
+
+\index{backfor@\texttt{backfor}|)}
+
+
+
 
 \subsubsection{\texttt{break}} \index{break equivalent|(}
 
@@ -1818,7 +1833,7 @@ There is no \verb#break# statement in Cicada.  But there is a way to jerry-rig s
 print("finished with counter = ", counter)
 \end{verbatim} \end{code}
 
-\noindent This works because the braces actually define a new composite variable, and the code inside the braces is actually running inside of this variable.  This causes problems in some cases.  If we define a member, that member will be inside of this variable, which was probably not intended.  The \verb#this# keyword refers to this newly-defined variable, while \verb#parent# now refers to the place we were before hitting the braces.  Also, if we had been running a function, we cannot escape this function using a \verb#return# statement within the bracketed code.  On the upside, we have a lot of latitude in choosing where to put the braces:  it doesn't have to escape from a loop, and if we do use them inside loops it does not have to be to the next-outermost \verb#for# or \verb#while#.\index{break equivalent|)}
+\noindent This works because the braces define a new composite variable, and the code inside the braces is actually running inside of this variable.  This hack causes problems in some cases.  If we define a member, that member will be inside of this variable, which was probably not intended.  The \verb#this# keyword refers to this newly-defined variable, while \verb#parent# now refers to the place we were before hitting the braces.  Also, if we had been running a function, we cannot escape this function using a \verb#return# statement within the bracketed code.  On the upside, we have a lot of latitude in choosing where to put the braces:  it doesn't have to escape from a loop, and if we do use them inside loops it doesn't have to fall out to the next-outermost \verb#for# or \verb#while#.\index{break equivalent|)}
 
 \index{flow control|)}
 
@@ -1831,7 +1846,7 @@ print("finished with counter = ", counter)
 
 \subsection{Sets} \index{sets|(}
 
-One object in Cicada that is not supported by C is the \emph{set}.  A set is like a bag of assorted objects---variables, functions, classes, even other sets---that are exist somewhere else except that they can also be found, magically, by reaching into the bag.  To define a set we write curly braces around a list of objects separated by commas (or end-of-lines).  Here is an example where each object is in several places.
+One object in Cicada that is not supported by C is the \emph{set}.  A set is basically a magical bag of assorted items---variables, functions, classes, even other sets---that also exist somewhere else.  To define a set we write curly braces around a list of objects separated by commas (or end-of-lines).  Here is an example where each object is in several places.
 
 \begin{code} \begin{verbatim}
 Alice :: Bob :: Christine :: Daniel :: Elan :: friend_of_mine
@@ -2831,7 +2846,7 @@ comp2 := comp1
 There's something missing in our scripts, and the easiest place to see this is in an ordinary function call:
 
 \begin{code} \begin{verbatim}
-f(2, pi)
+f(2, pi, { 1, int })
 \end{verbatim} \end{code}
 
 \noindent Realizing that commas are just ends-of-lines, we could write this
@@ -2840,10 +2855,11 @@ f(2, pi)
 f(
     2
     pi
+    { 1, int }
 )
 \end{verbatim} \end{code}
 
-\noindent which shows that \verb#2# and \verb#pi# are somehow valid commands.  How can this be?
+\noindent which shows that \verb#2#, \verb#pi#, and \verb#{ 1, int }# are somehow all valid commands.  How can this be?
 
 Let's draw an analogy.  Back in the cave man days, there were probably a lot of sentences like
 
@@ -2857,46 +2873,54 @@ rock
 [That which I want to draw your attention to] [is] the rock.
 \end{verbatim} \end{code}
 
-\noindent In other words, if a sentence only contains an object, the cave man's brain fills it out by adding some stock subject and verb.  Cicada works exactly the same way:  the stock `subjects and verbs' to use in different situations are the so-called adapters defined in \verb#cicada.c#.  Each adapter allows the compiler to convert some bare expression (analogous to the object of a sentence) to another type (perhaps a `sentence' type), at the price of adding a few bytecode words.  This prevents a type-mismatch error from being thrown by incomplete expressions.
+\noindent In other words, if a sentence only contains an object, the cave man's brain fills it out by adding some stock subject and verb.  Cicada works exactly the same way:  the stock subjects and verbs to use in different situations are the so-called adapters defined in \verb#cicada.c#.  Each adapter allows the compiler to convert some bare expression (e.g. the object of a sentence) to another type (a full sentence) by throwing in a few extra bytecode words.
 
-For example, when the user enters the command `\verb#2#', the compiler rolls its eyes and reaches for the type-mismatch error button, because it expected a complete command (a type 1 expression) whereas an \verb#int_constant# can only be construed as types 4, 5 or 6 based on its return-types string in the \verb#cicadaLanguage[]# array.  But then Cicada notices an adapter that works on type-5 objects (called \verb#type5arg_adapter# in \verb#cicada.c#), and moreover that adapter's return-types string includes a ``1" which is what we want.  So the adapter adds its code and the error never happens.  Here is the adapter's bytecode:
+When the user enters the command `\verb#2#', the compiler rolls its eyes and reaches for the type-mismatch error button, because it a complete command is a type 1 expression whereas an \verb#int_constant# can only be construed as types 4, 5 or 6 based on its return-types string in the \verb#cicadaLanguage[]# array.  But then Cicada notices an adapter that works on type-5 objects (named \verb#type5arg_adapter# in \verb#cicada.c#), and moreover that adapter's return-types string includes a ``1" which is what we want.  So the adapter adds its code and the error never happens.  Here is the adapter's bytecode:
 
 \begin{code} \begin{verbatim}
 inbytecode "8 173 10" anonymousmember "a1"
 \end{verbatim} \end{code}
 
-\noindent The expression to adapt is considered the `argument' and goes in place of \verb#a1#.  Looking at \verb#cicada.h# or the reference section, we could figure out that this adapter turns our expression into something looking like
+\noindent The expression to adapt is considered the argument and goes in place of \verb#a1#.  Looking at \verb#cicada.h# or the reference section, we could figure out that this adapter turns our expression into something looking like
 
 \begin{code} \begin{verbatim}
 var1 := 2
 \end{verbatim} \end{code}
 
-\noindent except that the define-equate operator has slightly different define flags (173 instead of 47).  Likewise the expression `\verb#pi#' requires a different adapter that looks like
+\noindent except that the define-equate operator has slightly different define flags (173 instead of 47).
+
+Other types of objects use different adapters when they appear by themselves.  Variables use an adapter that creates an alias:  for example the expression `\verb#pi#' becomes something like
 
 \begin{code} \begin{verbatim}
 var2 := @pi
 \end{verbatim} \end{code}
 
-\noindent though again with slightly different flags on the aliasing operator.  A third adapter with a define-like operator creates composite objects, and allows statements like \verb#myVar = { 1, false }#.
+\noindent though again using slightly different flags from a normal aliasing operator.  Finally, type-objects are assigned turned into full commands using a third adapter that adds a define-like operator.  Thus `\verb#{ 1, int }#' turns into a modified version of
 
-The \verb#anonymousmember# keyword is a unique member `name', which is inexpressible by any user.  (The reason is that members the user types are translated into positive member ID numbers in bytecode, whereas anonymous members are assigned sequential negative ID numbers.)  Thus the members we represented as \verb#var1# and \verb#var2# in the last paragraph really don't have those names or any other, so they can only be accessed by index using the bracket operators \verb#[...]#.  (Or by `name'/ID number if we are willing to write our own bytecode.)
+\begin{code} \begin{verbatim}
+var3 :: { 1, int }
+\end{verbatim} \end{code}
 
-Incidentally, anonymous members are also used in ordinary function calls, and in this case those members are also `hidden' because their define operators have the hidden-member flag set.  The hidden flag causes these members to be invisible to the array-index operators:  they can only be accessed by `name' (a.k.a. ID number).  The variables behind these members become the \verb#args# variables when functions are run.  If it helps, think of a function call \verb#f(2, pi)# as if the syntax were \verb#f{2, pi}#, having braces denoting the argument variable.
+\noindent or more precisely:
 
-The exotic define operator flags used by function calls are listed in Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}.  The rarest bird in this collection, abbreviated \verb#def-c**# (`hidden-define-minus-constructor'), lives exclusively in the function call of a \verb#trap()#\index{trap@\texttt{trap()}} function, defining the \verb#args# variable \emph{without running its constructor} so that \verb#trap()# can do this in a controlled way.
+\begin{code} \begin{verbatim}
+var3 :: { var3a := 1, var3b :: int }
+\end{verbatim} \end{code}
 
-The adapters consistently set the unjammable flag of their define/equate-at operators, preventing them from jamming arrays.  For example, if we call \verb#f(myArray[<2, 4>])# we will still be able to resize \verb#myArray# in the future, and the broken link will be refreshed next time that call to \verb#f()# is made because that reruns the argument constructor.  (In sets this can cause a problem, because the set's constructor is not usually rerun after an array resize.  We can get around this by manually aliasing a member to certain array indices.)  Also, the update-members flag is cleared by all of the adapters, so that the anonymous member can be re-assigned to a variable of a different type (for example if between two iterations of the command \verb#f(a)# member `\verb#a#' gets removed and redefined).
+The \verb#anonymousmember# keyword produces a unique member `name' that is inexpressible by the user.  (Names become ID numbers in the bytecode:  user-typed names become positive ID numbers, whereas anonymous members get assigned sequential negative ID numbers as they are encountered.  The namespace consists of both the name-ID list and the negative ID counter.)  Thus \verb#var1#, \verb#var2#, etc. in the last paragraph don't really don't have those names or any other, so function \verb#f()# will access those members using the bracket operators (\verb#args[1]#, \verb#args[2]#, etc.).  It's technically possible to write bytecode having hardcoded negative IDs to access anonymous members, but that's a last resort usually used for anonymous members that are also, in the lingo, hidden.
 
-One last type of adapter called \verb#noarg_adapter# replaces missing expressions altogether.  These adapters are necessary to allow blank scripts, or expressions like `\verb#,,#' where no command appeared between the commas, since each comma expects a sentence-type argument.  A final no-argument-adapter allows a script to contain a \verb#return# command without a variable.
+Hidden members are invisible to the array-index operators.  In bytecode-speak, these are produced using define operators whose hidden-member flags are set (flag 6 in Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}).  Members that are both hidden and anonymous get sprinkled discreetly around the code for a variety of reasons, but there are two situation where the user explicitly interacts with the variable behind an anonymous hidden member.  In the first situation, a function's arguments lie within a hidden member in the calling space, but within the function itself are referenced directly by the pseudo-member called \verb#args#.  (A better notation would have been to use braces for function calls as in \verb#f{x, y}#, in order to show the hidden member explicitly.).  The rarest bird of all the hidden define operators, abbreviated \verb#def-c**# (`hidden-define-minus-constructor'), lives exclusively in the function call of a \verb#trap()#\index{trap@\texttt{trap()}} function, defining the \verb#args# variable \emph{without running its constructor} so that \verb#trap()# can do this in a controlled way. The second notable situation is the return value of a function, whose variable lies behind an anonymous hidden member in the function space.
 
-Notice that the final set of adapters in \verb#cicada.c/cpp# is used to convert a sentences-type expression (type 1) to a script expression (type 0), by adding a null bytecode word at the end.\index{adapters|)}\\
+The other define-operator flag used by (in this case all) adapters is the unjammable flag (flag 7; see Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}), which prevents members from jamming arrays.  Consider the function call \verb#f(myArray[<2, 4>])#, which produces a hidden \verb$args$ variable consisting of \verb${ myArray[<2, 4>] }$, which compiles to something like \verb${ anon1 := @myArray[<2, 4>] }$.  Ordinarily \verb$anon1[]$ would jam \verb$myArray[]$, and the actual array could not be resized from either member since doing so would also force a resize of the other.  But in this case \verb$anon1$ was defined as unjammable, as in unjam-able (can be unjammed), so any array resize (e.g. \verb#myArray[+3]#) is allowed because the now-out-of-date \verb$anon1$ gets de-aliased rather than causing a jammed-member error.  That's OK because the alias will be restored the next time that same function call happens, since the argument constructor will be rerun.  (However there can be a problem in other contexts where the constructor is not rerun each time it is used, for example in sets containing aliases to array subsets.  Use hard-coded aliases for these cases.)  As an aside, these adapters also clear their update-member-type flags (flag 1), so that their anonymous members can be re-assigned to variables of different type (in case, for example, between two iterations of the command \verb#f(a)# member `\verb#a#' gets removed and redefined).
+
+One last type of adapter called \verb#noarg_adapter# replaces missing expressions altogether.  These adapters are necessary to allow blank scripts, or situations like two consecutive end-of-lines (command-conjoining operators) which lack a command between them to conjoin.  Another no-argument-adapter allows a script to contain a \verb#return# command without a variable.  The final set of adapters in \verb#cicada.c# is used to convert a sentences-type expression (type 1) to a script expression (type 0), by adding a null bytecode word at the end.\index{adapters|)}\\
 
 
  
 
 
 
-\subsection{Custom-compiling within a script}% \index{functions!in bytecode|(}
+\subsection{Custom-compiling within a script}
 
 For a variety of reasons, we might occasionally want to run a script manually without using the \verb#run()# function.  This involves two steps.  The first step is to produce bytecode, easily done using the \verb#compile()# function.  Second, the \verb#transform()# function gives bytecode a perch on a function's internal code registry.  Here is a simple example:
 
@@ -2910,7 +2934,7 @@ newFunction()
 
 \noindent Manual compilation and transformation is necessary when \verb#user.cicada# has not been loaded, for example when running Cicada from the command prompt with a script-file argument.
 
-Another situation where we will want to compile scripts manually is when we want to run a script that uses a \emph{different syntax} from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  We don't want to change \verb#cicada.c# because then none of the other scripts like \verb#start.cicada# will work.  Instead we will need to use the \verb#newCompiler()#\index{setCompiler@\texttt{setCompiler()}|(} function to process the user's input differently from our own scripts.  Here is an example, relying on language-constant definitions in \verb#user.cicada#.
+Another situation where we will want to compile scripts manually is when we want to run a script that uses a \emph{different syntax} from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  In that case we won't want to change \verb#cicada.c# since doing so would break our other scripts like \verb#start.cicada#.  Instead we will use the \verb#setCompiler()#\index{setCompiler@\texttt{setCompiler()}|(} function to process the user's input using a different syntax from that of our own scripts.  Here is an example, relying on language-constant definitions in \verb#user.cicada#.
 
 \begin{code} \begin{verbatim}
 newLanguage :: [] compiledCommandType
@@ -2932,9 +2956,9 @@ doMath()
 printl("The answer is:  ", doMath[1])
 \end{verbatim} \end{code}
 
-\noindent Notice how the two array arguments to \verb#newCompilerID()# are exactly the same as the two arrays that specify the language in \verb#cicada.c/cpp#.  For consistency, all of the constants used in the C file (such as \verb#int_constant# and \verb#inbytecode#) are also defined in \verb#user.cicada#.  The main difference is that we have to use the \verb#cat()# function to concatenate strings.  Also, make sure to define both arguments as arrays -- \verb#setCompiler()# will not understand anything inside of curly braces.  As always, any script must have an overall type of 0, which in this case means that any valid script is an `\verb#add#' command.
+\noindent Notice how the two array arguments to \verb#setCompiler()# are exactly the same as the two arrays that specify the language in \verb#cicada.c#.  For consistency, all of the constants used in the C file (such as \verb#int_constant# and \verb#inbytecode#) are also defined in \verb#user.cicada#.  The main difference is that we have to use the \verb#cat()# function to concatenate strings.  Also, make sure to define both arguments as arrays -- \verb#setCompiler()# will not understand anything inside of curly braces.  As always, any script must have an overall type of 0.  In this primitive example the only possible valid script is an \verb#add# command.
 
-Cicada always opens with a single compiler -- compiler ID 1 -- so to switch back we can just type the command \verb#newCompiler(1)#.  Calling \verb#newCompiler()# with no arguments returns the ID of the current compiler, without changing which compiler is active.
+Cicada always opens with a single compiler -- compiler ID 1 -- so to switch back just type \verb#setCompiler(1)#.  Calling \verb#setCompiler()# with no arguments returns the ID of the current compiler, without changing the active compiler.
 
 Functions produced by different compilers live in different namespaces, because each compiler which keeps its own running tally of all member names it has encountered (and how many anonymous members have been made).  But the use of separate compilers does \emph{not} prevent collisions of member names between these functions:  if anything switching compilers makes collisions more likely.  (Any new compiler member will assign member IDs starting from 1 and counting upwards, and that ID is the only thing Cicada sees when the function runs.)  To avoid problems, use \verb#transform()#'s ability to customize the search path so that the calling script is hidden from any transformed bytecode that it produces.\index{setCompiler@\texttt{setCompiler()}|)}
 
@@ -3036,6 +3060,7 @@ Program flow:
 \item{\verb#while A do ...,#} :  do as long as A is true
 \item{\verb#loop ... until A#} :  do until A is true
 \item{\verb#for I in < A, B >  ...#} :  do for a defined number of times
+\item{\verb#backfor I in < B, A >  ...#} :  same as \verb$for$, except starts at B and counts backwards to A
 \item{\verb#A( ... )#} :  call A as a function with given arguments
 \item{\verb#code#} or \verb#;# :  begin a new code block\index{code@\texttt{code} marker}
 \item{\verb#return A#  or  \verb#return#} :  exit function with return variable A (if specified)\index{return@\texttt{return}}
@@ -4153,7 +4178,7 @@ The \texttt{saveTable()} routine exports data stored a set or array to a file.  
 \paragraph{\texttt{readTable()}\\\\
 \normalfont \emph{syntax: } \texttt{readTable}((table) \emph{table\_array}, (string) \emph{table\_text} [ ; (bools) \texttt{ifHeader}, \texttt{resizeColumns}, \texttt{resizeRows} = values])\\\\}\index{readTable@\texttt{readTable()}|(}\index{tables!reading|(}
 
-The counterpart to \texttt{saveTable()} is \texttt{readTable()}, which loads data into an array.  It reads the data from a string, not a file, and tries to parse the data into the provided table (and if it fails it will print an error message to the screen).  If the \texttt{IfHeader} variable is set to true, then the first line of text is skipped.  Setting the \texttt{Resize...Index} arguments gives \verb#readTable()# permission to adjust the size of the table to fit the data; in order for this to work the table must be a square array (i.e. not a list of 1-dimensional arrays that can be resized independently).  The default values of the optional arguments are \texttt{false} for \texttt{IfHeader}, and \texttt{true} for \texttt{ResizeFirstIndex} and \texttt{ResizeSecondIndex}.  An error results in a non-zero value for \verb#readTable.errCode#.\index{readTable@\texttt{readTable()}|)}\index{tables!reading|)}\\\\\\\\
+The counterpart to \texttt{saveTable()} is \texttt{readTable()}, which loads data into an array.  It reads the data from a string, not a file, and tries to parse the data into the provided table.  If the \texttt{IfHeader} variable is set to true, then the first line of text is skipped.  Setting the \texttt{Resize...Index} arguments gives \verb#readTable()# permission to adjust the size of the table to fit the data; in order for this to work the table must be a square array (i.e. not a list of 1-dimensional arrays that can be resized independently).  The default values of the optional arguments are \texttt{false} for \texttt{IfHeader}, and \texttt{true} for \texttt{ResizeFirstIndex} and \texttt{ResizeSecondIndex}.  An error results in a non-zero value for \verb#readTable.errCode# and an error message printed to the screen.\index{readTable@\texttt{readTable()}|)}\index{tables!reading|)}\\\\\\\\
 
 
 
@@ -4683,7 +4708,7 @@ There was an empty expression where there shouldn't be.  For example, the expres
 
 \paragraph{\texttt{call()} can't find C function (\#44)\\\\}
 
-A \verb#call()# statement or \verb#$myCFunction()# command was instructed to run a C/C++ function that does not seem to exist.  \verb#call()# takes either a function name or a function ID.  If it is a name, a string corresponding to that name must appear in the \verb#UserFunctionSet# array (in userfn.c/cpp).  If it is an ID, it must be on the interval $1-N$ (if there are $N$ user-defined C/C++ functions).  Thus
+A \verb#call()# statement or \verb#$myCFunction()# command was instructed to run a C/C++ function that does not seem to exist.  \verb#call()# takes either a function name or a function ID.  If it is a name, a string corresponding to that name must appear in the \verb#UserFunctionSet# array (in userfn.c).  If it is an ID, it must be on the interval $1-N$ (if there are $N$ user-defined C/C++ functions).  Thus
 
 \begin{code} \begin{verbatim}
 call(0)
@@ -5087,7 +5112,7 @@ A number was used that was not within expected bounds.  This error is often thro
 
 \noindent This warning is \emph{not} caused by rounding-off errors:  for example, we can assign the value 1.9 to an integer variable, and Cicada will quietly round it off to 1 without raising any warning flag.
 
-\verb#transform()# can throw at out-of-range error (an actual error, not a warning) if some element of the character-positions list (optional 6th argument) is not within [1, \emph{num\_chars}].  It can also be caused by certain defective numbers passed to \verb#newCompiler()#:  a negative number of commands or precedence levels (2nd/4th arguments); a precedence level outside of bounds; an operator direction other than \verb#l_to_r# or \verb#r_to_l#; or an argument number or jump-to number in the bytecode (e.g. `\verb#a5#' or `\verb#j4#') beyond the number of arguments/jump positions (or outside the range 1-9).  Finally, this error can be thrown by the linked list routines if a nonexistent/nonsensical element number of a list is passed (although \texttt{InsertElements()} allows the insertion point to be one greater than the top element).  Remember that linked list indices begin at 1, not 0.\\
+\verb#transform()# can throw at out-of-range error (an actual error, not a warning) if some element of the character-positions list (optional 6th argument) is not within [1, \emph{num\_chars}].  It can also be caused by certain defective numbers passed to \verb#setCompiler()#:  a negative number of commands or precedence levels (2nd/4th arguments); a precedence level outside of bounds; an operator direction other than \verb#l_to_r# or \verb#r_to_l#; or an argument number or jump-to number in the bytecode (e.g. `\verb#a5#' or `\verb#j4#') beyond the number of arguments/jump positions (or outside the range 1-9).  Finally, this error can be thrown by the linked list routines if a nonexistent/nonsensical element number of a list is passed (although \texttt{InsertElements()} allows the insertion point to be one greater than the top element).  Remember that linked list indices begin at 1, not 0.\\
 
 
 

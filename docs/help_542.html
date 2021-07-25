@@ -291,7 +291,7 @@
  <i>syntax: </i> <tt>readTable</tt>((table) <i>table_array</i>, (string) <i>table_text</i> [ ; (bools) <tt>ifHeader</tt>, <tt>resizeColumns</tt>, <tt>resizeRows</tt> = values])<P><P></b>
 <P>
 
-<P> The counterpart to <tt>saveTable()</tt> is <tt>readTable()</tt>, which loads data into an array.  It reads the data from a string, not a file, and tries to parse the data into the provided table (and if it fails it will print an error message to the screen).  If the <tt>IfHeader</tt> variable is set to true, then the first line of text is skipped.  Setting the <tt>Resize...Index</tt> arguments gives <tt>readTable()</tt> permission to adjust the size of the table to fit the data; in order for this to work the table must be a square array (i.e. not a list of 1-dimensional arrays that can be resized independently).  The default values of the optional arguments are <tt>false</tt> for <tt>IfHeader</tt>, and <tt>true</tt> for <tt>ResizeFirstIndex</tt> and <tt>ResizeSecondIndex</tt>.  An error results in a non-zero value for <tt>readTable.errCode</tt>.<P><P><P><P>
+<P> The counterpart to <tt>saveTable()</tt> is <tt>readTable()</tt>, which loads data into an array.  It reads the data from a string, not a file, and tries to parse the data into the provided table.  If the <tt>IfHeader</tt> variable is set to true, then the first line of text is skipped.  Setting the <tt>Resize...Index</tt> arguments gives <tt>readTable()</tt> permission to adjust the size of the table to fit the data; in order for this to work the table must be a square array (i.e. not a list of 1-dimensional arrays that can be resized independently).  The default values of the optional arguments are <tt>false</tt> for <tt>IfHeader</tt>, and <tt>true</tt> for <tt>ResizeFirstIndex</tt> and <tt>ResizeSecondIndex</tt>.  An error results in a non-zero value for <tt>readTable.errCode</tt> and an error message printed to the screen.<P><P><P><P>
 
 <P> 
 
@@ -653,4 +653,4 @@
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_541.html">Prev: <tt>start.cicada</tt></a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_55.html">Next: Linked list routines for handling Cicada strings in C</a>
-</div><br><br><P>Last update: June 18, 2019
+</div><br><br><P>Last update: July 25, 2021
