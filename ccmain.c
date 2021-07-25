@@ -148,11 +148,11 @@ ccInt cicadaMain(ccInt argc, char **argv)
     
     if (rtrn != passed)  {
         errCode = rtrn;
-        printError(startupFileName, firstChar, errPosition-1, ccFalse);
+        printError(startupFileName, startupFileNameLength, firstChar, errPosition-1, ccFalse);
         return rtrn;    }
     else if (compilerWarning != passed)  {
         warningCode = compilerWarning;
-        printError(startupFileName, firstChar, errPosition-1, ccFalse);     }
+        printError(startupFileName, startupFileNameLength, firstChar, errPosition-1, ccFalse);     }
     
     defragmentLinkedList(&(currentCompiler->opCharNum));
     
@@ -174,7 +174,7 @@ ccInt cicadaMain(ccInt argc, char **argv)
     
     if ((errCode != passed) || (warningCode != passed))  {
         
-        printError(startupFileName, firstChar, *LL_int(&(currentCompiler->opCharNum), errIndex)-1, ccFalse);
+        printError(startupFileName, startupFileNameLength, firstChar, *LL_int(&(currentCompiler->opCharNum), errIndex)-1, ccFalse);
         
         if (errCode != passed)  return errCode;         }
     
@@ -195,7 +195,7 @@ ccInt cicadaMain(ccInt argc, char **argv)
         if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
                     errIndex + (ccInt) (errScript.code_ptr - errorBaseScript->bytecode) - 1] - 1;
         
-        printError(errorBaseScript->fileName, errorBaseScript->sourceCode, errCharNum, ccFalse);
+        printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse);
         
         mainErrorCode = 1;         }
     
@@ -305,7 +305,7 @@ void cleanUp()
 // printError() converts the character number of an error into a line number, then outputs
 // that line number along with the line of text and an error flagging the offending character.
 
-void printError(char *errFileName, char *errText, ccInt errCharNum, ccBool forceLineNo)
+void printError(char *errFileName, ccInt errFileNameLength, char *errText, ccInt errCharNum, ccBool forceLineNo)
 {
     
         // print the error/warning message, if there is one
@@ -336,7 +336,9 @@ void printError(char *errFileName, char *errText, ccInt errCharNum, ccBool force
     
         // print the file that caused the error, if its name was recorded
     
-    if (errFileName != NULL)  printf(" in file %s", errFileName);
+    if (errFileName != NULL)  {
+        if (errFileNameLength < 0)  printf(" in file %s", errFileName);
+        else  printf(" in file %.*s", errFileNameLength, errFileName);      }
     printf("\n");
     
     

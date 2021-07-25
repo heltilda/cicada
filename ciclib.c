@@ -347,6 +347,7 @@ void cclib_compile()
     if (((rtrn != passed) || (compilerWarning != passed)) && (doPrintError))  {
         
         char *fileString = NULL;
+        ccInt fileStringLength = -1;
         
         if (numArgs >= 2)  {
         if (getBIFmember(2) != NULL)  {
@@ -354,13 +355,15 @@ void cclib_compile()
             if (errCode != passed)  {  free((void *) scriptCopy);  return;  }
             if (fileStringWindow->width > 0)  {
                 if (defragmentLinkedList(&(fileStringWindow->variable_ptr->mem.data)) != passed)  rtrn = out_of_memory_err;
-                else  fileString = (char *) element(&(fileStringWindow->variable_ptr->mem.data), fileStringWindow->offset+1);
-        }}  }
+                else  {
+                    fileString = (char *) element(&(fileStringWindow->variable_ptr->mem.data), fileStringWindow->offset+1);
+                    fileStringLength = fileStringWindow->width;
+        }}  }   }
         
         if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
         else  setWarning(compilerWarning, pcCodePtr-1);
         
-        printError(fileString, scriptCopy, errPosition-1, ccFalse);
+        printError(fileString, fileStringLength, scriptCopy, errPosition-1, ccFalse);
         doPrintError = ccFalse;             }
     
     else if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
@@ -561,7 +564,7 @@ void cclib_transform()
     if ((errCode != passed) && (doPrintError))  {
         if (opCharNum == NULL)  theOpChar = 0;
         else  theOpChar = opCharNum[errIndex-1]-1;
-        printError(fileName, sourceCode, theOpChar, ccFalse);
+        printError(fileName, fileNameLength, sourceCode, theOpChar, ccFalse);
         
         doPrintError = ccFalse;        }
     
@@ -901,7 +904,7 @@ void cclib_read_string()
         setWarning(string_read_err, pcCodePtr-1);       }
     
     if ((warningCode != passed) && (doPrintError))  {
-        printError(NULL, holdString, (ccInt) (stringOverflow[1]-holdString), ccTrue);
+        printError(NULL, -1, holdString, (ccInt) (stringOverflow[1]-holdString), ccTrue);
         warningCode = passed;       }
     
     free((void *) holdString);      // clean up
@@ -1047,7 +1050,7 @@ void cclib_trap()
                 if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
                                    errIndexToPrint + (ccInt) (errScriptToPrint->code_ptr - errorBaseScript->bytecode) - 1] - 1;
                 
-                printError(errorBaseScript->fileName, errorBaseScript->sourceCode, errCharNum, ccFalse);       }
+                printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse);       }
             
             if (errCode != passed)  {  intRegister = errCode;  if (doClearError)  errCode = passed;  }
             else  intRegister = -warningCode;

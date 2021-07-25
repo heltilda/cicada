@@ -215,6 +215,11 @@ commandTokenType cicadaLanguage[] = {
                     bcPosition(1) bc_jump_if_true(2) bc(if_greater) bcArg(1)
                     bcArg(3) bcArg(4) bc_define(equFlags) bcArg(1) bc(add_num) bc(that_variable) bc_constant_int(1)
                     bc_jump_always(1) bcPosition(2) },
+    { "backfor" type2arg "in <" type4arg "," type4arg ">" type1arg, commandLevel, "1",
+                    inbytecode bc_define(equFlags) bcArg(1) bcArg(3)
+                    bcPosition(1) bc_jump_if_true(2) bc(if_less) bcArg(1)
+                    bcArg(2) bcArg(4) bc_define(equFlags) bcArg(1) bc(subtract_num) bc(that_variable) bc_constant_int(1)
+                    bc_jump_always(1) bcPosition(2) },
     { "if" type5arg "then" type1arg optionalargs "else" type1arg, commandLevel, "1",
                     inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
                     bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2) },

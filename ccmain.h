@@ -45,7 +45,7 @@ extern ccInt runCicada(ccInt, char **);
 extern ccInt cicadaMain(ccInt, char **);
 extern ccInt initCicada(ccInt *, ccInt, char *, ccInt, char *, ccInt *, ccInt);
 extern void cleanUp(void);
-extern void printError(char *, char *, ccInt, ccBool);
+extern void printError(char *, ccInt, char *, ccInt, ccBool);
 
 #ifdef __cplusplus
 }

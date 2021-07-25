@@ -992,7 +992,6 @@ void _forced_equate()
     }}
     
     sourceType = GL_Object.type;
-    sourceDataSize = typeSizes[sourceType];
     
     
         // if the data to copy comes from a variable, size it using sizeView()
@@ -1000,6 +999,7 @@ void _forced_equate()
     if (sourceType == var_type)  {
         if (sourceView.windowPtr == NULL)  {  setError(not_a_variable_err, pcCodePtr-1);  return;  }
         
+        sourceDataSize = 0;
         sizeView(&sourceView, &sourceDataSize, &sourceStringSize);
         if (sourceStringSize != no_string)  sourceDataSize += sourceStringSize;    // we don't care what form the source data is in
         
@@ -1014,16 +1014,19 @@ void _forced_equate()
         // if the data to copy is a constant (i.e. is stored in one of the registers), make a pointer to that register
         // (we make a copy of the byte stored in intRegister if it's of type 'char')
     
-    else if (sourceType <= char_type)  {
-        if (sourceType == bool_type)  stringPtr = (void *) &boolRegister;
-        else  {  byteBackup = (char) intRegister;  stringPtr = (void *) &byteBackup;  }    }
-    else if (sourceType == int_type)  stringPtr = (void *) &intRegister;
-    else if (sourceType == double_type)  stringPtr = (void *) &doubleRegister;
-    else if (sourceType == string_type)  {
-        stringPtr = objectCopy = malloc(stringRegister.elementNum);
-        if (objectCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
-        getElements(&stringRegister, 1, stringRegister.elementNum, objectCopy);
-        sourceDataSize = stringRegister.elementNum;     }
+    else  {
+        sourceDataSize = typeSizes[sourceType];
+        if (sourceType <= char_type)  {
+            if (sourceType == bool_type)  stringPtr = (void *) &boolRegister;
+            else  {  byteBackup = (char) intRegister;  stringPtr = (void *) &byteBackup;  }    }
+        else if (sourceType == int_type)  stringPtr = (void *) &intRegister;
+        else if (sourceType == double_type)  stringPtr = (void *) &doubleRegister;
+        else if (sourceType == string_type)  {
+            stringPtr = objectCopy = malloc(stringRegister.elementNum);
+            if (objectCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+            getElements(&stringRegister, 1, stringRegister.elementNum, objectCopy);
+            sourceDataSize = stringRegister.elementNum;
+    }   }
     
     
         // Get the byte size of the destination variable.

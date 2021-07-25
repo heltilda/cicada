@@ -128,7 +128,7 @@ inbytecode := "\1c"
 
 
 
-| creates a new object using args[1] as a template
+| new(var) creates a new object using var as a template;
 | used for creating new return objects for functions
 
 new :: {
@@ -163,7 +163,8 @@ new :: {
 
 
 
-| Load() and Save() extend Cicada's load() and save() (no caps) by searching all paths in the filePaths[] array
+| fileStr = Load(filename) and Save(filename, fileStr) extend Cicada's load() and save() (no caps)
+| by searching all paths in the filePaths[] array
 
 doInAllDirectories :: {
     
@@ -207,7 +208,7 @@ Save :: doInAllDirectories : {
 
 
 
-| cd() changes the working directory
+| cd(newDir) changes the working directory
 
 cd :: {
     
@@ -236,7 +237,7 @@ pwd :: {
 
 
 
-| lowercase(), uppercase() change the case of all characters in a string
+| lowercase(str), uppercase(str) change the case of all characters in the string 'str'
 
 lowercase :: {
     
@@ -273,7 +274,7 @@ uppercase :: lowercase : { A_char = 'a', Z_char = 'z', ASCII_diff = -that }
 
 
 
-| creates a byte block containing the provided string in C-string format
+| C_string(str) creates a byte block containing the provided string 'str' in C-string format
 
 C_string :: {
     
@@ -295,7 +296,7 @@ C_string :: {
 
 
 
-| returns the concatenation of its arguments as a string
+| cat(a, b, ...) returns the concatenation of its arguments as a string
 
 cat :: {
     
@@ -316,13 +317,13 @@ compilerString :: {  return cat(args, '\00')  }
 
 
 
-| print with a following end-of-line
+| printl(a, b, ...) prints its arguments with a following end-of-line
 
 printl :: {  code, print(args, "\n")  }
 
 
 
-| matrix print -- prints a table or list
+| mprint(M) prints M as a matrix; also works with tables and lists
 
 mprint :: {
     
@@ -337,7 +338,7 @@ mprint :: {
 
 
 
-| spaced print -- used for printing variables, structures, etc.
+| sprint(a, b, ...) prints its arguments as a set -- good for printing variables, structures, etc.
 
 sprint :: {
     argCounter :: argTop :: int
@@ -379,7 +380,7 @@ calculator = @sprint
 
 
 
-| writeTable() outputs table data as a string
+| tableString = writeTable(table) outputs table data as a string
 
 writeTable :: {
     
@@ -450,7 +451,7 @@ writeTable :: {
 
 
 
-| saveTable() outputs table data to a file
+| saveTable(filename, table) outputs table data to a file
 
 saveTable :: {
     
@@ -466,7 +467,8 @@ saveTable :: {
 
 
 
-| readTable() fills in a table (provided as the 2nd argument) from text data stored in a string (1st argument)
+| readTable(table, tableString) fills in a table (1st argument) from text data stored in a string (2nd argument);
+| readInput(table) and readFile(table, fileName) are variations of this
 
 readTable :: {
     
@@ -578,8 +580,10 @@ readFile :: {  holdArgs :: *; holdArgs = @args, readTable(holdArgs[1], Load(hold
 
 
 
-| run a script in a designated location (with an optional search path)
-| 2nd coding section allows changes to the bytecode after compilation of the script
+| do_in(location [, searchPath [, toRun_args [, bytecodeWordsMod_args]]]; toRun [; bytecodeWordsMod code])
+| compile_and_do_in(location [, searchPath [, toRun_args [, bytecodeWordsMod_args]]]; toRun [; bytecodeWordsMod code])
+| - these run the compiled code / uncompiled string 'toRun' in a designated location with an optional search path;
+|   2nd coding section allows changes to the bytecode after compilation of the script
 
 do_in :: {
     params :: *
@@ -691,8 +695,7 @@ compile_and_do_in :: do_in : { myname = "compile_and_do_in" }
 
 
 
-| Runs the code stored in a file
-| syntax:  run(file_name)
+| errCode = run(file_name [, location]) runs the code stored in a file, in the workspace or optionally in 'location' 
 
 run :: {
     
@@ -824,7 +827,8 @@ run.run_template :: {
 
 
 
-| Changes the workspace variable.  Syntax:  go([code, ] path).  go() goes back to path=="root".
+| go([; ] path) the workspace variable to path.  Syntax:  go([code, ] path).  go() goes back to path=="root".
+| jump([; ] path) is the same as go() except that the new path gets appended onto the current path
 
 go :: {
     
@@ -1004,6 +1008,9 @@ go_path :: go_path : {  code, where = "root"  }    | in case start.cicada has to
 
 
 
+
+| what([location]) displays the list of variables in the current workspace, or in 'location'
+
 what :: {
     
     var_strings :: [] string
@@ -1042,7 +1049,9 @@ what :: {
 
 
 
-| max(), min():  return the maximum/minimum value of a list
+| max(list; rtrn = value/index/both)
+| min(list; rtrn = value/index/both)
+| - these return the maximum/minimum value of a list
 
 maxmin_template :: {
     
@@ -1104,7 +1113,7 @@ max.mult = 1, min.mult = -1
 
 
 
-| sum() and mean() return the sum/arithmetic mean of elements of a numeric list
+| sum(list) and mean(list) return the sum/arithmetic mean of elements of a numeric list
 
 sum :: {
     
@@ -1143,10 +1152,14 @@ mean :: sum : {  name = "mean", code, return new(the_sum/list_top)  }
 sum :: sum : {  code, return new(the_sum)  }
 
 
+
+| round(num) rounds off a num to the nearest integer
+
 round :: { ; return floor(args[1] + 0.5) }
 
 
-| sort() sorts a table by one of its (numerical) columns or by another list
+| sort(list [, whichColumn] [; direction = increasing/decreasing]) sorts a table
+| by one of its (numerical) columns or by another list
 
 sort :: {
     tableToSort :: sortingList :: sortedTable :: *
@@ -1280,7 +1293,8 @@ sort.sortpart :: {
 
 
 
-| binsearch() searches a sorted list for a given value, and returns the index in the list of that value (or * if not found)
+| binsearch(list [; direction = increasing/decreasing]) searches a sorted list for a given value,
+| and returns the index in the list of that value (or * if not found)
 
 binsearch :: {
     
@@ -1326,9 +1340,10 @@ binsearch :: {
 
 
 | The so-called 'disassembler' takes in Cicada bytecode code (NOT real machine code)
-| and outputs a text version that is somewhat more readable.  The two arguments are the compiled code string and
-| the position of the 'flag' (error flag) within that string.  Index 1 = bytes 1-wordSize, index 2 = ws+1 - 2*ws bytes, etc.
-| An flag position of 0 indicates no flag.  The return value is the disassembly string.
+| and outputs a text version that is somewhat more readable.  Reads the compiled code string, optionally from startFrom,
+| using nameSpace if given.  The return value is the disassembly string.  The optional flag marks the nth bytecode word.
+
+| disassembly = disassemble(compiledCodeString [, nameSpace [, startFrom]] [; expandFunctions = true/false, flagPosition = #])
 
 
 disassembler :: {

@@ -124,7 +124,7 @@ while true  do (
                 search_path[counter+1] = @go_path[counter]
             ))
             if top_of_path /= @go_path[top]  then (
-                if type(go_path[top]) < 5  then throw(1)
+                if type(go_path[top]) /= 5  then throw(1)
                 top_of_path = @go_path[top]        )
         ) /= passed  then (
             search_path[^1]
