@@ -98,7 +98,7 @@ ccInt cicadaMain(ccInt argc, char **argv)
     
     
         // Initialize the random number generator.
-        
+    
     srand((int) time(0));
     rand();  rand();  rand();  rand();      // otherwise the first couple of random numbers are suspiciously consistent
     

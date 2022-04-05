@@ -526,7 +526,7 @@ void _def_general()
                 if (searchView.windowPtr->variable_ptr->mem.members.elementNum == 0)  {
                     GL_Path.stemMemberNumber = searchView.windowPtr->variable_ptr->mem.members.elementNum + 1;
                     rtrn = addMember(searchView.windowPtr->variable_ptr, GL_Path.stemMemberNumber,
-                                oneDimSize, &(GL_Path.stemMember), ccFalse);
+                                oneDimSize, &(GL_Path.stemMember), ccFalse, 1, ccTrue);
                     if (rtrn != passed)  {  setError(rtrn, subjectCommand);  break;  }
                     GL_Path.stemMember->type = no_type;     }
                 
@@ -701,7 +701,8 @@ void _def_general()
                             && (sourceWidth % GL_Path.stemView.width == 0) && (GL_Path.stemMember != NULL))     {
                 
                 
-                if (searchView.width != searchView.windowPtr->variable_ptr->instances)  setError(incomplete_variable_err, subjectCommand);
+                if (searchView.width != searchView.windowPtr->variable_ptr->instances)
+                    {  setError(incomplete_variable_err, subjectCommand);  return;  }
                 
                 
                     // if we're reading from the same window we're writing to (for example, myvar[*] = myvar[<2, 5>]),
@@ -1313,11 +1314,13 @@ void doResize(ccBool allowAddMember)
         findMemberIndex(searchView.windowPtr->variable_ptr, 0, oldTop, &oneMember, &oldTopIndex, &memberOffset, ccFalse);
         
         if (newTop > oldTop)  {
-        for (loopMember = oldTop+1; loopMember <= newTop; loopMember++)  {
-            oneMemberLLIndex = searchView.windowPtr->variable_ptr->mem.members.elementNum + 1;
-            rtrn = addMember(searchView.windowPtr->variable_ptr, oneMemberLLIndex, 1, &oneMember, ccFalse);
+            oneMemberLLIndex = searchView.windowPtr->variable_ptr->mem.members.elementNum;
+            rtrn = addMember(searchView.windowPtr->variable_ptr, oneMemberLLIndex+1, 1, &oneMember, ccFalse, newTop-oldTop, ccFalse);
             if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
-        }}
+            for (loopMember = oldTop+1; loopMember <= newTop; loopMember++)  {
+                rtrn = addMember(searchView.windowPtr->variable_ptr, oneMemberLLIndex+loopMember-oldTop, 1, &oneMember, ccFalse, 0, ccTrue);
+                if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+        }   }
         
         else if (newTop < oldTop)  {
             if (newTop == 0)  newTopIndex = 0;
@@ -1416,8 +1419,10 @@ void masterInsert(ccBool multipleIndices, ccBool allowAddMember)
             if (firstIndex == numMemberIndices(&searchView)+1)  lastMemberNumber = memberLL->elementNum+1;
             else  {  setError(rtrn, pcCodePtr-1);  return;  }       }
         
+        rtrn = addMember(searchView.windowPtr->variable_ptr, lastMemberNumber, 1, &oneMember, ccFalse, secondIndex-firstIndex+1, ccFalse);
+        if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
         for (loopMember = firstIndex; loopMember <= secondIndex; loopMember++)  {
-            rtrn = addMember(searchView.windowPtr->variable_ptr, loopMember-firstIndex+lastMemberNumber, 1, &oneMember, ccFalse);
+            rtrn = addMember(searchView.windowPtr->variable_ptr, loopMember-firstIndex+lastMemberNumber, 1, &oneMember, ccFalse, 0, ccTrue);
             if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }        }
         
         findMemberIndex(searchView.windowPtr->variable_ptr, 0, firstIndex, &(GL_Path.stemMember),
@@ -1607,6 +1612,7 @@ void _remove()
         // Get the path to the condemned.
         // Unlike masterInsert(), we don't read the indices separately -- we just step into whatever we want deleted.
     
+    canAddMembers = ccFalse;
     callDefineFunction();
     if (errCode != passed)  return;
     

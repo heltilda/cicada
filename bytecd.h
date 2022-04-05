@@ -113,6 +113,7 @@ typedef struct {
     ccInt _whichCompiler;               // the number of the compiler currently in use
     ccInt _CodeNumber;                  // set by the # operator
     ccInt _GL_MaxDigits;                // for printing numbers
+    ccInt _GL_FieldWidth;               // also for printing numbers
     ccInt _GL_RecursionCounter;         // current nesting of running codes
     code_ref _PCCodeRef;
     linkedlist _JumpList, _JumpFromList, _SentenceList;         // these are used for checking code
@@ -163,6 +164,7 @@ extern cc_bytecode_global_struct cc_bytecode_globals;
 #define whichCompiler cc_bytecode_globals._whichCompiler
 #define codeNumber cc_bytecode_globals._CodeNumber
 #define maxDigits cc_bytecode_globals._GL_MaxDigits
+#define fieldWidth cc_bytecode_globals._GL_FieldWidth
 #define recursionCounter cc_bytecode_globals._GL_RecursionCounter
 #define PCCodeRef cc_bytecode_globals._PCCodeRef
 #define codeRegister cc_bytecode_globals._codeRegister

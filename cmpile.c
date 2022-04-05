@@ -40,6 +40,7 @@
 // **** make sure the readXXXFormatStrings end with a %n ****
 
 const int maxPrintableDigits = DBL_DIG;
+const int maxFieldWidth = 1000;
 const char *printFloatFormatString = "%lg";
 const char *print_stringFloatFormatString = "%.*lg";
 const char *readFloatFormatString = "%lg%n";
@@ -522,10 +523,12 @@ ccInt findToken(compiler_type *compiler, linkedlist *tokenStringList, char **scr
     do  {
         scriptChar = scriptStringStart;
         
-        if (searchBottom > numLanguageOps)  comparingLanguageOp = ccFalse;
+        if (searchBottom > numLanguageOps)  {
+            if ((comparingLanguageOp) && (*whichElement > 0))  break;       // interpret it as a language op if possible
+            comparingLanguageOp = ccFalse;      }
         
-        if (comparingLanguageOp)  loopElement = searchBottom;
-        else  loopElement = (searchBottom+searchTop)/2;
+        if (comparingLanguageOp)  loopElement = searchBottom;               // first do an enumerative search over all built-in operators,
+        else  loopElement = (searchBottom+searchTop)/2;                     // then a binary search over the stored variable names
         
         
             // try to match all of the characters of this particular token
@@ -557,7 +560,7 @@ ccInt findToken(compiler_type *compiler, linkedlist *tokenStringList, char **scr
             finishedScriptToken = maybeFinishedScriptToken = ccFalse;       }
         else  {
             finishedScriptToken = (!comparingLanguageOp);
-            maybeFinishedScriptToken = ((finishedScriptToken) || (comparingLanguageOp));       }
+            maybeFinishedScriptToken = ccTrue;            }
         finishedStoredToken = (*storedChar == 0);
         
         if ((maybeFinishedScriptToken) && (finishedStoredToken))  directionToAdjust = 0;
@@ -1042,23 +1045,37 @@ ccInt addScriptToken(compiler_type *compiler, ccInt tokenID, ccInt tokenCharNum,
 
 // readNum() reads in a number (type ccFloat, but if_float is set if it could be read as an integer).
 
+const ccInt numBufferSize = 999;
+char numBuffer[numBufferSize+1];
+
 ccInt readNum(char **charPtr, ccFloat *returnedNum, ccBool *ifFloat)
 {
-    ccInt intnum, intnumsread, doublenumsread;
+    ccInt intnum, intnumsread, doublenumsread, cc;
     int intcharsread, doublecharsread;
     ccFloat doublenum;
-    char *newCharPtr;
+    char *newCharPtr, *numStart;
     
-    doublenumsread = sscanf(*charPtr, readFloatFormatString, &doublenum, &doublecharsread);
+    while ((lettertype(*charPtr) == a_space) || (lettertype(*charPtr) == unprintable))  (*charPtr)++;
+    numStart = *charPtr;
+    
+    for (cc = 0; cc < numBufferSize; cc++)  {       // super stupid -- sscanf() will copy the whole string up to \x00 into a file stream,
+        char *oneChar = numStart + cc;              // so let's make sure it only copies the number we're reading
+        if ((lettertype(oneChar) == a_space) || (lettertype(oneChar) == a_eol) || (lettertype(oneChar) == a_null) || (*oneChar == ','))  break;
+        numBuffer[cc] = *oneChar;       }
+    
+    if (cc < numBufferSize)  {
+        numBuffer[cc] = '\x00';
+        numStart = numBuffer;       }
+    
+    doublenumsread = sscanf(numStart, readFloatFormatString, &doublenum, &doublecharsread);
     if (doublenumsread == 1)  {
-        intnumsread = sscanf(*charPtr, readIntFormatString, &intnum, &intcharsread);
         
-        if ((intnumsread == 1) && (intcharsread == doublecharsread) && (doublenum == (ccFloat) intnum))
-            *ifFloat = ccFalse;
-        else  *ifFloat = ccTrue;
+        if (ifFloat != NULL)  {
+            intnumsread = sscanf(numStart, readIntFormatString, &intnum, &intcharsread);
+            *ifFloat = ((intnumsread != 1) || (intcharsread != doublecharsread) || (doublenum != (ccFloat) intnum));    }
         
         errno = 0;
-        doublenum = strtod(*charPtr, &newCharPtr);      // reread to check for over/underflow
+        doublenum = strtod(numStart, &newCharPtr);      // reread to check for over/underflow
         *returnedNum = doublenum;
         *charPtr += doublecharsread;
         

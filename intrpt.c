@@ -534,7 +534,7 @@ void printViewString(view *theView, void *stringPtr, void *sizeofStrings)
 
 void printDataString(view *theView, void *destString, void *dummy)
 {
-    ccInt counter, numCharacters;
+    ccInt counter, numChars;
     
     if (theView->windowPtr->variable_ptr->type == bool_type)  {
     for (counter = 1; counter <= theView->width; counter++)  {
@@ -542,10 +542,12 @@ void printDataString(view *theView, void *destString, void *dummy)
         loadBoolRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
         if (boolRegister)  {
             destChar[0] = 't'; destChar[1] = 'r'; destChar[2] = 'u'; destChar[3] = 'e';
-            (*(char **) destString) += 4;       }
+            (*(char **) destString) += 4;
+            for (numChars = 4; numChars < fieldWidth; numChars++)  {  destChar[numChars] = ' ';  (*(char **) destString)++;  }    }
         else  {
             destChar[0] = 'f'; destChar[1] = 'a'; destChar[2] = 'l'; destChar[3] = 's'; destChar[4] = 'e';
             (*(char **) destString) += 5;
+            for (numChars = 5; numChars < fieldWidth; numChars++)  {  destChar[numChars] = ' ';  (*(char **) destString)++;  }
     }}  }
     
     else if (theView->windowPtr->variable_ptr->type == char_type)  {
@@ -558,8 +560,9 @@ void printDataString(view *theView, void *destString, void *dummy)
     else  {
     for (counter = 1; counter <= theView->width; counter++)  {
         loadDoubleRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        printNumber(*(char **) destString, doubleRegister, &numCharacters, theView->windowPtr->variable_ptr->type);
-        (*(char **) destString) += numCharacters;
+        printNumber(*(char **) destString, doubleRegister, &numChars, theView->windowPtr->variable_ptr->type);
+        (*(char **) destString) += numChars;
+        for (numChars++; numChars <= fieldWidth; numChars++)  {  **(char **) destString = ' ';  (*(char **) destString)++;  }
     }}
 }
 
@@ -573,23 +576,26 @@ void sizeViewString(view *theView, void *dataSize, void *sizeofStrings)
 
 void sizeDataString(view *theView, void *dataSize, void *dummy)
 {
-    ccInt counter, numCharacters;
+    ccInt counter, numChars;
     
     if (theView->windowPtr->variable_ptr->type == bool_type)  {
     for (counter = 1; counter <= theView->width; counter++)  {
         loadBoolRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        if (boolRegister)  *(ccInt *) dataSize += 4;
-        else  *(ccInt *) dataSize += 5;
+        if (boolRegister)  numChars = 4;
+        else  numChars = 5;
+        if (numChars < fieldWidth)  numChars = fieldWidth;
+        *(ccInt *) dataSize += numChars;
     }}
     
     else if (theView->windowPtr->variable_ptr->type == char_type)  {
-        *(ccInt *) dataSize += theView->width;     }
+        *(ccInt *) dataSize += theView->width;        }
     
     else  {
     for (counter = 1; counter <= theView->width; counter++)  {
         loadDoubleRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        printNumber(NULL, doubleRegister, &numCharacters, theView->windowPtr->variable_ptr->type);
-        *(ccInt *) dataSize += numCharacters;
+        printNumber(NULL, doubleRegister, &numChars, theView->windowPtr->variable_ptr->type);
+        if (numChars < fieldWidth)  numChars = fieldWidth;
+        *(ccInt *) dataSize += numChars;
     }}
 }
 
@@ -604,7 +610,6 @@ void readViewString(view *theView, void *stringPtr, void *overflowMarker)
 void readDataString(view *theView, void *sourceString, void *overflowMarker)
 {
     ccInt oneLetterType, counter, rtrn, charType = lettertype(*(char **) sourceString);
-    ccBool dummyIfFloat;
     
     
         // white space in the source string is skipped over
@@ -617,7 +622,7 @@ void readDataString(view *theView, void *sourceString, void *overflowMarker)
         // numeric types in the destination window are parsed using readNum() (defined in cmpile.c(pp))
     
     for (counter = 1; counter <= theView->width; counter++)  {
-        rtrn = readNum((char **) sourceString, &doubleRegister, &dummyIfFloat);
+        rtrn = readNum((char **) sourceString, &doubleRegister, NULL);
         if (rtrn != passed)  {
             if ((rtrn != underflow_err) && (rtrn != overflow_err))  rtrn = read_number_err;
             if (warningCode == passed)  ((char **) overflowMarker)[1] = *(char **) sourceString;
@@ -863,7 +868,7 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, ccBool doIn
                 setBusy(loopMember, busy_SRW_flag);
                 
                 if ((loopMember->memberWindow != NULL) && (!loopMember->ifHidden))      {
-                    if (doInIndexOrder)  {//&& (theVar->type == composite_type))  {
+                    if (doInIndexOrder)  {
                     for (indexCounter = 0; indexCounter < theView->width*loopMember->indices; indexCounter++)  {
                         nextView.windowPtr = theView->windowPtr;
                         nextView.offset = theView->offset;
@@ -871,13 +876,13 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, ccBool doIn
                         stepView(&nextView, loopMember, indexCounter, 1);
                         if (errCode == passed)  srwComposite(&nextView, globalPtr, secondaryPtr);
                         else  errCode = passed;
-//                        if (errCode != passed)  break;
                     }}
                     
                     else  {
                         nextView = *theView;
                         stepView(&nextView, loopMember, 0, loopMember->indices);
                         if (errCode == passed)  srwComposite(&nextView, globalPtr, secondaryPtr);
+                        else  errCode = passed;
                 }   }
                 
                 clearBusy(loopMember, busy_SRW_flag);
@@ -992,7 +997,7 @@ ccInt findMemberID(variable *theObject, ccInt soughtMemberID, member **soughtMem
     
     else  {
         *soughtMemberNumber = theObject->mem.members.elementNum + 1;
-        rtrn = addMember(theObject, *soughtMemberNumber, 1, soughtMember, ifHiddenMember);
+        rtrn = addMember(theObject, *soughtMemberNumber, 1, soughtMember, ifHiddenMember, 1, ccTrue);
         if (rtrn == passed)  (*soughtMember)->memberID = soughtMemberID;        }
     
     return rtrn;
@@ -1029,7 +1034,7 @@ ccInt findMemberIndex(variable *theVariable, ccInt currentOffset, ccInt soughtMe
         
         else  {
             *memberNumber = theVariable->mem.members.elementNum + 1;
-            rtrn = addMember(theVariable, *memberNumber, 1, soughtMember, ccFalse);
+            rtrn = addMember(theVariable, *memberNumber, 1, soughtMember, ccFalse, 1, ccTrue);
             if (rtrn == passed)  (*soughtMember)->memberID = 0;
             return rtrn;
     }   }
@@ -1411,7 +1416,8 @@ void unlinkWindow(variable *stemVariable, window **unlinkedWindow, ccInt stemMem
 // A window in the target variable is created automatically if destWindow == NULL --> new space is being created (i.e. done with a :=).
 // Or, new space is created if destIndex > DestVariable->instances.
 
-ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices, member **newMember, ccBool ifHidden)
+ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices, member **newMember, ccBool ifHidden,
+        const ccInt membersToAdd, const ccBool doWrite)
 {
     linkedlist *memberLL = &(hostVariable->mem.members);
     ccInt rtrn;
@@ -1419,20 +1425,22 @@ ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices,
     
         // add the new member and write its fields
     
-    rtrn = insertElements(memberLL, newMemberNumber, 1, ccFalse);
-    if (rtrn != passed)  return out_of_memory_err;
+    if (membersToAdd > 0)  {
+        rtrn = insertElements(memberLL, newMemberNumber, membersToAdd, ccFalse);
+        if (rtrn != passed)  return out_of_memory_err;      }
     
-    *newMember = (member *) element(memberLL, newMemberNumber);
-    (*newMember)->indices = newIndices;
-    (*newMember)->memberWindow = NULL;
-    (*newMember)->type = no_type;
-    (*newMember)->eventualType = no_type;
-    (*newMember)->arrayDepth = 0;
-    (*newMember)->ifHidden = ifHidden;
-    (*newMember)->business = 0;
-    
-    rtrn = newLinkedList(&((*newMember)->codeList), 0, sizeof(code_ref), 0., ccFalse);
-    if (rtrn != passed)  return out_of_memory_err;
+    if (doWrite)  {
+        *newMember = (member *) element(memberLL, newMemberNumber);
+        (*newMember)->indices = newIndices;
+        (*newMember)->memberWindow = NULL;
+        (*newMember)->type = no_type;
+        (*newMember)->eventualType = no_type;
+        (*newMember)->arrayDepth = 0;
+        (*newMember)->ifHidden = ifHidden;
+        (*newMember)->business = 0;
+        
+        rtrn = newLinkedList(&((*newMember)->codeList), 0, sizeof(code_ref), 0., ccFalse);
+        if (rtrn != passed)  return out_of_memory_err;          }
     
     return passed;
 }
@@ -1774,21 +1782,24 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
                 rtrn = insertElements(&(theVariable->mem.data), fullInsertionOffset+1, newIndices, ccTrue);
                 if (rtrn != passed)  return rtrn;       }
             
-            else  {
-            for (counter = fullInsertionOffset+1; counter <= fullInsertionOffset+newIndices; counter++)  {
-                
-                variable *oneStringVar;
-                window *oneStringWindow = NULL;
-                member *oneStringMember = NULL;
-                
-                rtrn = addVariable(&oneStringVar, char_type, char_type, 0, ccFalse);
-                if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneStringWindow, ccTrue);
-                if (rtrn == passed)  rtrn = addMember(theVariable, counter, 0, &oneStringMember, ccFalse);
+            else  {         // allocate one big sublist in case the members LL isn't set up with spare room
+                rtrn = addMember(theVariable, fullInsertionOffset+1, 0, NULL, ccFalse, newIndices, ccFalse);
                 if (rtrn != passed)  return rtrn;
                 
-                oneStringMember->memberWindow = oneStringWindow;
-                refWindow(oneStringWindow);
-        }   }}
+                for (counter = fullInsertionOffset+1; counter <= fullInsertionOffset+newIndices; counter++)  {
+                    
+                    variable *oneStringVar;
+                    window *oneStringWindow = NULL;
+                    member *oneStringMember = NULL;
+                    
+                    rtrn = addVariable(&oneStringVar, char_type, char_type, 0, ccFalse);
+                    if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneStringWindow, ccTrue);
+                    if (rtrn == passed)  rtrn = addMember(theVariable, counter, 0, &oneStringMember, ccFalse, 0, ccTrue);
+                    if (rtrn != passed)  return rtrn;
+                    
+                    oneStringMember->memberWindow = oneStringWindow;
+                    refWindow(oneStringWindow);
+        }   }   }
         else  {
             if (theVariable->type == string_type)  {
             for (counter = fullInsertionOffset+(-newIndices); counter >= fullInsertionOffset+1; counter--)  {

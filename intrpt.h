@@ -362,7 +362,7 @@ extern void derefWindow(window **);
 extern void combVariables(void);
 extern void combBranch(variable *, ccBool);
 extern void unlinkWindow(variable *, window **, ccInt);
-extern ccInt addMember(variable *, ccInt, ccInt, member **, ccBool);
+extern ccInt addMember(variable *, ccInt, ccInt, member **, ccBool, const ccInt, const ccBool);
 extern void removeMember(variable *, ccInt);
 extern void refPath(searchPath *);
 extern void derefPath(searchPath **);

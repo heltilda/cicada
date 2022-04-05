@@ -917,11 +917,11 @@ void cclib_read_string()
 
 void cclib_print_string()
 {
-    window *precisionWindow, *stringWindow, *charWindow;
+    window *precisionWindow, *fieldWidthWindow, *stringWindow, *charWindow;
     member *charMember;
     view windowView;
     char *stringPositionMarker;
-    ccInt dataSize, sizeofStrings, counter, numArgs, stringWindowPosition = 0, rtrn;
+    ccInt dataSize, sizeofStrings, counter, numArgs, stringWindowPosition = 1, rtrn;
     linkedlist tempPrintLL;
     
     numArgs = numBIF_args();
@@ -930,23 +930,28 @@ void cclib_print_string()
     
         // read in the (optional) floating-point precision (first argument if one is given); otherwise use default 
     
+    maxDigits = maxPrintableDigits;
+    fieldWidth = 0;
+    
     precisionWindow = getBIFmember(1);
     if (precisionWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
     
     if (precisionWindow->variable_ptr->type <= double_type)  {
-        stringWindowPosition = 2;
+        stringWindowPosition++;
         if (numArgs < 2)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
-        maxDigits = (ccInt) getBIFnumArg(1, 0., (ccFloat) maxPrintableDigits);      }
-    
-    else if (precisionWindow->variable_ptr->type == string_type)  {
-        stringWindowPosition = 1;
-        maxDigits = maxPrintableDigits;     }
-    
-    else  setError(string_expected_err, pcCodePtr-1);
-    
-    if (errCode != passed)  return;
+        maxDigits = (ccInt) getBIFnumArg(1, 0., (ccFloat) maxPrintableDigits);
+        
+        fieldWidthWindow = getBIFmember(2);
+        if (fieldWidthWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+        
+        if (fieldWidthWindow->variable_ptr->type <= double_type)  {
+            stringWindowPosition++;
+            if (numArgs < 3)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+            fieldWidth = (ccInt) getBIFnumArg(2, 0., (ccFloat) maxFieldWidth);
+    }   }
     
     stringWindow = getBIFmember(stringWindowPosition);
+    if (stringWindow->variable_ptr->type != string_type)  {  setError(string_expected_err, pcCodePtr-1);  return;  }
     
     
         // compute the byte size of the final string without printing it yet

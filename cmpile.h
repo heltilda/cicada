@@ -236,6 +236,7 @@ typedef struct {
 } cc_compile_global_struct;
 
 extern const int maxPrintableDigits;
+extern const int maxFieldWidth;
 extern const char *printFloatFormatString;
 extern const char *print_stringFloatFormatString;
 extern const char *readFloatFormatString;

@@ -384,8 +384,7 @@ calculator = @sprint
 
 writeTable :: {
     
-    c1 :: c2 :: idx1 :: idx2 :: int
-    t0 :: tstep :: double
+    c1 :: idx1 :: int
     fileWriteString :: string
     theTable :: *
     
@@ -412,31 +411,15 @@ writeTable :: {
         return ""      )
     
     idx1 = top(theTable)
-    stringsTable :: { }, stringsTable[^idx1]
+    stringsTable :: [idx1] string
     
     
-        | store each row of our table as an array of strings containing either a) a void symbol, b) a constant,
-        | or c) an array whose elements are separated by a defined number of spaces 
+        | store each row of our table as an array of strings containing either a) a void symbol,
+        | or b) an array whose elements are separated by a defined number of spaces 
     
     for c1 in <1, idx1>  (
-        if theTable[c1] == @nothing  then stringsTable[c1] := "*\n"
-        else if type(theTable[c1]) <= 4  then (
-            stringsTable[c1] :: string
-            print_string(stringsTable[c1], theTable[c1], "\n")      )
-        
-        else  (
-            idx2 = top(theTable[c1])
-            stringsTable[c1] :: [idx2] string
-            
-            for c2 in <1, idx2>  (
-                if theTable[c1][c2] == @nothing  then stringsTable[c1][c2] = params.voidString
-                else  print_string(params.maxDigits, stringsTable[c1][c2], theTable[c1][c2])
-                
-                if c2 < idx2  then (
-                    stringsTable[c1][c2][+<top+1, params.fieldWidth>] = ' '     )
-                else  (
-                    stringsTable[c1][c2][+top+1] = '\n'
-    )   )   )   )
+        if theTable[c1] == @nothing  then stringsTable[c1] = "*\n"
+        else  print_string(params.maxDigits, params.fieldWidth, stringsTable[c1], theTable[c1], "\n")       )
     
     
         | copy the array of strings into a final big string, unlink our alias and return
