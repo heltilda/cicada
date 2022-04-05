@@ -70,7 +70,7 @@
 
 <P> Cicada clearly makes an important distinction between members and variables.  Until now we have been rather sloppy on this point, so we shall be more careful from now on.  A member is a named object in Cicada:  the name of a variable, or a field in a composite variable.  The variable itself is the data that the member refers to.  In Cicada these two objects are entirely separate, and there is no reason to require a one-to-one correspondence between them.
 
-<P> Just as the data-copying operator &lsquo;<tt>=</tt>&rsquo; or &lsquo;<tt>&lt;-</tt>&rsquo; has a data-comparison counterpart &lsquo;<tt>==</tt>&rsquo;, so the member-reference-copying operator &lsquo;<tt>=@</tt>&rsquo;  is mirrored in a reference-comparison operator &lsquo;<tt>==@</tt>&rsquo; which tests to see whether two members point to the same object.  (If the left side spans a range of array elements then the right side must also span exactly those same elements in order for the test to return true).  Finally, the is a reference-not-equal operator &lsquo;<tt>/=@</tt>&rsquo; is just the logical negation of &lsquo;<tt>==@</tt>&rsquo;.<P>
+<P> Just as the data-copying operator &lsquo;<tt>=</tt>&rsquo; or &lsquo;<tt>&lt;-</tt>&rsquo; has a data-comparison counterpart &lsquo;<tt>==</tt>&rsquo;, so the member-reference-copying operator &lsquo;<tt>=@</tt>&rsquo;  is mirrored in a reference-comparison operator &lsquo;<tt>==@</tt>&rsquo; which tests to see whether two members point to the same object.  (If the left side spans a range of array elements then the right side must also span exactly those same elements in order for the test to return true).  Finally, the are-references-not-equal operator &lsquo;<tt>/=@</tt>&rsquo; is just the logical negation of &lsquo;<tt>==@</tt>&rsquo;.<P>
 
 <P> If we so prefer, we can write whitespace just before the &lsquo;@&rsquo; of any of the aliasing operators.
 
@@ -127,7 +127,7 @@
 
 <P>
 
-<P>  but <i>not</i>
+<P>  as long as <tt>array_1</tt> had 5 elements to begin with (aliasing can&rsquo;t resize an array); however we <i>cannot</i> write
 
 <P> 
 
@@ -139,7 +139,7 @@
 
 <P>
 
-<P> The complication is that arrays having multiple members pointing to them can become &lsquo;jammed&rsquo;, meaning that they cannot be resized.  The reason is that resizing one of its members would also force a resize of the other member which may be in an unrelated part of code, and this is not allowed.  Here is an example.
+<P> The potential complication is that arrays having multiple members pointing to them can become &lsquo;jammed&rsquo;, meaning that they cannot be resized.  The reason is that resizing one of its members would also force a resize of the other member which may be in an unrelated part of code, and this is not allowed.  Here is an example.
 
 <P> 
 
@@ -151,11 +151,11 @@
 
 <br>&nbsp;&nbsp;&nbsp; 
 
-<br>&nbsp;&nbsp;&nbsp; array_1[*][^12]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| legal
+<br>&nbsp;&nbsp;&nbsp; array_1[*][^12]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| legal - indices 11-12 aren't aliased by array_2
 
 <br>&nbsp;&nbsp;&nbsp; array_2[^12]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| no, this would cause problems
 
-<br>&nbsp;&nbsp;&nbsp; remove array_1[*][5]&nbsp;&nbsp;| not legal
+<br>&nbsp;&nbsp;&nbsp; remove array_1[*][5]&nbsp;&nbsp;| not legal -- would remove 2nd column of array_2
 
 <br>&nbsp;&nbsp;&nbsp; remove array_1[1]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| legal
 
@@ -177,13 +177,13 @@
 
 <br>&nbsp;&nbsp;&nbsp; al := @my_array[&lt;4, 6&gt;]&nbsp;&nbsp;&nbsp;| jams elements 4-6
 
-<br>&nbsp;&nbsp;&nbsp; my_array[&lt;4, 6&gt;]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| does not jam
+<br>&nbsp;&nbsp;&nbsp; my_array[&lt;4, 6&gt;]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| does not jam
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
-<P>  Tokens are &lsquo;unjammable&rsquo;, both in the sense that they cannot jam, and that they will become &lsquo;unjammed&rsquo;---i.e. permanently deactivated---if their referent is resized through another member.  An unjammed token becomes unusable until it is redefined (when happens when the line defining the token is rerun).
+<P>  Tokens are &lsquo;unjammable&rsquo;, both in the sense that they cannot jam, and that they will become &lsquo;unjammed&rsquo;---i.e. permanently deactivated---if their referent is resized through another member.  An unjammed token becomes unusable until it is redefined, usually when the command defining the token is rerun.
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_345.html">Prev: This and that</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_347.html">Next: The void</a>

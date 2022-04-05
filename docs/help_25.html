@@ -28,7 +28,7 @@
 
 <P>  With no arguments (<tt>argc</tt> = 0) Cicada will run the <tt>start.cicada</tt> script.  If we set <tt>argc</tt> to 1 and pass the name of a script file in <tt>argv[0]</tt>, then Cicada will load and run that script file instead.
 
-<P> Procedure (1) for embedding external C or C++ functions into Cicada involves three steps.  First, one declares the C/C++ routine in a particular way and writes the code accordingly; this is easy because Cicada-embedded functions look just like the <tt>main()</tt> function of a stand-alone program.  In the second step the author introduces his routine to Cicada by changing a couple of lines in Cicada&rsquo;s <tt>userfn.c</tt> or <tt>userfn.cpp</tt> file.  The final, optional step is to write a wrapper in Cicada&rsquo;s scripting language that allocates storage for the C/C++ function and provides it with a smooth interface.
+<P> Procedure (1) for embedding external C or C++ functions into Cicada involves three steps.  First, one declares the C/C++ routine in a particular way and writes the code accordingly; this is easy because Cicada-embedded functions look just like the <tt>main()</tt> function of a stand-alone program.  In the second step the author introduces his routine to Cicada by changing a couple of lines in Cicada&rsquo;s <tt>userfn.c</tt> file.  The final, optional step is to write a wrapper in Cicada&rsquo;s scripting language that allocates storage for the C/C++ function and provides it with a smooth interface.
 
 <P> <ul>
 <li><a href="https://heltilda.github.io/cicada/help_251.html">C function declaration</a>

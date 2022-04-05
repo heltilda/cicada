@@ -12,7 +12,7 @@
 
 
 
-<P> Cicada interfaces with a user&rsquo;s C/C++ code through the file <tt>userfn.c</tt> or <tt>userfn.cpp</tt>.  Usually this is the only Cicada source file we need to deal with.  The cleanest way to incorporate C/C++ functions is to include their header files at the top of <tt>userfn.c</tt>/<tt>userfn.cpp</tt>, reference them in the <tt>UserFunction[]</tt> array, and add the source files to Cicada&rsquo;s <tt>Makefile</tt>.
+<P> Cicada interfaces with a user&rsquo;s C/C++ code through the file <tt>userfn.c</tt>.  Usually this is the only Cicada source file we need to deal with.  The cleanest way to incorporate C/C++ functions is to include their header files at the top of <tt>userfn.c</tt>, reference them in the <tt>UserFunction[]</tt> array, and add the source files to Cicada&rsquo;s <tt>Makefile</tt>.
 
 <P> To give an explicit example, let&rsquo;s assume our C function <tt>myFunction()</tt> is stored in a source file called <tt>myFunctionFile.c</tt>, and prototyped in <tt>myFunctionFile.h</tt>.  First, we open up <tt>userfn.c</tt> (since we will be using the C version of Cicada).  At the top we include the header file.
 

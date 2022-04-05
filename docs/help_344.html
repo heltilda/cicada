@@ -18,7 +18,7 @@
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; coordinates[^9]
+<br>&nbsp;&nbsp;&nbsp; A[^9]
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
@@ -26,13 +26,13 @@
 
 <P>  The effect can be either to increase or reduce the size of the array.
 
-<P> Another way to resize an array is to use the all-indices operator <tt>[]</tt> or <tt>*</tt> for the <i>last dimension</i> of an array that is being copied to.  The last dimension of the array will be resized only if necessary to prevent a mismatched-indices error.  So
+<P> Another way to resize an array is to use the all-indices operator <tt>[]</tt> or <tt>[*]</tt> for the <i>last dimension</i> of an array that is being copied to.  The last dimension of the array will be resized only if necessary to prevent a mismatched-indices error.  So
 
 <P> 
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; numDays[*] = coordinates[*].x
+<br>&nbsp;&nbsp;&nbsp; A[*] = B[*].x
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
@@ -44,13 +44,13 @@
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; numDays[&lt;1, 5&gt;] = coordinates[*].x
+<br>&nbsp;&nbsp;&nbsp; A[&lt;1, 5&gt;] = B[*].x
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
-<P>  will only work if <tt>coordinates</tt> has 5 elements.
+<P>  will only work if <tt>B</tt> has 5 elements.
 
 <P> Finally, we can insert an array index somewhere in the middle of an array using the <tt>[+...]</tt> operator, or the <tt>[+&lt;..., ...&gt;]</tt> operator for multiple indices.  We can also delete array indices using either the <tt>[-...]</tt>/<tt>[-&lt;..., ...&gt;]</tt> operators or the <tt>remove</tt> command.  Here are some examples:
 
@@ -100,7 +100,7 @@
 
 <P>  then <tt>threeNums.b</tt> is the same as <tt>threeNums[2]</tt>.  If we want to delete the third member we can type either <tt>remove threeNums.c</tt> or <tt>remove threeNums[3]</tt>.  And we can add two members <i>between</i> <tt>a</tt> and <tt>b</tt> by typing <tt>threeNums[+&lt;2, 3&gt;]</tt>.  Those two new members will have no name, and initially will also have no data (see the forthcoming section on the void).  If we enter &lsquo;<tt>threeNums</tt>&rsquo; after all these operations Cicada will print <tt>{ 2, *, *, 5 }</tt>, showing that <tt>threeNums.b</tt> is now <tt>threeNums[4]</tt>.  In contrast, the old way of adding an extra member, say by typing <tt>threeNums.d :: int</tt>, sticks the new member <tt>d</tt> at the end of <tt>threeNums</tt>.
 
-<P> We can never reference multiple elements of a composite variable except when removing them.  So <tt>threeNums[&lt;2, 3&gt;]</tt> is not allowed.  Again, the technical reason is the storage of these two members&rsquo; data is not contiguous, because each member is stored separately,.
+<P> We can never reference multiple elements of a composite variable except when removing them.  So <tt>threeNums[&lt;2, 3&gt;]</tt> is not allowed.
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_343.html">Prev: Array variables</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_345.html">Next: This and that</a>

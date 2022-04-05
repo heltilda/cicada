@@ -273,7 +273,7 @@ extern void trainNetwork(neural_network, double);
 
 Notice that our C code doesn't allocate/deallocate memory, load or prepare the data sets, save the results, or do any of the other miscellaneous operations that don't need to happen thousands of times per second.  We will script the remainder of our program, not only because Cicada automates most of these housekeeping functions but also because scripted functions can be controlled from the command line.
 
-We bring our C functions into Cicada by referencing them in a Cicada file called \verb#userfn.c#.  (This assumes we're using the C version of Cicada.  If we're using the C++ version we modify \verb#userfn.cpp#.  The extension on the source files is the only difference between the two versions of Cicada.)  First, make sure the C compiler knows about our neural network routines.  It's sloppy, but the easiest way to do this is to put \verb#NN.c# and \verb#NN.h# into the Cicada directory, and then add the following line to \verb#userfn.c#.
+We bring our C functions into Cicada by referencing them in a Cicada file called \verb#userfn.c#.  First, make sure the C compiler knows about our neural network routines.  It's sloppy, but the easiest way to do this is to put \verb#NN.c# and \verb#NN.h# into the Cicada directory, and then add the following line to \verb#userfn.c#.
 
 \begin{code} \begin{verbatim}
 ...
@@ -679,7 +679,7 @@ errCode = runCicada(argc, argv);
 
 \noindent With no arguments (\verb#argc# = 0) Cicada will run the \verb#start.cicada# script.  If we set \verb#argc# to 1 and pass the name of a script file in \verb#argv[0]#, then Cicada will load and run that script file instead.
 
-Procedure (1) for embedding external C or C++ functions into Cicada involves three steps.  First, one declares the C/C++ routine in a particular way and writes the code accordingly; this is easy because Cicada-embedded functions look just like the \verb#main()# function of a stand-alone program.  In the second step the author introduces his routine to Cicada by changing a couple of lines in Cicada's \verb#userfn.c# or \verb#userfn.cpp# file.  The final, optional step is to write a wrapper in Cicada's scripting language that allocates storage for the C/C++ function and provides it with a smooth interface.
+Procedure (1) for embedding external C or C++ functions into Cicada involves three steps.  First, one declares the C/C++ routine in a particular way and writes the code accordingly; this is easy because Cicada-embedded functions look just like the \verb#main()# function of a stand-alone program.  In the second step the author introduces his routine to Cicada by changing a couple of lines in Cicada's \verb#userfn.c# file.  The final, optional step is to write a wrapper in Cicada's scripting language that allocates storage for the C/C++ function and provides it with a smooth interface.
 
 
 
@@ -819,7 +819,7 @@ ccInt myFunction(ccInt argc, char **argv)
 
 \subsubsection{Cicada's \texttt{userfn} source files}
 
-Cicada interfaces with a user's C/C++ code through the file \verb#userfn.c# or \verb#userfn.cpp#.  Usually this is the only Cicada source file we need to deal with.  The cleanest way to incorporate C/C++ functions is to include their header files at the top of \verb#userfn.c#/\verb#userfn.cpp#, reference them in the \verb#UserFunction[]# array, and add the source files to Cicada's \verb#Makefile#.
+Cicada interfaces with a user's C/C++ code through the file \verb#userfn.c#.  Usually this is the only Cicada source file we need to deal with.  The cleanest way to incorporate C/C++ functions is to include their header files at the top of \verb#userfn.c#, reference them in the \verb#UserFunction[]# array, and add the source files to Cicada's \verb#Makefile#.
 
 To give an explicit example, let's assume our C function \verb#myFunction()# is stored in a source file called \verb#myFunctionFile.c#, and prototyped in \verb#myFunctionFile.h#.  First, we open up \verb#userfn.c# (since we will be using the C version of Cicada).  At the top we include the header file.
 
@@ -1328,16 +1328,16 @@ coordinates[*].x = coordinates[*].y               | assign all 'x's
 coordinates[*].y = -1                             | assign all 'y's (scalar-to-array copying)
 \end{verbatim} \end{code}
 
-Strings are effectively character arrays, and we can use array operators access either single characters or ranges of characters.  Thus the single-element operator \verb#[n]# returns a character, whereas the multi-index operator \verb#[<a, b>]# returns a character array (equivalent to a string).  Thus we cannot copy two strings \verb#s1# \verb#s2# using the code \verb#s1 = s2[4]#, since Cicada does not allow \verb#char#-to-\verb#string# assignment.  In this situation use \verb#s1 = s2[<4, 4>]# or \verb#s1 =! s2[4]# instead.
+Strings are effectively character arrays, and we can use array operators to access either single characters or ranges of characters.  The single-element operator \verb#[n]# returns a character, whereas the multi-index operator \verb#[<a, b>]# returns a character array (equivalent to a string).  Given two strings \verb#s1# and \verb#s2#, the following commands are legal:  \verb#s1 = s2[<3, 4>]#, \verb#s1 = s2[<4, 4>]#, \verb#s1 =! s2[4]#; however \verb#s1 = s2[4]# is illegal since Cicada does not allow \verb#char#-to-\verb#string# assignment.  Note that array operators only work on string variables, not string literals, so \verb#"abc"[2]# will cause an error.
 
-Cicada has a technical restriction on the elements we can access simultaneously in multi-dimensional arrays:  their memory has to be \emph{contiguous}.  Internally, the \emph{last} index counts consecutive elements in memory; then the next-to-last index increments; etc.  So the elements of some 2-dimensional array \verb#A# elements are \texttt{[1][1]}, \texttt{[1][2]}, ..., \texttt{[2][1]}, \texttt{[2][2]}, ..., etc as shown in Figure \ref{arrayElementOrder}.  Here are some legal and illegal expressions involving \verb#A#.
+Cicada has a technical restriction on the elements we can access simultaneously in multi-dimensional arrays:  their memory has to be \emph{contiguous}.  Internally, the \emph{last} index counts consecutive elements in memory; then the next-to-last index increments; etc.  So the elements of some 2-dimensional array \verb#A# elements are \texttt{[1][1]}, \texttt{[1][2]}, ..., \texttt{[2][1]}, \texttt{[2][2]}, ..., etc as shown in Figure \ref{arrayElementOrder}.  Here are some legal and illegal expressions involving a matrix \verb#A :: [3][4] { x :: ... }#:
 
 \begin{code} \begin{verbatim}
 A[<2, 3>]                | legal
 A[<2, 3>][<1, 4>]        | legal
 A[<2, 3>][2]             | will cause error
 A[2][<2, 3>]             | legal
-A[1][2]                  | legal
+A[1][2]                  | legal of course
 A[<2, 3>][*].x           | legal -- x is stored separately from other members
 \end{verbatim} \end{code}
 
@@ -1363,24 +1363,24 @@ grid :: [5][5] int
 All arrays in Cicada that are not `jammed' may be resized, and there are a number of ways to accomplish this.  The most straightforward method is to use the modified index operator \verb#[^...]# which sets the size of a single dimension of the array, as in
 
 \begin{code} \begin{verbatim}
-coordinates[^9]
+A[^9]
 \end{verbatim} \end{code}
 
 \noindent The effect can be either to increase or reduce the size of the array.
 
-Another way to resize an array is to use the all-indices operator \verb#[]# or \verb#*# for the \emph{last dimension} of an array that is being copied to.  The last dimension of the array will be resized only if necessary to prevent a mismatched-indices error.  So
+Another way to resize an array is to use the all-indices operator \verb#[]# or \verb#[*]# for the \emph{last dimension} of an array that is being copied to.  The last dimension of the array will be resized only if necessary to prevent a mismatched-indices error.  So
 
 \begin{code} \begin{verbatim}
-numDays[*] = coordinates[*].x
+A[*] = B[*].x
 \end{verbatim} \end{code}
 
 \noindent should always work, whereas
 
 \begin{code} \begin{verbatim}
-numDays[<1, 5>] = coordinates[*].x
+A[<1, 5>] = B[*].x
 \end{verbatim} \end{code}
 
-\noindent will only work if \verb#coordinates# has 5 elements.
+\noindent will only work if \verb#B# has 5 elements.
 
 Finally, we can insert an array index somewhere in the middle of an array using the \verb#[+...]# operator, or the \verb#[+<..., ...>]# operator for multiple indices.  We can also delete array indices using either the \verb#[-...]#/\verb#[-<..., ...>]# operators or the \verb#remove# command.  Here are some examples:
 
@@ -1408,7 +1408,7 @@ threeNums :: {
 
 \noindent then \verb#threeNums.b# is the same as \verb#threeNums[2]#.  If we want to delete the third member we can type either \verb#remove threeNums.c# or \verb#remove threeNums[3]#.  And we can add two members \emph{between} \verb#a# and \verb#b# by typing \verb#threeNums[+<2, 3>]#.  Those two new members will have no name, and initially will also have no data (see the forthcoming section on the void).  If we enter `\verb#threeNums#' after all these operations Cicada will print \verb#{ 2, *, *, 5 }#, showing that \verb#threeNums.b# is now \verb#threeNums[4]#.  In contrast, the old way of adding an extra member, say by typing \verb#threeNums.d :: int#, sticks the new member \verb#d# at the end of \verb#threeNums#.
 
-We can never reference multiple elements of a composite variable except when removing them.  So \verb#threeNums[<2, 3>]# is not allowed.  Again, the technical reason is the storage of these two members' data is not contiguous, because each member is stored separately,.\index{arrays!resizing|)}\index{arrays|)textbf}
+We can never reference multiple elements of a composite variable except when removing them.  So \verb#threeNums[<2, 3>]# is not allowed.
 
 
 
@@ -1523,7 +1523,7 @@ c =@ b =@ a
 
 Cicada clearly makes an important distinction between members and variables.  Until now we have been rather sloppy on this point, so we shall be more careful from now on.  A member\index{members|textbf} is a named object in Cicada:  the name of a variable, or a field in a composite variable.  The variable itself is the data that the member refers to.  In Cicada these two objects are entirely separate, and there is no reason to require a one-to-one correspondence between them.
 
-Just as the data-copying operator `\verb#=#' or `\verb#<-#' has a data-comparison counterpart `\verb#==#', so the member-reference-copying operator `\verb#=@#'  is mirrored in a reference-comparison operator `\verb#==@#' which tests to see whether two members point to the same object.  (If the left side spans a range of array elements then the right side must also span exactly those same elements in order for the test to return true).  Finally, the is a reference-not-equal operator `\verb#/=@#' is just the logical negation of `\verb#==@#'.\\
+Just as the data-copying operator `\verb#=#' or `\verb#<-#' has a data-comparison counterpart `\verb#==#', so the member-reference-copying operator `\verb#=@#'  is mirrored in a reference-comparison operator `\verb#==@#' which tests to see whether two members point to the same object.  (If the left side spans a range of array elements then the right side must also span exactly those same elements in order for the test to return true).  Finally, the are-references-not-equal operator `\verb#/=@#' is just the logical negation of `\verb#==@#'.\\
 
 If we so prefer, we can write whitespace just before the `@' of any of the aliasing operators.
 
@@ -1555,21 +1555,21 @@ oneEl = @array_2[top]
 array_1[*] = @array_2[<4, 8>]
 \end{verbatim} \end{code}
 
-\noindent but \emph{not}
+\noindent as long as \verb#array_1# had 5 elements to begin with (aliasing can't resize an array); however we \emph{cannot} write
 
 \begin{code} \begin{verbatim}
 array_1[<3, 5>] = @array_2[<4, 6>]
 \end{verbatim} \end{code}
 
-The complication is that arrays having multiple members pointing to them can become `jammed', meaning that they cannot be resized.  The reason is that resizing one of its members would also force a resize of the other member which may be in an unrelated part of code, and this is not allowed.  Here is an example.
+The potential complication is that arrays having multiple members pointing to them can become `jammed', meaning that they cannot be resized.  The reason is that resizing one of its members would also force a resize of the other member which may be in an unrelated part of code, and this is not allowed.  Here is an example.
 
 \begin{code} \begin{verbatim}
 array_1 :: [3][10] int
 array_2 := @array_1[2][<4, 7>]   | jams 4 indices of array_1
 
-array_1[*][^12]        | legal
+array_1[*][^12]        | legal - indices 11-12 aren't aliased by array_2
 array_2[^12]           | no, this would cause problems
-remove array_1[*][5]   | not legal
+remove array_1[*][5]   | not legal -- would remove 2nd column of array_2
 remove array_1[1]      | legal
 
 remove array_1
@@ -1580,10 +1580,10 @@ Explicit aliases always jam arrays.\index{aliases}  On the other hand, unnamed r
 
 \begin{code} \begin{verbatim}
 al := @my_array[<4, 6>]    | jams elements 4-6
-my_array[<4, 6>]                 | does not jam
+my_array[<4, 6>]           | does not jam
 \end{verbatim} \end{code}
 
-\noindent Tokens\index{tokens} are `unjammable', both in the sense that they cannot jam, and that they will become `unjammed'---i.e. permanently deactivated---if their referent is resized through another member.  An unjammed token becomes unusable until it is redefined (when happens when the line defining the token is rerun).\index{arrays!jamming|)}
+\noindent Tokens\index{tokens} are `unjammable', both in the sense that they cannot jam, and that they will become `unjammed'---i.e. permanently deactivated---if their referent is resized through another member.  An unjammed token becomes unusable until it is redefined, usually when the command defining the token is rerun.\index{arrays!jamming|)}
 
 
 
@@ -1614,7 +1614,7 @@ var1 :: [1000] string
 
 \noindent We could have redefined \verb#var1# as anything:  a primitive or composite variable, function, etc.  But once it's been redefined once \verb#var1# cannot be redefined again except to the same type or a derived type (see inheritance).
 
-What is the use of defining void-typed variables (aside from the fact that they don't take up space until we redefine them)?  The main reason is that 1) members defined this way have no type (unless you redefine them), and 2) members without a type can alias any other member, because in a sense all data types are derived from the void.  This works as long as we don't redefine the alias (i.e. we have to just use the \verb#=@# operator, not \verb#:=@#).
+What is the use of defining void-typed variables (aside from the fact that they don't take up space until we redefine them)?  The main reason is that 1) members defined this way have no type until there are redefined, and 2) members without a type can alias any other member, because in a sense all data types are derived from the void.  This works as long as we don't redefine the alias (i.e. we have to just use the \verb#=@# operator, not \verb#:=@#).
 
 \begin{code} \begin{verbatim}
 any_var :: *
@@ -1632,7 +1632,7 @@ The fact that the void is the universal parent type also explains why void membe
 
 There are actually two uses of the word `void' in this document that are important to keep logically separate.  A void member is one that has no storage space.  But a void-\emph{typed} member is one with essentially no type restriction on what it can point to.  A definition like \verb#a :: *# does \emph{two} things:  it defines a member `\verb#a#' having no type, and it therefore neglects to give `\verb#a#' any storage space.
 
-Cicada also distinguishes between member types and variable types.  For example, after \texttt{any\_var} was aliased to \texttt{x}, did \texttt{any\_var} have a null type or was it an \verb#int#?  Well, that depends on whether you are asking about the member's type (which was void), or the type of the variable it points to (an integer).  Both members and variables have types, and in general (as in the example above) they may be different.  A member's type specification\index{members!type|(} determines which variables it is allowed to point to.  The rule is that a member can only target variables with the same type, or having a sub-type derived from its own.  The only exception is that members of any type can be aliased to `\texttt{*}', but the void hardly qualifies as a normal variable.\\
+Cicada also distinguishes between member types and variable types.  For example, after \texttt{any\_var} was aliased to \texttt{x}, did \texttt{any\_var} have a null type or was it an \verb#int#?  Well, that depends on whether you are asking about the member's type (which was void), or the type of the variable it points to (an integer).  Both members and variables have types, and in general they may be different.  A member's type specification\index{members!type|(} determines which variables it is allowed to point to.  The rule is that a member can only target variables of the same type, or having a sub-type derived from its the member's type.  (Well strictly speaking there is an exception:  any member can be aliased to the void to free up its storage space, regardless of its type.  I guess the void plays by its own rules.)\\
 
 
 
@@ -1655,14 +1655,14 @@ theVar = @theBool
 
 \noindent Notice that the second \verb#@::# operator was forced to make a new variable because \verb#theVar# had been unlinked (aliased to the void) on the previous line.  Had we left out the unlinking command, Cicada would have tried to redefine the existing \verb#int# \emph{variable} as a \verb#string#, causing a type-mismatch error.
 
-The member-define operator `\texttt{*::}' is the counterpart to variable-define:  it only acts upon the member, without affecting any variable that member may target.  Its symbol reflects the fact that, if one uses member-define to define a new member, it will indeed create a member of the desired type but it will not bother to create a variable for it, so the member will point (be aliased) into the void.  So the following code will cause an error:
+The member-define operator `\texttt{*::}' is the counterpart to variable-define:  it only acts upon the member, without affecting any variable that member may target.  Its symbol reflects the fact that, if one uses member-define to define a new member, it will indeed create a member of the desired type but it will not bother to create a variable for it:  the member will point into the void.  So the following code will cause an error:
 
 \begin{code} \begin{verbatim}
 myNum *:: int
 myNum = 5      | will cause an error
 \end{verbatim} \end{code}
 
-\noindent which could have been avoided had we written \verb#myNum :: int# or \verb#myNum @:: int# between the two lines, in order to construct the variable behind the member.  But it has to be an integer variable, in order to be compatible with member \verb#myNum#'s type.\index{nothing@\texttt{nothing}|)textbf}\index{members!type|)}
+\noindent which could have been avoided had we written \verb#myNum :: int# or \verb#myNum @:: int# between the two lines, in order to construct the integer variable behind the member.  It has to be an integer variable in order to be compatible with member \verb#myNum#'s type.\index{nothing@\texttt{nothing}|)textbf}\index{members!type|)}
 
 There are actually 256 operators in the define family, most of which cannot be scripted directly unless we modify the language.  See Chapter 4.\\
 
@@ -2577,7 +2577,7 @@ The biggest improvement in Cicada over its predecessor (Yazoo script) is the com
 
 \subsection{\texttt{cicada.c}}\index{cicada.c@\verb#cicada.c#|(textbf}
 
-Inside the file \verb#cicada.c# (or \verb#cicada.cpp#) lives an array called \verb#cicadaLanguage[]# which defines basically every symbol we find inside of a script.  Each array element is a \verb#commandTokenType# structure variable that defines one operator in the Cicada language:
+Inside the file \verb#cicada.c# lives an array called \verb#cicadaLanguage[]# which defines basically every symbol we find inside of a script.  Each array element is a \verb#commandTokenType# structure variable that defines one operator in the Cicada language:
 
 \begin{code} \begin{verbatim}
 typedef struct {
@@ -2909,11 +2909,11 @@ var3 :: { var3a := 1, var3b :: int }
 
 The \verb#anonymousmember# keyword produces a unique member `name' that is inexpressible by the user.  (Names become ID numbers in the bytecode:  user-typed names become positive ID numbers, whereas anonymous members get assigned sequential negative ID numbers as they are encountered.  The namespace consists of both the name-ID list and the negative ID counter.)  Thus \verb#var1#, \verb#var2#, etc. in the last paragraph don't really don't have those names or any other, so function \verb#f()# will access those members using the bracket operators (\verb#args[1]#, \verb#args[2]#, etc.).  It's technically possible to write bytecode having hardcoded negative IDs to access anonymous members, but that's a last resort usually used for anonymous members that are also, in the lingo, hidden.
 
-Hidden members are invisible to the array-index operators.  In bytecode-speak, these are produced using define operators whose hidden-member flags are set (flag 6 in Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}).  Members that are both hidden and anonymous get sprinkled discreetly around the code for a variety of reasons, but there are two situation where the user explicitly interacts with the variable behind an anonymous hidden member.  In the first situation, a function's arguments lie within a hidden member in the calling space, but within the function itself are referenced directly by the pseudo-member called \verb#args#.  (A better notation would have been to use braces for function calls as in \verb#f{x, y}#, in order to show the hidden member explicitly.).  The rarest bird of all the hidden define operators, abbreviated \verb#def-c**# (`hidden-define-minus-constructor'), lives exclusively in the function call of a \verb#trap()#\index{trap@\texttt{trap()}} function, defining the \verb#args# variable \emph{without running its constructor} so that \verb#trap()# can do this in a controlled way. The second notable situation is the return value of a function, whose variable lies behind an anonymous hidden member in the function space.
+Hidden members are invisible to the array-index operators.  In bytecode-speak, these are produced using define operators whose hidden-member flags are set (flag 6 in Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}).  The compiler sprinkles anonymous hidden members discreetly around the code for a variety of reasons, where most of them operate almost undetectably.  The one exception:  a hidden-define operator embedded in each function call creates a hidden member in the calling space to store the arguments, which becomes directly visible within the function itself through the pseudo-member \verb#args#.  (Maybe a better notation would show this member explicitly using braces for function calls, as in \verb#f{x, y}#).  The rarest bird of all is the hidden-define-minus-constructor operator (\verb#def-c**# in the table), living exclusively in \verb#trap()#\index{trap@\texttt{trap()}} function calls, where it defines the \verb#args# variable \emph{without running its constructor} so that \verb#trap()# can do so in a controlled way.
 
 The other define-operator flag used by (in this case all) adapters is the unjammable flag (flag 7; see Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable}), which prevents members from jamming arrays.  Consider the function call \verb#f(myArray[<2, 4>])#, which produces a hidden \verb$args$ variable consisting of \verb${ myArray[<2, 4>] }$, which compiles to something like \verb${ anon1 := @myArray[<2, 4>] }$.  Ordinarily \verb$anon1[]$ would jam \verb$myArray[]$, and the actual array could not be resized from either member since doing so would also force a resize of the other.  But in this case \verb$anon1$ was defined as unjammable, as in unjam-able (can be unjammed), so any array resize (e.g. \verb#myArray[+3]#) is allowed because the now-out-of-date \verb$anon1$ gets de-aliased rather than causing a jammed-member error.  That's OK because the alias will be restored the next time that same function call happens, since the argument constructor will be rerun.  (However there can be a problem in other contexts where the constructor is not rerun each time it is used, for example in sets containing aliases to array subsets.  Use hard-coded aliases for these cases.)  As an aside, these adapters also clear their update-member-type flags (flag 1), so that their anonymous members can be re-assigned to variables of different type (in case, for example, between two iterations of the command \verb#f(a)# member `\verb#a#' gets removed and redefined).
 
-One last type of adapter called \verb#noarg_adapter# replaces missing expressions altogether.  These adapters are necessary to allow blank scripts, or situations like two consecutive end-of-lines (command-conjoining operators) which lack a command between them to conjoin.  Another no-argument-adapter allows a script to contain a \verb#return# command without a variable.  The final set of adapters in \verb#cicada.c# is used to convert a sentences-type expression (type 1) to a script expression (type 0), by adding a null bytecode word at the end.\index{adapters|)}\\
+One last type of adapter called \verb#noarg_adapter# replaces missing expressions altogether.  These adapters are necessary to allow blank scripts, or situations like two consecutive end-of-lines (command-conjoining operators) which lack a command between them to conjoin.  Another no-argument adapter allows a script to contain a \verb#return# command without a variable.  The final set of no-argument adapters in \verb#cicada.c# is used to convert a sentences-type expression (type 1) to a script expression (type 0), by adding a null bytecode word at the end.\index{adapters|)}\\
 
 
  
@@ -2932,9 +2932,9 @@ newFunction :: transform(myBytecode)
 newFunction()
 \end{verbatim} \end{code}
 
-\noindent Manual compilation and transformation is necessary when \verb#user.cicada# has not been loaded, for example when running Cicada from the command prompt with a script-file argument.
+\noindent Ordinarily \verb#run()# does these things for you.  If \verb#user.cicada# wasn't loaded by \verb#start.cicada# (probably because Cicada was set to run another script from the command line), then \verb#run()# isn't defined, so we need to manually load, compile and transform any script we want to run.
 
-Another situation where we will want to compile scripts manually is when we want to run a script that uses a \emph{different syntax} from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  In that case we won't want to change \verb#cicada.c# since doing so would break our other scripts like \verb#start.cicada#.  Instead we will use the \verb#setCompiler()#\index{setCompiler@\texttt{setCompiler()}|(} function to process the user's input using a different syntax from that of our own scripts.  Here is an example, relying on language-constant definitions in \verb#user.cicada#.
+Another \verb#compile()#-\verb#transform()# situation arises when we run a script that uses a \emph{different syntax} from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  In that case we won't want to change \verb#cicada.c# since doing so would break our other scripts like \verb#start.cicada#.  Instead we must use the \verb#setCompiler()#\index{setCompiler@\texttt{setCompiler()}|(} function to process the user's input using a different syntax from that of our own scripts.  Here is an example, relying on language-constant definitions in \verb#user.cicada#.
 
 \begin{code} \begin{verbatim}
 newLanguage :: [] compiledCommandType
@@ -2949,18 +2949,25 @@ newLanguageAssociativity :: [] int
 newLanguageAssociativity[*] = { l_to_r, r_to_l }
 newCompilerID := setCompiler(newLanguage, newLanguageAssociativity)
 
-myBytecode := compile(input())
+myBytecode := compile(input("Give me math:  "))
 doMath :: transform(myBytecode)
 
 doMath()
 printl("The answer is:  ", doMath[1])
 \end{verbatim} \end{code}
 
-\noindent Notice how the two array arguments to \verb#setCompiler()# are exactly the same as the two arrays that specify the language in \verb#cicada.c#.  For consistency, all of the constants used in the C file (such as \verb#int_constant# and \verb#inbytecode#) are also defined in \verb#user.cicada#.  The main difference is that we have to use the \verb#cat()# function to concatenate strings.  Also, make sure to define both arguments as arrays -- \verb#setCompiler()# will not understand anything inside of curly braces.  As always, any script must have an overall type of 0.  In this primitive example the only possible valid script is an \verb#add# command.
+\noindent Running this script:
+
+\begin{code} \begin{verbatim}
+Give me math:  add negative 1 to 3.14
+The answer is:  2.14
+\end{verbatim} \end{code}
+
+\noindent Notice how the two array arguments to \verb#setCompiler()# are almost exactly the same as the two arrays that specify the language in \verb#cicada.c#, the main difference just being the use of \verb#cat()# to concatenate strings.  For consistency, all of the constants used in the C file (such as \verb#int_constant# and \verb#inbytecode#) are also defined in \verb#user.cicada#.  Also, make sure to define both arguments as arrays -- \verb#setCompiler()# will not understand anything inside of curly braces.  As always, any script must have an overall type of 0.  In this primitive example the only possible valid script is an \verb#add# command.
 
 Cicada always opens with a single compiler -- compiler ID 1 -- so to switch back just type \verb#setCompiler(1)#.  Calling \verb#setCompiler()# with no arguments returns the ID of the current compiler, without changing the active compiler.
 
-Functions produced by different compilers live in different namespaces, because each compiler which keeps its own running tally of all member names it has encountered (and how many anonymous members have been made).  But the use of separate compilers does \emph{not} prevent collisions of member names between these functions:  if anything switching compilers makes collisions more likely.  (Any new compiler member will assign member IDs starting from 1 and counting upwards, and that ID is the only thing Cicada sees when the function runs.)  To avoid problems, use \verb#transform()#'s ability to customize the search path so that the calling script is hidden from any transformed bytecode that it produces.\index{setCompiler@\texttt{setCompiler()}|)}
+Functions produced by different compilers live in different namespaces, because each compiler which keeps its own running tally of all member names and anonymous members it has encountered.  But the use of separate compilers does \emph{not} prevent collisions of member names between these functions:  if anything switching compilers makes collisions more likely.  (Any new compiler member will assign member IDs starting from 1 and counting upwards, and that ID is the only thing Cicada sees when the function runs.)  To avoid problems, set the search path manually with \verb#transform()# so that the new bytecode can't see the workspace.\index{setCompiler@\texttt{setCompiler()}|)}
 
 
 \newpage
@@ -3347,7 +3354,7 @@ pow :: {
 \normalfont \emph{syntax: } (numeric) \emph{return\_code} = \texttt{call}((string/numeric) \emph{C\_routine}, [\emph{arguments}])\\\\}
 \index{call@\texttt{call()}|(textbf}
 
-Runs a user-defined C or C++ routine referenced in \verb#UserFunctions[]# (in \verb#userfn.c# or \verb#userfn.cpp#).  The first argument specifies which function to run, either as a string containing the Cicada function name (the string in \verb#UserFunctions[]#), or else as the array index (beginning at 1) of the function in \verb#UserFunctions[]#.  The subsequent arguments form the \texttt{argv} array that the C routine receives.  Returns the return value of C/C++ function (an integer).
+Runs a user-defined C or C++ routine referenced in \verb#UserFunctions[]# (in \verb#userfn.c#).  The first argument specifies which function to run, either as a string containing the Cicada function name (the string in \verb#UserFunctions[]#), or else as the array index (beginning at 1) of the function in \verb#UserFunctions[]#.  The subsequent arguments form the \texttt{argv} array that the C routine receives.  Returns the return value of C/C++ function (an integer).
 
 For example, if we write some C function
 
@@ -3577,7 +3584,7 @@ When Cicada is run from the command prompt, \verb#user.cicada# loads three furth
 % print_string()
 
 \paragraph{\texttt{print\_string()}\\\\
-\normalfont \emph{syntax: } \texttt{print\_string}([(numeric) precision,] (string) to\_write, (vars) v1, v2, ...)\\\\}
+\normalfont \emph{syntax: } \texttt{print\_string}([(numeric) field\_width, [(numeric) precision, ]] (string) to\_write, (vars) v1, v2, ...)\\\\}
 \index{print_string@\verb$print_string()$|(} \index{strings!type conversion|(} \index{printing!to a string|(}
 
 Writes data to a text string.  \texttt{print\_string()} is the counterpart to \texttt{read\_string()}.  Roughly speaking, \texttt{print\_string()} is to \texttt{print()} as C's more elaborate \texttt{sprintf()} is to \texttt{printf()}.  The string to write is followed by any number of variables whose data Cicada writes to the string (with no spaces in between).  Strings from the source variables get copied into the destination string verbatim.  Numeric variables are written as text, and here \texttt{print\_string} differs from a forced equate.  For example: 
@@ -3594,7 +3601,7 @@ str =! { 5, 2.7 }
 
 \noindent gives something illegible (the raw bytes encoding the two numbers in binary format).
 
-If the first argument is numeric, then it is taken as the output precision for floating-point \texttt{single} and \texttt{double} variables; then the output string must follow as the second argument.  Otherwise the output precision is determined by the C constant \texttt{DBL\_DIG} for \texttt{double}-typed variables.  Thus, when no precision is specified, \texttt{print\_string} prints considerably more digits than does \texttt{print()}.\\
+If the first argument is numeric, then it is taken as the minimum field width for numeric and Boolean (but not string or character) variables to be printed; otherwise the default minimum field width is zero.  If both the first and second arguments are numeric, then the second argument is the output precision for floating-point \texttt{single} and \texttt{double} variables; otherwise the output precision is determined by the C constant \texttt{DBL\_DIG} for \texttt{double}-typed variables.  When no precision is specified, \texttt{print\_string} prints considerably more digits than does \texttt{print()}, whose precision is set by \verb#printFloatFormatString# at the top of \verb#cmpile.c#.\\
 
 \index{print_string@\verb$print_string()$|)} \index{strings!type conversion|)} \index{printing!to a string|)}
 
@@ -4470,7 +4477,7 @@ ccInt doubleString(ccInt argc, char **argv)
 }
 \end{verbatim} \end{code}
 
-\noindent Notice that we used a data type defined in \verb#lnklst.h# called \verb#ccInt#, which is (by default) just an \verb#int# type.  The reason for this is that we can change the default integer type to some other signed integer -- for example a \verb#short# or \verb#long int# type -- by changing the \verb#typedef# at the beginning of \verb#lnklst.h# along with the two integer limits defined below it.  We can also change Cicada's default floating-point type here.  If we do this then we should also change the format-string constants at the beginning of \verb#cmpile.c#/\verb#cmpile.cpp#.
+\noindent Notice that we used a data type defined in \verb#lnklst.h# called \verb#ccInt#, which is (by default) just an \verb#int# type.  The reason for this is that we can change the default integer type to some other signed integer -- for example a \verb#short# or \verb#long int# type -- by changing the \verb#typedef# at the beginning of \verb#lnklst.h# along with the two integer limits defined below it.  We can also change Cicada's default floating-point type here.  If we do this then we should also change the format-string constants at the beginning of \verb#cmpile.c#.
 
 There are two rules to keep in mind when using linked lists, to avoid crashing Cicada.  1) The \verb#linkedlist# variable should only be updated by Cicada's linked list routines.  2) Whenever a linked list is updated the \emph{original} \verb#linkedlist# variable (i.e. Cicada's own copy) must be updated as well.  Therefore it is critical that linked lists always be passed \emph{by reference} to any C routine that could conceivably modify that list.\\
 

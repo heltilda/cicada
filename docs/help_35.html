@@ -40,7 +40,7 @@
 
 <P>  Notice that the second <tt>@::</tt> operator was forced to make a new variable because <tt>theVar</tt> had been unlinked (aliased to the void) on the previous line.  Had we left out the unlinking command, Cicada would have tried to redefine the existing <tt>int</tt> <i>variable</i> as a <tt>string</tt>, causing a type-mismatch error.
 
-<P> The member-define operator &lsquo;<tt>*::</tt>&rsquo; is the counterpart to variable-define:  it only acts upon the member, without affecting any variable that member may target.  Its symbol reflects the fact that, if one uses member-define to define a new member, it will indeed create a member of the desired type but it will not bother to create a variable for it, so the member will point (be aliased) into the void.  So the following code will cause an error:
+<P> The member-define operator &lsquo;<tt>*::</tt>&rsquo; is the counterpart to variable-define:  it only acts upon the member, without affecting any variable that member may target.  Its symbol reflects the fact that, if one uses member-define to define a new member, it will indeed create a member of the desired type but it will not bother to create a variable for it:  the member will point into the void.  So the following code will cause an error:
 
 <P> 
 
@@ -54,7 +54,7 @@
 
 <P>
 
-<P>  which could have been avoided had we written <tt>myNum :: int</tt> or <tt>myNum @:: int</tt> between the two lines, in order to construct the variable behind the member.  But it has to be an integer variable, in order to be compatible with member <tt>myNum</tt>&rsquo;s type.
+<P>  which could have been avoided had we written <tt>myNum :: int</tt> or <tt>myNum @:: int</tt> between the two lines, in order to construct the integer variable behind the member.  It has to be an integer variable in order to be compatible with member <tt>myNum</tt>&rsquo;s type.
 
 <P> There are actually 256 operators in the define family, most of which cannot be scripted directly unless we modify the language.  See Chapter 4.<P>
 

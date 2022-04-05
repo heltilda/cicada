@@ -144,7 +144,7 @@
 <P>
 
 
-<P> Runs a user-defined C or C++ routine referenced in <tt>UserFunctions[]</tt> (in <tt>userfn.c</tt> or <tt>userfn.cpp</tt>).  The first argument specifies which function to run, either as a string containing the Cicada function name (the string in <tt>UserFunctions[]</tt>), or else as the array index (beginning at 1) of the function in <tt>UserFunctions[]</tt>.  The subsequent arguments form the <tt>argv</tt> array that the C routine receives.  Returns the return value of C/C++ function (an integer).
+<P> Runs a user-defined C or C++ routine referenced in <tt>UserFunctions[]</tt> (in <tt>userfn.c</tt>).  The first argument specifies which function to run, either as a string containing the Cicada function name (the string in <tt>UserFunctions[]</tt>), or else as the array index (beginning at 1) of the function in <tt>UserFunctions[]</tt>.  The subsequent arguments form the <tt>argv</tt> array that the C routine receives.  Returns the return value of C/C++ function (an integer).
 
 <P> For example, if we write some C function
 
@@ -439,7 +439,7 @@
 <P> 
 
 <br><P><b><tt>print_string()</b></tt><P><P>
- <i>syntax: </i> <tt>print_string</tt>([(numeric) precision,] (string) to_write, (vars) v1, v2, ...)<P><P></b>
+ <i>syntax: </i> <tt>print_string</tt>([(numeric) field_width, [(numeric) precision, ]] (string) to_write, (vars) v1, v2, ...)<P><P></b>
 <P>
   
 
@@ -469,7 +469,7 @@
 
 <P>  gives something illegible (the raw bytes encoding the two numbers in binary format).
 
-<P> If the first argument is numeric, then it is taken as the output precision for floating-point <tt>single</tt> and <tt>double</tt> variables; then the output string must follow as the second argument.  Otherwise the output precision is determined by the C constant <tt>DBL_DIG</tt> for <tt>double</tt>-typed variables.  Thus, when no precision is specified, <tt>print_string</tt> prints considerably more digits than does <tt>print()</tt>.<P>
+<P> If the first argument is numeric, then it is taken as the minimum field width for numeric and Boolean (but not string or character) variables to be printed; otherwise the default minimum field width is zero.  If both the first and second arguments are numeric, then the second argument is the output precision for floating-point <tt>single</tt> and <tt>double</tt> variables; otherwise the output precision is determined by the C constant <tt>DBL_DIG</tt> for <tt>double</tt>-typed variables.  When no precision is specified, <tt>print_string</tt> prints considerably more digits than does <tt>print()</tt>, whose precision is set by <tt>printFloatFormatString</tt> at the top of <tt>cmpile.c</tt>.<P>
 
 <P>   
 

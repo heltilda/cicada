@@ -68,7 +68,7 @@
 
 <P>
 
-<P>  Notice that we used a data type defined in <tt>lnklst.h</tt> called <tt>ccInt</tt>, which is (by default) just an <tt>int</tt> type.  The reason for this is that we can change the default integer type to some other signed integer -- for example a <tt>short</tt> or <tt>long int</tt> type -- by changing the <tt>typedef</tt> at the beginning of <tt>lnklst.h</tt> along with the two integer limits defined below it.  We can also change Cicada&rsquo;s default floating-point type here.  If we do this then we should also change the format-string constants at the beginning of <tt>cmpile.c</tt>/<tt>cmpile.cpp</tt>.
+<P>  Notice that we used a data type defined in <tt>lnklst.h</tt> called <tt>ccInt</tt>, which is (by default) just an <tt>int</tt> type.  The reason for this is that we can change the default integer type to some other signed integer -- for example a <tt>short</tt> or <tt>long int</tt> type -- by changing the <tt>typedef</tt> at the beginning of <tt>lnklst.h</tt> along with the two integer limits defined below it.  We can also change Cicada&rsquo;s default floating-point type here.  If we do this then we should also change the format-string constants at the beginning of <tt>cmpile.c</tt>.
 
 <P> There are two rules to keep in mind when using linked lists, to avoid crashing Cicada.  1) The <tt>linkedlist</tt> variable should only be updated by Cicada&rsquo;s linked list routines.  2) Whenever a linked list is updated the <i>original</i> <tt>linkedlist</tt> variable (i.e. Cicada&rsquo;s own copy) must be updated as well.  Therefore it is critical that linked lists always be passed <i>by reference</i> to any C routine that could conceivably modify that list.<P>
 

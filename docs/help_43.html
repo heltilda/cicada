@@ -32,9 +32,9 @@
 
 <P>
 
-<P>  Manual compilation and transformation is necessary when <tt>user.cicada</tt> has not been loaded, for example when running Cicada from the command prompt with a script-file argument.
+<P>  Ordinarily <tt>run()</tt> does these things for you.  If <tt>user.cicada</tt> wasn&rsquo;t loaded by <tt>start.cicada</tt> (probably because Cicada was set to run another script from the command line), then <tt>run()</tt> isn&rsquo;t defined, so we need to manually load, compile and transform any script we want to run.
 
-<P> Another situation where we will want to compile scripts manually is when we want to run a script that uses a <i>different syntax</i> from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  In that case we won&rsquo;t want to change <tt>cicada.c</tt> since doing so would break our other scripts like <tt>start.cicada</tt>.  Instead we will use the <tt>setCompiler()</tt> function to process the user&rsquo;s input using a different syntax from that of our own scripts.  Here is an example, relying on language-constant definitions in <tt>user.cicada</tt>.
+<P> Another <tt>compile()</tt>-<tt>transform()</tt> situation arises when we run a script that uses a <i>different syntax</i> from the default Cicada language.  For example, our script might want to process commands typed by the user, that are in a completely different format from the Cicada language.  In that case we won&rsquo;t want to change <tt>cicada.c</tt> since doing so would break our other scripts like <tt>start.cicada</tt>.  Instead we must use the <tt>setCompiler()</tt> function to process the user&rsquo;s input using a different syntax from that of our own scripts.  Here is an example, relying on language-constant definitions in <tt>user.cicada</tt>.
 
 <P> 
 
@@ -64,7 +64,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; 
 
-<br>&nbsp;&nbsp;&nbsp; myBytecode := compile(input())
+<br>&nbsp;&nbsp;&nbsp; myBytecode := compile(input(&quot;Give me math:&nbsp;&quot;))
 
 <br>&nbsp;&nbsp;&nbsp; doMath :: transform(myBytecode)
 
@@ -78,11 +78,25 @@
 
 <P>
 
-<P>  Notice how the two array arguments to <tt>setCompiler()</tt> are exactly the same as the two arrays that specify the language in <tt>cicada.c</tt>.  For consistency, all of the constants used in the C file (such as <tt>int_constant</tt> and <tt>inbytecode</tt>) are also defined in <tt>user.cicada</tt>.  The main difference is that we have to use the <tt>cat()</tt> function to concatenate strings.  Also, make sure to define both arguments as arrays -- <tt>setCompiler()</tt> will not understand anything inside of curly braces.  As always, any script must have an overall type of 0.  In this primitive example the only possible valid script is an <tt>add</tt> command.
+<P>  Running this script:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; Give me math:&nbsp;add negative 1 to 3.14
+
+<br>&nbsp;&nbsp;&nbsp; The answer is:&nbsp;2.14
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice how the two array arguments to <tt>setCompiler()</tt> are almost exactly the same as the two arrays that specify the language in <tt>cicada.c</tt>, the main difference just being the use of <tt>cat()</tt> to concatenate strings.  For consistency, all of the constants used in the C file (such as <tt>int_constant</tt> and <tt>inbytecode</tt>) are also defined in <tt>user.cicada</tt>.  Also, make sure to define both arguments as arrays -- <tt>setCompiler()</tt> will not understand anything inside of curly braces.  As always, any script must have an overall type of 0.  In this primitive example the only possible valid script is an <tt>add</tt> command.
 
 <P> Cicada always opens with a single compiler -- compiler ID 1 -- so to switch back just type <tt>setCompiler(1)</tt>.  Calling <tt>setCompiler()</tt> with no arguments returns the ID of the current compiler, without changing the active compiler.
 
-<P> Functions produced by different compilers live in different namespaces, because each compiler which keeps its own running tally of all member names it has encountered (and how many anonymous members have been made).  But the use of separate compilers does <i>not</i> prevent collisions of member names between these functions:  if anything switching compilers makes collisions more likely.  (Any new compiler member will assign member IDs starting from 1 and counting upwards, and that ID is the only thing Cicada sees when the function runs.)  To avoid problems, use <tt>transform()</tt>&rsquo;s ability to customize the search path so that the calling script is hidden from any transformed bytecode that it produces.
+<P> Functions produced by different compilers live in different namespaces, because each compiler which keeps its own running tally of all member names and anonymous members it has encountered.  But the use of separate compilers does <i>not</i> prevent collisions of member names between these functions:  if anything switching compilers makes collisions more likely.  (Any new compiler member will assign member IDs starting from 1 and counting upwards, and that ID is the only thing Cicada sees when the function runs.)  To avoid problems, set the search path manually with <tt>transform()</tt> so that the new bytecode can&rsquo;t see the workspace.
 
 <P> 
 

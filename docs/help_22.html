@@ -14,7 +14,7 @@
 
 <P> Notice that our C code doesn&rsquo;t allocate/deallocate memory, load or prepare the data sets, save the results, or do any of the other miscellaneous operations that don&rsquo;t need to happen thousands of times per second.  We will script the remainder of our program, not only because Cicada automates most of these housekeeping functions but also because scripted functions can be controlled from the command line.
 
-<P> We bring our C functions into Cicada by referencing them in a Cicada file called <tt>userfn.c</tt>.  (This assumes we&rsquo;re using the C version of Cicada.  If we&rsquo;re using the C++ version we modify <tt>userfn.cpp</tt>.  The extension on the source files is the only difference between the two versions of Cicada.)  First, make sure the C compiler knows about our neural network routines.  It&rsquo;s sloppy, but the easiest way to do this is to put <tt>NN.c</tt> and <tt>NN.h</tt> into the Cicada directory, and then add the following line to <tt>userfn.c</tt>.
+<P> We bring our C functions into Cicada by referencing them in a Cicada file called <tt>userfn.c</tt>.  First, make sure the C compiler knows about our neural network routines.  It&rsquo;s sloppy, but the easiest way to do this is to put <tt>NN.c</tt> and <tt>NN.h</tt> into the Cicada directory, and then add the following line to <tt>userfn.c</tt>.
 
 <P> 
 
