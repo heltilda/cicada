@@ -419,7 +419,7 @@ writeTable :: {
     
     for c1 in <1, idx1>  (
         if theTable[c1] == @nothing  then stringsTable[c1] = "*\n"
-        else  print_string(params.maxDigits, params.fieldWidth, stringsTable[c1], theTable[c1], "\n")       )
+        else  print_string(params.fieldWidth, params.maxDigits, stringsTable[c1], theTable[c1], "\n")       )
     
     
         | copy the array of strings into a final big string, unlink our alias and return

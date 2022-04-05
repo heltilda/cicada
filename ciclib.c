@@ -928,26 +928,26 @@ void cclib_print_string()
     if (numArgs < 1)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
     
     
-        // read in the (optional) floating-point precision (first argument if one is given); otherwise use default 
+        // read in the (optional) field width and floating-point precision arguments; otherwise use default values
     
-    maxDigits = maxPrintableDigits;
     fieldWidth = 0;
+    maxDigits = maxPrintableDigits;
     
-    precisionWindow = getBIFmember(1);
-    if (precisionWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    fieldWidthWindow = getBIFmember(1);
+    if (fieldWidthWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
     
-    if (precisionWindow->variable_ptr->type <= double_type)  {
+    if (fieldWidthWindow->variable_ptr->type <= double_type)  {
         stringWindowPosition++;
         if (numArgs < 2)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
-        maxDigits = (ccInt) getBIFnumArg(1, 0., (ccFloat) maxPrintableDigits);
+        fieldWidth = (ccInt) getBIFnumArg(1, 0., (ccFloat) maxFieldWidth);
         
-        fieldWidthWindow = getBIFmember(2);
-        if (fieldWidthWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+        precisionWindow = getBIFmember(2);
+        if (precisionWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
         
-        if (fieldWidthWindow->variable_ptr->type <= double_type)  {
+        if (precisionWindow->variable_ptr->type <= double_type)  {
             stringWindowPosition++;
             if (numArgs < 3)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
-            fieldWidth = (ccInt) getBIFnumArg(2, 0., (ccFloat) maxFieldWidth);
+            maxDigits = (ccInt) getBIFnumArg(2, 0., (ccFloat) maxPrintableDigits);
     }   }
     
     stringWindow = getBIFmember(stringWindowPosition);
