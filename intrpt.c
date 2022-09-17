@@ -912,7 +912,7 @@ void printNumber(char *destString, ccFloat numberToPrint, ccInt *characterCount,
     char theChars[50];
     
     if (numberType != double_type)  *characterCount = sprintf(theChars, printIntFormatString, (ccInt) numberToPrint);
-    else  *characterCount = sprintf(theChars, print_stringFloatFormatString, numberToPrint, maxDigits);
+    else  *characterCount = sprintf(theChars, print_stringFloatFormatString, maxDigits, numberToPrint);
     
     if (destString != NULL)  memcpy((void *) destString, (void *) theChars, *characterCount);
     
