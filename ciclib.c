@@ -881,9 +881,9 @@ void cclib_read_string()
     
     for (counter = 2; counter <= numArgs; counter++)   {
         windowView.windowPtr = getBIFmember(counter);
-        windowView.offset = windowView.windowPtr->offset;
-        windowView.width = windowView.windowPtr->width;
         if (windowView.windowPtr != NULL)  {
+            windowView.offset = windowView.windowPtr->offset;
+            windowView.width = windowView.windowPtr->width;
             readViewString(&windowView, (void *) &stringPositionMarker, stringOverflow);
             if (warningCode != passed)  errIndex--;
             if (errCode != passed)  {  free((void *) holdString);  return;  }
@@ -951,6 +951,7 @@ void cclib_print_string()
     }   }
     
     stringWindow = getBIFmember(stringWindowPosition);
+    if (stringWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
     if (stringWindow->variable_ptr->type != string_type)  {  setError(string_expected_err, pcCodePtr-1);  return;  }
     
     
@@ -959,9 +960,9 @@ void cclib_print_string()
     dataSize = 0;  sizeofStrings = 0;
     for (counter = stringWindowPosition+1; counter <= numArgs; counter++)  {
         windowView.windowPtr = getBIFmember(counter);
-        windowView.offset = windowView.windowPtr->offset;
-        windowView.width = windowView.windowPtr->width;
         if (windowView.windowPtr != NULL)  {
+            windowView.offset = windowView.windowPtr->offset;
+            windowView.width = windowView.windowPtr->width;
             sizeViewString(&windowView, &dataSize, (void *) &sizeofStrings);
     }   }
     
@@ -979,9 +980,9 @@ void cclib_print_string()
         stringPositionMarker = (char *) element(&tempPrintLL, 1);
         for (counter = stringWindowPosition+1; counter <= numArgs; counter++)  {
             windowView.windowPtr = getBIFmember(counter);
-            windowView.offset = windowView.windowPtr->offset;
-            windowView.width = windowView.windowPtr->width;
             if (windowView.windowPtr != NULL)  {
+                windowView.offset = windowView.windowPtr->offset;
+                windowView.width = windowView.windowPtr->width;
                 printViewString(&windowView, (void *) &stringPositionMarker, (void *) &sizeofStrings);
                 if (warningCode != passed)  errIndex--;
                 if (errCode != passed)  {  deleteLinkedList(&tempPrintLL);  return;  }

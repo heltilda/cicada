@@ -201,13 +201,22 @@ typedef struct {
 
 // The flags words for the various define operators
 
-#define def_flags (dg_add_members+dg_update_members+dg_new_target+dg_run_constructor)
-#define vdf_flags (dg_add_members+dg_new_target+dg_run_constructor)
-#define mdf_flags (dg_update_members+dg_add_members)
-#define dqa_flags (dg_add_members+dg_update_members+dg_relink_target)
-#define eqa_flags (dg_relink_target)
-#define equ_flags (dg_post_equate)
-#define deq_flags (dg_add_members+dg_update_members+dg_new_target+dg_post_equate+dg_run_constructor)
+#define post_equate_flag (1<<0)
+#define update_members_flag (1<<1)
+#define can_add_members_flag (1<<2)
+#define new_target_flag (1<<3)
+#define relink_target_flag (1<<4)
+#define run_constructor_flag (1<<5)
+#define hidden_member_flag (1<<6)
+#define unjammable_flag (1<<7)
+
+#define def_flags (can_add_members_flag+update_members_flag+new_target_flag+run_constructor_flag)
+#define vdf_flags (can_add_members_flag+new_target_flag+run_constructor_flag)
+#define mdf_flags (update_members_flag+can_add_members_flag)
+#define dqa_flags (can_add_members_flag+update_members_flag+relink_target_flag)
+#define eqa_flags (relink_target_flag)
+#define equ_flags (post_equate_flag)
+#define deq_flags (can_add_members_flag+update_members_flag+new_target_flag+post_equate_flag+run_constructor_flag)
 
 
 

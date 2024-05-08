@@ -256,13 +256,14 @@ void _built_in_function()
 
 void _def_general()
 {
-    ccInt counter, rtrn, flags, loopArrayDim, sourceType, sourceDataType, arrayDimsToConstruct;
+    ccInt counter, rtrn, flags, loopArrayDim, sourceType, sourceDataType, arrayDimsToConstruct, dimCounter;
     ccInt *dgCommandPtr, *subjectCommand, *objectCommand, holdCodeNumber, holdMemberID, firstToCustomize = 0;
     unsigned char charRegister;
-    ccBool canResizeDestination, errorInConstructor, isVoid, sourceIsScalar, varIsString;
+    ccBool canResizeDestination, errorInConstructor, isVoid, sourceIsScalar, varIsString, useVarCode;
     ccBool wasUnjammed, isUnjammable, doRelink, updateMembers, runConstructor, newTarget, doEquate;
     window fauxStringWindow;
     variable *theNewVariable, fauxStringVariable;
+    member *sourceMember;
     view sourceView, destView, holdThatView, holdDestView, searchViewToReturn;
     code_ref *loopCodeRef;
     linkedlist *theCodeList = NULL;
@@ -287,14 +288,14 @@ void _def_general()
     subjectCommand = pcCodePtr;
     if (flags != equ_flags)   {
         
-        isUnjammable = getFlag(flags, unjammable);
-        doRelink = getFlag(flags, relink_target);
-        doEquate = getFlag(flags, post_equate);
-        canAddMembers = getFlag(flags, can_add_members);
-        updateMembers = getFlag(flags, update_members);
-        newTarget = getFlag(flags, new_target);
-        runConstructor = getFlag(flags, run_constructor);
-        isHiddenMember = getFlag(flags, hidden_member);
+        isUnjammable = getFlag(flags, unjammable_flag);
+        doRelink = getFlag(flags, relink_target_flag);
+        doEquate = getFlag(flags, post_equate_flag);
+        canAddMembers = getFlag(flags, can_add_members_flag);
+        updateMembers = getFlag(flags, update_members_flag);
+        newTarget = getFlag(flags, new_target_flag);
+        runConstructor = getFlag(flags, run_constructor_flag);
+        isHiddenMember = getFlag(flags, hidden_member_flag);
         
         searchViewToReturn.windowPtr = NULL;
         
@@ -316,7 +317,7 @@ void _def_general()
         else  holdMemberID = 0;
         
         objectCommand = pcCodePtr;       // we can get the pointer to a constant string from this
-        compareReadArg(callCodeFunction, &sourceDataType, &sourceIsScalar);
+        copyCompareReadArg(callCodeFunction, &sourceDataType, &sourceIsScalar);
         
         if ((searchView.windowPtr == NULL) || (!searchView.multipleIndices)
                     || (GL_Path.stemView.windowPtr == NULL))  varIsString = ccFalse;
@@ -343,8 +344,9 @@ void _def_general()
         
             // restore the target-variable path info
         
-        GL_Path = destPath;
+        sourceMember = GL_Path.stemMember;
         sourceView = searchView;
+        GL_Path = destPath;
         searchView = destPath.stemView;
         if (holdDestView.windowPtr != NULL)  {
             derefWindow(&(holdDestView.windowPtr));
@@ -363,12 +365,21 @@ void _def_general()
         
             // figure out what type of object is being copied, and the array indices spanned over it
         
-        sourceType = sourceDataType = GL_Object.type;
+        sourceDataType = sourceType = GL_Object.type;
         isVoid = (sourceType == no_type);
+        
+        useVarCode = ccTrue;
+        if ((updateMembers) || (newTarget))  {
+        if ((sourceType == no_type) || ((sourceType == var_type) && (sourceView.windowPtr == NULL)))  {
+        if (sourceMember != NULL)  {
+            useVarCode = ccFalse;
+            GL_Object.codeList = &(sourceMember->codeList);
+        }}}
+        
         arrayDimsToConstruct = 0;
         if (sourceType == var_type)  {
             
-            if (sourceView.windowPtr == NULL)  {
+            if ((useVarCode) && (sourceView.windowPtr == NULL))  {
                 sourceDataType = no_type;
                 isVoid = ccTrue;        }
             
@@ -387,34 +398,47 @@ void _def_general()
                     // if the source object itself is an array, step through the dimensions of the array
                     // to record the size of each dimension and get to the fundamental object at the end
                 
-                if (sourceView.windowPtr->variable_ptr->type == array_type)  {
-                    
+                dimCounter = GL_Object.arrayDimList.elementNum;
+                
+                if (useVarCode)  {
+                    sourceDataType = sourceView.windowPtr->variable_ptr->eventualType;
+                    if (sourceView.windowPtr->variable_ptr->type == array_type)  {
+                        rtrn = addElements(&(GL_Object.arrayDimList), sourceView.windowPtr->variable_ptr->arrayDepth, ccFalse);
+                        if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
+                }   }
+                
+                if (sourceView.windowPtr != NULL)  {
                     variable *sourceVar = sourceView.windowPtr->variable_ptr;
-                    ccInt dimCounter = GL_Object.arrayDimList.elementNum+1;
-                    
-                    rtrn = addElements(&(GL_Object.arrayDimList), sourceVar->arrayDepth, ccFalse);
-                    if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
-                    
-                    while (sourceVar->type == array_type)  {
+                    while (GL_Object.arrayDimList.elementNum > dimCounter)  {
                         member *arrayMember = LL_member(sourceVar, 1);
+                        dimCounter++;
                         *LL_int(&(GL_Object.arrayDimList), dimCounter) = arrayMember->indices;
                         if (arrayMember->memberWindow == NULL)  break;
                         sourceVar = arrayMember->memberWindow->variable_ptr;
-                        dimCounter++;
                 }   }
-                
-                sourceDataType = sourceView.windowPtr->variable_ptr->eventualType;
         }   }
         
         else if ((sourceType != no_type) && (doRelink))  {  setError(illegal_target_err, subjectCommand);  return;  }
+        
+        if (!useVarCode)  {
+            sourceDataType = sourceMember->eventualType;
+            if (newTarget)  isVoid = (sourceDataType == no_type);
+            if (sourceMember->type == array_type)  {
+                dimCounter = GL_Object.arrayDimList.elementNum;
+                rtrn = addElements(&(GL_Object.arrayDimList), sourceMember->arrayDepth, ccFalse);
+                if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
+                while (GL_Object.arrayDimList.elementNum > dimCounter)  {
+                    dimCounter++;
+                    *LL_int(&(GL_Object.arrayDimList), dimCounter) = 0;
+        }   }   }
+        
+        
+            // Catch type-mismatch errors before they make us unlink the whole target.  Check member type, then variable type.
         
         GL_Object.type = var_type;
         codeNumber = holdCodeNumber;
         
         if (newTarget)  arrayDimsToConstruct = GL_Object.arrayDimList.elementNum;
-        
-        
-            // Catch type-mismatch errors before they make us unlink the whole target.  Check member type, then variable type.
         
         if (GL_Path.stemMember != NULL)   {
             
@@ -455,10 +479,10 @@ void _def_general()
             
             if (updateMembers)  {
                 if (GL_Path.indices != GL_Path.stemMember->indices)  {  setError(incomplete_member_err, subjectCommand);  break;  }
-                if ((loopArrayDim <= arrayDimsToConstruct) || (!isVoid))  {
+//                if ((loopArrayDim <= arrayDimsToConstruct) || (!isVoid))  {
                     updateType(&(GL_Path.stemMember->codeList), &(GL_Path.stemMember->type), &(GL_Path.stemMember->eventualType),
                             &(GL_Path.stemMember->arrayDepth), varType, sourceDataType, arrayDepth, ccTrue);
-            }   }
+            }   //}
             
             
                 // add a new variable if there isn't currently one here (i.e. the member is void)
@@ -498,13 +522,13 @@ void _def_general()
             
                 // step into the next variable
             
-            if ((expectNewVar) || (doRelink))  {
+//            if ((expectNewVar) || (doRelink))  {
                 stepView(&searchView, GL_Path.stemMember, GL_Path.offset, GL_Path.indices);
                 if (errCode == void_member_err)  errCode = passed;
                 if (loopArrayDim == 1)  {
                     searchViewToReturn = searchView;
 //                    searchViewToReturn.multipleIndices = (searchViewToReturn.multipleIndices | (arrayDimsToConstruct > 0));
-            }   }
+            }   //}
             
             
                 // update the variable type specification
@@ -642,7 +666,7 @@ void _def_general()
             // get the source variable coordinate
         
         objectCommand = pcCodePtr;
-        compareReadArg(callBytecodeFunction, &sourceDataType, &sourceIsScalar);
+        copyCompareReadArg(callBytecodeFunction, &sourceDataType, &sourceIsScalar);
         
         
             // restore important variables; derefence the destination window
@@ -1532,10 +1556,10 @@ void navigate(void (*stepFunction)(ccBool), ccBool defineMode, ccBool takeStep, 
     
         // set our object info before returning
     
+    GL_Object.type = var_type;
     if ((allowStepToVoid) && (errCode == void_member_err))  {
         errCode = passed;
-        GL_Object.type = no_type;   }
-    else  GL_Object.type = var_type;
+        GL_Object.type = no_type;       }
     
     if (searchView.windowPtr != NULL)  GL_Object.codeList = &(searchView.windowPtr->variable_ptr->codeList);
     codeNumber = 1;
@@ -1660,7 +1684,7 @@ void _if_eq()
     
         // get the first argument
     
-    compareReadArg(callBytecodeFunction, &firstDataType, &firstArgIsScalar);
+    copyCompareReadArg(callBytecodeFunction, &firstDataType, &firstArgIsScalar);
     if (errCode != passed)  return;
     
     if (firstArgIsScalar)  {
@@ -1692,7 +1716,7 @@ void _if_eq()
             windowToDeref = firstArgView.windowPtr;
     }   }
     
-    compareReadArg(callBytecodeFunction, &secondDataType, &secondArgIsScalar);
+    copyCompareReadArg(callBytecodeFunction, &secondDataType, &secondArgIsScalar);
     if (errCode == passed)  {
         
         if (secondArgIsScalar)  {
@@ -1746,9 +1770,9 @@ void _if_ne()
 }
 
 
-// compareReadArg() reads a bytecode argument and determines its type
+// copyCompareReadArg() reads a bytecode argument and determines its type
 
-void compareReadArg(void(*runBytecodeFunction)(void), ccInt *dataType, ccBool *argIsScalar)
+void copyCompareReadArg(void(*runBytecodeFunction)(void), ccInt *dataType, ccBool *argIsScalar)
 {
     runBytecodeFunction();
     if (errCode != passed)  return;
@@ -1948,6 +1972,7 @@ void _sub_code()
     if (errCode != passed)  return;
     
     getCurrentCodeList(&tempCodeRegister);
+    if (errCode != passed)  return;
     
     holdCodeNumber = codeNumber;
     
@@ -2013,6 +2038,7 @@ void _append_code()
     if (errCode != passed)  return;
     
     getCurrentCodeList(&firstCodeList);
+    if (errCode != passed)  return;
     
     
         // get the 2nd argument
@@ -2021,6 +2047,7 @@ void _append_code()
     if (errCode != passed)  {  derefCodeList(&firstCodeList);  return;  }
     
     getCurrentCodeList(&secondCodeList);
+    if (errCode != passed)  return;
     
     
         // prepare the codeRegister for holding the concatenated code list
@@ -2112,7 +2139,8 @@ void _parent_var()
     searchPath *searchPosition = pcSearchPath;
     
     pcCodePtr--;
-    searchView.width = baseView.width;          // in case the first stem is NULL
+    searchView = baseView;                      // a.\.a won't work
+//    searchView.width = baseView.width;          // in case the first stem is NULL
     do  {
         searchView.windowPtr = searchPosition->jamb;
         if (searchPosition->stemIndices == 0)  {
@@ -2623,7 +2651,7 @@ void beginExecution(code_ref *theCode, ccBool ifStorePC, ccInt newPCOffset, ccIn
         // don't go too many levels deep or we will blow the (real) stack
     
     if (recursionCounter >= glMaxRecursions)  {  
-    setError(recursion_depth_err, pcCodePtr);  return;  }
+        setError(recursion_depth_err, pcCodePtr);  return;  }
     recursionCounter++;
     
     
@@ -3029,7 +3057,7 @@ void(*numericJumpTable[commands_num])(void) = {     // numeric arguments
     &_illegal, &_illegal, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_illegal, &_illegal    };
 
-void(*codeJumpTable[commands_num])(void) = {     // right argument of define:  something that denotes the new type
+void(*codeJumpTable[commands_num])(void) = {     // right argument of define when copying variable type
     &_illegal, &_illegal, &_illegal, &_illegal, &_illegal,
         &_illegal, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
     &_object_search_member, &_object_step_to_memberID, &_object_step_to_index, &_object_step_to_indices, &_step_to_all_indices,

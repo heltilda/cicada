@@ -184,7 +184,7 @@ typedef struct {
     ccInt arrayDepth;       // array dimension spanned by this member (not the whole array) 
     linkedlist codeList;    // parallels the codeList in the targeted variable, but may be less restrictive
     
-    ccBool ifHidden;        // hidden_member members don't have indices associated with them
+    ccBool ifHidden;        // hidden members don't have indices associated with them
     int business;           // to use when checking to see if a window is part of an 'island'
 } member;
 
@@ -247,10 +247,6 @@ extern cc_interpret_global_struct cc_interpret_globals;
 #define MasterCodeList cc_interpret_globals._MasterCodeList
 #define VariableList cc_interpret_globals._VariableList
 #define PCStack cc_interpret_globals._PCStack
-
-
-#define setFlag(a,b,c) (a = (a&(~(1<<b)))+(c<<b))
-#define getFlag(a,b) ((a>>b)&1)
 
 
 #define LL_member(a,b) ((member *) element(&(a->mem.members),b))

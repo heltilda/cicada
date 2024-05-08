@@ -725,7 +725,7 @@ void passString(view *theView, ccInt stringDummyIndex, void *ptrHandle, void *in
         for (windowCounter = 1; windowCounter <= theStringWindow->variable_ptr->windows.data.elementNum; windowCounter++)  {
             window *loopWindow = (window *) element(&(theStringWindow->variable_ptr->windows.data), windowCounter);
             if ((loopWindow != theStringWindow) && (*(loopWindow->references) > 0))  {
-                if (loopWindow->jamStatus == unjammable)  loopWindow->jamStatus = unjammed;
+                if (loopWindow->jamStatus == cannot_jam)  loopWindow->jamStatus = unjammed;
                 else  {
                     setError(overlapping_window_err, pcCodePtr-1);
                     return;

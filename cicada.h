@@ -123,16 +123,21 @@
 #define no_arg 5
 
 
-// flags used after the define_equate command
+// flags used by define/equate/etc commands -- must be string literals equal to commented expressions (see cmpile.h for X_flag definitions)
 
-#define unjammable 7
-#define hidden_member 6
-#define run_constructor 5
-#define relink_target 4
-#define new_target 3
-#define can_add_members 2
-#define update_members 1
-#define post_equate 0
+#define defFlags 46     // can_add_members_flag + update_members_flag + new_target_flag + run_constructor_flag
+#define mdfFlags 6      // update_members_flag + can_add_members_flag
+#define vdfFlags 44     // can_add_members_flag + new_target_flag + run_constructor_flag
+#define equFlags 1      // post_equate_flag
+#define deqFlags 47     // can_add_members_flag + update_members_flag + new_target_flag + post_equate_flag + run_constructor_flag
+#define eqaFlags 16     // relink_target_flag
+#define dqaFlags 22     // can_add_members_flag + update_members_flag + relink_target_flag
+#define defxFlags 172   // can_add_members_flag + new_target_flag + run_constructor_flag + unjammable_flag
+#define deqxFlags 173   // can_add_members_flag + new_target_flag + post_equate_flag + run_constructor_flag + unjammable_flag
+#define dqaxFlags 148   // can_add_members_flag + relink_target_flag + unjammable_flag
+#define defxxFlags 236  // can_add_members_flag + new_target_flag + run_constructor_flag + unjammable_flag + hidden_member_flag
+#define deqxxFlags 237  // can_add_members_flag + new_target_flag+post_equate_flag+run_constructor_flag+unjammable_flag+hidden_member_flag
+#define defcxxFlags 204 // can_add_members_flag + new_target_flag + unjammable_flag + hidden_member_flag
 
 
 // Prototypes from cicada.c(pp)
@@ -160,19 +165,5 @@ extern ccInt cicadaNumPrecedenceLevels;
 #define bc_jump_if_false(arg) " 3 j" #arg " "
 #define bcArg(arg) " a" #arg " "
 #define bcPosition(arg) " p" #arg " "
-
-#define defFlags 46
-#define mdfFlags 6
-#define vdfFlags 44
-#define equFlags 1
-#define deqFlags 47
-#define eqaFlags 16
-#define dqaFlags 22
-#define defxFlags 172
-#define deqxFlags 173
-#define dqaxFlags 148
-#define defxxFlags 236
-#define deqxxFlags 237
-#define defcxxFlags 204
 
 #endif

@@ -245,7 +245,7 @@ extern void _delete_indices(void);
 
 extern void _if_eq(void);
 extern void _if_ne(void);
-extern void compareReadArg(void(*)(void), ccInt *, ccBool *);
+extern void copyCompareReadArg(void(*)(void), ccInt *, ccBool *);
 extern void _if_eq_at(void);
 extern void _if_ne_at(void);
 extern void eqaOneArg(void);
@@ -400,5 +400,8 @@ extern void(*saveDPRegJumpTable[])(void *);
 
 #define var_type -1
 #define no_string -1
+
+#define getFlag(a,b) ((a&b)!=0)
+
 
 #endif
