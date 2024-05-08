@@ -80,40 +80,40 @@
 
 \section{Introduction}
 
-Cicada script is a simple, interpreted language that interfaces naturally with C and C++.  Its goal is to have the best from two worlds:  an interactive and portable scripting language, embedded with our C routines that run at the top speed of the machine.  We build a Cicada program by compiling the Cicada source files (which are written in C/C++) together with our own C/C++ files.  Voil\`a, this gives us a command-line environment for executing our C routines and managing their data.
+Cicada is a simple, interpreted language that that embeds the user's fast C and C++ routines.  Compile the Cicada source code together with our own C/C++ files, and voil\`a, we have a command-line environment for executing our C routines and managing their data.
 
-For example, suppose we want to write a program to alphabetize a list of names.  It's a large list and will take quite a while to process, so we opt to write the sorting routine in C.
+For example, suppose we're writing a program to alphabetize a list of names.  It's a large list and will take quite a while to process, so we opt to write the sorting routine in C.
 
 \begin{code} \begin{verbatim}
-int SortPhoneBook(int argc, char **argv)     // format explained later
+int SortPhoneBook(int argc, char **argv)     // must be int(int, char**)
 {
     ...
 }
 \end{verbatim} \end{code}
  
-\noindent Speed is not critical for the rest of the job, but it would be nice to be able to call our routine from the command line.  So we paste our C routine into Cicada, specifically in the source file userfn.c.  We then give our sorting routine a name within Cicada, by modifying one of the pre-existing lines in userfn.c.
+\noindent Having written the time-consuming step in C, it'll be nice to be able to control it from a command line environment.  So let's incorporate \verb#SortPhoneBook()# into Cicada, specifically the source file called \verb#userfn.c#, and give it a name within the scripting language.
 
 \begin{code} \begin{verbatim}
-UserFunction UserFunctionSet[] = { { "DoSort", &SortPhoneBook } };
+UserFunction UserFunctionSet[] = { { "doSort", &SortPhoneBook } };
 \end{verbatim} \end{code}
 
-\noindent Finally, we update our Makefile and re-compile Cicada.
+\noindent Finally, update Cicada's Makefile if we added new source files, and re-compile.
 
 \begin{code} \begin{verbatim}
 user-prompt% make cicada CC=gcc
 \end{verbatim} \end{code}
 
-\noindent Finally we run Cicada, which brings up a command prompt allowing us to make our list and sort it.
+\noindent Running Cicada now brings up a command prompt allowing us to make our list and sort it.
 
 \begin{code} \begin{verbatim}
-> ListUSA := load("AllUSA.txt")
-> $DoSort(ListUSA)
-> save("/Documents/SortedList.txt", ListUSA)
+> US_numbers := load("AllUSA.txt")
+> $doSort(US_numbers)
+> save("/Documents/SortedList.txt", US_numbers)
 \end{verbatim} \end{code}
 
-\noindent And we are done.  Of course there are a few details.  The syntax should be easy to grasp at a glance -- in fact you can change the default syntax if you want -- but at its heart this language is a bit of an oddball.  For example, many Cicada functions will call their own arguments.
+\noindent That's it in a nutshell, modulo a few details.  The scripting syntax should be straightforward, and you can change it if you don't like it -- but at its heart this language has some unusual abilities.  For example, many Cicada functions will call their own arguments.
 
-The rest of this document explains the Cicada language in more detail three times over:  through an extended example (Chapter 2), a textbook-style explanation (Chapters 3 and 4), and a reference section (Chapter 5).
+The rest of this document describes the Cicada language three times over:  through a longer example (Section 2), an explanation (Section 3 and 4), and a reference section (Section 5).
 
 \newpage
 
@@ -127,7 +127,7 @@ The rest of this document explains the Cicada language in more detail three time
 
 \section{Example:  neural networks in Cicada}
 
-Cicada (formerly Yazoo) originally aimed to be a neural network simulator, missed by a mile, and ended up as a scripting language instead.  As a nod to the original mission, our tutorial will be a program that lets a user create and train artificial neural networks, which are algorithms based on models of we think neurons in our brains work that are widely used for fuzzy tasks such as pattern-recognition.  The time-consuming processes of simulating and training the networks will be written in C, for speed.  (This code is also C++ compatible.)  We will then write Cicada wrappers so that these networks can be controlled at the Cicada command prompt.  Finally, we will write (and debug) a script to use these networks to `learn' words that the user types at the command prompt.
+Cicada originally aimed to be a neural network engine, missed by a mile, and ended up as a scripting language instead.  As a nod to the original goal, let's write a program that lets a user create and train artificial neural networks:  algorithms based on models of we think neurons in our brains work that are widely used for fuzzy tasks such as pattern-recognition.  The time-consuming processes of simulating and training the networks will be written in C for speed.  (It's also C++ compatible.)  Then we'll write Cicada wrappers so that these networks can be controlled at the Cicada command prompt.  Finally, we will write (and debug) a script to use these networks to `learn' words that the user types at the command prompt.
 
 
 
@@ -413,7 +413,7 @@ neural_network :: {
 }
 \end{verbatim} \end{longcode}
 
-\noindent We should save NN.cicada in same directory that contains the \verb#cicada# application, \verb#start.cicada# and \verb#user.cicada#.  (start.cicada\index{start.cicada@\texttt{start.cicada}|textbf} runs the command prompt, and user.cicada\index{user.cicada@\texttt{user.cicada}|textbf} pre-loads a number of useful functions.)
+\noindent We should save NN.cicada in same directory that contains the \verb#cicada# application, \verb#start.cicada# and \verb#user.cicada#.  \verb#start.cicada#\index{start.cicada@\texttt{start.cicada}|textbf} runs the command prompt, and \verb#user.cicada#\index{user.cicada@\texttt{user.cicada}|textbf} pre-loads a number of useful functions.
 
 Assuming we are at Cicada's command prompt, we can try out our new wrapper by typing:
 
@@ -426,13 +426,13 @@ Error:  left-hand argument expected in file NN
                                    ^
 \end{verbatim} \end{code}
 
-\noindent Hmm..  we're obviously not finished with NN.cicada yet.  Fortunately compile-time errors like the one above are usually easy to sort out.  In our case we accidentally wrote a C-style comment `\verb#//#' in place of a Cicada comment `\verb#|#', which Cicada interpreted as a pair of division signs.  We make the straightforward fix to NN.cicada:
+\noindent Hmm..  we're obviously not finished with NN.cicada yet.  Fortunately compile-time errors like the one above are usually easy to sort out.  In our case we accidentally wrote a C-style comment `\verb#//#' in place of a Cicada comment `\verb#|#', which Cicada interpreted as a pair of division signs.  Make the straightforward fix to NN.cicada
 
 \begin{code} \begin{verbatim}
         inputs[1] = 1       | the 'bias' input
 \end{verbatim} \end{code}
 
-\noindent and try running the script again.
+\noindent and try again.
 
 \begin{code} \begin{verbatim}
 > run("NN")
@@ -443,7 +443,7 @@ Error:  member 'numHiddens' not found in file NN
                                    ^
 \end{verbatim} \end{code}
 
-We have made progress:  NN.cicada successfully compiled and began running --- before impaling itself on line 4 and duly filing a complaint.  Runtime errors can be more difficult to debug than compile-time errors, but the interactive environment helps somewhat.
+We have made progress:  NN.cicada successfully `compiled' and began running --- before impaling itself on line 4 and duly filing a complaint.  There's no debugger, but we can often troubleshoot runtime crashes using the command prompt.
 
 \begin{code} \begin{verbatim}
 > neural_network.numHiddens
@@ -451,7 +451,7 @@ We have made progress:  NN.cicada successfully compiled and began running --- be
 Error:  member 'numHiddens' not found
 \end{verbatim} \end{code}
 
-\noindent With a little knowledge of the scripting language we would see that we tried to define \verb#numInputs# and \verb#numOutputs# to be of type \verb#numHiddens#, which would be allowed except that \verb#numHiddens# has not been defined yet.  What we meant to do was to define all three of these variables to be of type \verb#int#.  Make the following correction to line 4:
+\noindent With a little knowledge of the scripting language we would see that we tried to define \verb#numInputs# and \verb#numOutputs# to be of type \verb#numHiddens#, which would be allowed except that \verb#numHiddens# itself was never defined.  What we meant to do was to define all three of these variables to be of type \verb#int#.  Make the following correction to line 4:
 
 \begin{code} \begin{verbatim}
     numInputs :: numOutputs :: numHiddens :: int
@@ -465,7 +465,7 @@ Error:  member 'numHiddens' not found
 usage:  myNN.init(inputs, outputs, hidden neurons)
 \end{verbatim} \end{code}
 
-This time the script successfully compiled and ran, although it printed out a suspicious `usage' message even though we never tried initializing a neural network.  Let's see if \verb#init()# works when we're actually trying to run it.
+This time the script successfully `compiled' and ran, or at least did something (unexpected) -- it printed out a usage message even though we never tried initializing a neural network.  Let's see if \verb#init()# works when we're actually trying to run it.
 
 \begin{code} \begin{verbatim}
 > neural_network.init(3, 4, 5)
@@ -501,7 +501,7 @@ This time the script successfully compiled and ran, although it printed out a su
 > go()
 \end{verbatim} \end{code}
 
-\noindent The last line takes us back to our normal workspace.  So our \verb#init()# call was a dud -- nothing happened.  Well, the next step is to put a trace statement in the coding section of the function.. wherever that is...  So, ho ho, we find that we forgot the \verb#code# marker in the \verb#init()# method, which explains all of our problems.  That should go at the beginning of \verb#init()#; the method should now begin:
+\noindent The last line takes us back to our normal workspace.  So our \verb#init()# call was a dud -- nothing happened.  So let's put a trace statement in the coding section of the \verb#init()# function.. wherever that is...  ho ho, well we forgot the \verb#code# marker, which explains why there isn't any coding section.  That should go at the beginning of \verb#init()#; the method should now begin:
 
 \begin{code} \begin{verbatim}
     init :: {
@@ -511,7 +511,7 @@ This time the script successfully compiled and ran, although it printed out a su
         if trap( { numInputs, numOutputs, numHiddens } = args ) /= passed  then (
 \end{verbatim} \end{code}
 
-etc.  For the last time, let's go back and try
+etc.  For the last time, go back and try
 
 \begin{code} \begin{verbatim}
 > run("NN"), neural_network.init(3, 4, 5)
@@ -654,22 +654,22 @@ ehllo
 hello
 \end{verbatim} \end{code}
 
-Thus concludes our Cicada demonstration.  Of course we've barely probed our anagrambler's intelligence, but a great virtue of the interactive command prompt is that the experimental cycles are very short.  For example, the author was taught it to perfectly recall three words (\verb#hello#, \verb#tomato# and \verb#yazoo#, the former name of Cicada) within a minute of coaching.  But maybe the network can learn even faster -- is 10 rounds of training on each word too many?  Will our network learn faster if we increase higher learning rate, or will it become unstable?  It's simple to test.
+Thus concludes our Cicada demonstration.  Of course we've barely probed our anagrambler's intelligence, but a great virtue of the interactive command prompt is that the experimental cycles are very short.  For example, the author was taught it to perfectly recall three words (\verb#hello#, \verb#tomato#, \verb#yazoo#) within a minute of coaching.  But maybe the network can learn even faster -- is 10 rounds of training on each word too many?  Will our network learn faster if we increase higher learning rate, or will it become unstable?  It's simple to test.
 
 \begin{code} \begin{verbatim}
 > anagrambler.teach("hello", 5; learning_rate = that*2)
 \end{verbatim} \end{code}
 
-\noindent We might also play around with the network architecture, for example by increasing the number of output neurons to allow the anagrambler to memorize longer words.  Most intriguingly of all, we could add hidden neurons to increase the complexity of its calculations, using the third argument of \verb#init()#.
+\noindent We might also play around with the network architecture, for example by increasing the number of output neurons to allow the anagrambler to memorize longer words.  Or we could add hidden neurons to increase the complexity of its calculations, using the third argument of \verb#init()#.
 
-That is the last that we shall say about neural networks -- this is, after all, a Cicada help file.  Hopefully this example shows the great advantage of marrying C code to an interpreted environment.  The final section of this chapter explains the general procedure for bringing C/C++ into Cicada.
+Hopefully this example shows the great advantage of marrying C code to an interpreted environment.  We'll conclude by explaining the general procedure for incorporating C/C++ functions into Cicada.
 
 
 
 
 \subsection{Rules for embedding C/C++ code}
 
-There are two ways to merge C or C++ with Cicada.  1) We can embed our own C functions inside Cicada, as shown in the tutorial.  2) Alternatively (or additionally), we can embed the Cicada inside of a larger C or C++ program.
+There are two ways to merge C or C++ with Cicada.  1) We can embed our own C functions inside Cicada, as shown above.  2) Alternatively (or additionally), we can embed the Cicada inside of a larger C or C++ program.
 
 Start with procedure (2) since it is very simple.  In order for a C/C++ source file to run Cicada, it needs to include Cicada's \verb#ccmain.h# header file.  The actual function call takes the form:
 
@@ -685,7 +685,7 @@ Procedure (1) for embedding external C or C++ functions into Cicada involves thr
 
 \subsubsection{C function declaration}
 
-An C/C++ function needs to be of type \verb#(ccInt)(ccInt, char **)# in order to be called from within Cicada.  Normally, \verb#ccInt# is just C's basic \verb#int# type.  The two arguments to the C function are:  1) the number of variables/arrays passed to the function, and 2) an array of pointers to these variables; and its return value is usually interpreted as an error code.  (This is the same function type as C's \verb#main()# function, making it easy to adapt a stand-alone C program.)  Each variable or array passed to the function is a list of one or more Booleans, characters, integers, floating-point numbers, or strings stored in linked lists.
+A C/C++ function needs to be of type \verb#(ccInt)(ccInt, char **)# in order to be called from within Cicada.  \verb#ccInt# will just be C's basic \verb#int# type unless you go in and change it.  The two arguments to the C function are:  1) the number of variables/arrays passed to the function, and 2) an array of pointers to these variables; and its return value is usually interpreted as an error code.  Each variable or array passed to the function is a list of one or more Booleans, characters, integers, floating-point numbers, or strings stored in linked lists.
 
 Here is an example of a Cicada-compatible function that has one argument of each possible data type:
 
@@ -696,9 +696,9 @@ ccInt myFunction(ccInt argc, char **argv)
 {
     ccBool firstArg = *argv[0];
     char secondArg = *argv[1];
-    ccInt *thirdArg = argv[2];
-    ccFloat *fourthArg = argv[3];
-    linkedlist *fifthArg = argv[4];
+    ccInt *thirdArg = (ccInt *) argv[2];
+    ccFloat *fourthArg = (ccFloat *) argv[3];
+    linkedlist *fifthArg = (linkedlist *) argv[4];
     
     ...
     
@@ -706,7 +706,7 @@ ccInt myFunction(ccInt argc, char **argv)
 }
 \end{verbatim} \end{code}
 
-\noindent We want to point out several features of this function call.  First, we included Cicada's \verb#userfn.h# header file.  Second, notice that we passed the first two arguments by value but the other three arguments by reference.  We must pass an argument by reference if it might be changed, \emph{particularly} if it is a string (the \verb#linkedlist# type).  The reason it is essential to pass strings by reference is that any resize of a string using a copy of the original linked list will probably crash the program.  Arrays are usually passed by reference because in C an array variable is the pointer to the first element.
+\noindent We want to point out several features of this function call.  First, we included Cicada's \verb#userfn.h# header file.  Second, notice that we passed the first two arguments by value but the other three arguments by reference.  We must pass an argument by reference if it might be changed, \emph{particularly} if it is a string (the \verb#linkedlist# type).  It's especially important to always pass strings by reference because otherwise any resize of the string will probably crash the program.  Arrays should also be passed by reference because that's how they're represented in C.
 
 Finally, we see that our C function used several Cicada-defined types:  for example \verb#ccInt# rather than \verb#int#.  Ordinarily these two types are interchangeable, according to definitions found in the \verb#lnklst.h# header file.  However, it is possible to change Cicada's default integer type to, say, a long integer by making changes to two of Cicada's files.  The first change is the type definition in \verb#lnklst.h#, which becomes
 
@@ -821,7 +821,7 @@ ccInt myFunction(ccInt argc, char **argv)
 
 Cicada interfaces with a user's C/C++ code through the file \verb#userfn.c#.  Usually this is the only Cicada source file we need to deal with.  The cleanest way to incorporate C/C++ functions is to include their header files at the top of \verb#userfn.c#, reference them in the \verb#UserFunction[]# array, and add the source files to Cicada's \verb#Makefile#.
 
-To give an explicit example, let's assume our C function \verb#myFunction()# is stored in a source file called \verb#myFunctionFile.c#, and prototyped in \verb#myFunctionFile.h#.  First, we open up \verb#userfn.c# (since we will be using the C version of Cicada).  At the top we include the header file.
+To give an explicit example, let's assume our C function \verb#myFunction()# is stored in a source file called \verb#myFunctionFile.c#, and prototyped in \verb#myFunctionFile.h#.  Open up \verb#userfn.c# (assuming we're using the C version of Cicada).  At the top include our header file.
 
 \begin{code} \begin{verbatim}
 // **********************************************
@@ -830,26 +830,26 @@ To give an explicit example, let's assume our C function \verb#myFunction()# is 
 #include "myFunctionFile.h"
 \end{verbatim} \end{code}
 
-Next, we add a new entry to the \verb#UserFunctions# array defined in \verb#userfn.c#.  The name of the C function is \verb#myFunction()#, but earlier in our examples we invoked it by writing either \verb#call("myFunctionInC", ...)# or \verb#$myFunctionInC(...)#, so its Cicada name is \verb#myFunctionInC#.  The altered \verb#UserFunctions# array (which already contained two entries) now reads:
+Next, add a new entry to the \verb#UserFunctions# array defined in \verb#userfn.c#.  The name of the C function is \verb#myFunction()#, but earlier in our examples we invoked it by writing either \verb#call("myFunctionInC", ...)# or \verb#$myFunctionInC(...)#, so its Cicada name is \verb#myFunctionInC#.  The altered \verb#UserFunctions# array (which already contained two entries) now reads:
 
 \begin{code} \begin{verbatim}
 userFunction UserFunctions[] = { { "pass2nums", &pass2nums }, { "cicada", &runCicada },
                           { "myFunctionInC", &myFunction } };
 \end{verbatim} \end{code}
 
-We are done changing \verb#userfn.c#, but we still need to modify the \verb#Makefile# so that our C code will get compiled into Cicada.  First we add a new object file to the end of the \verb#OBJ# definition in \verb#Makefile#:
+We are done changing \verb#userfn.c#, but we still need to modify the \verb#Makefile# so that our C code will get compiled into Cicada.  First, add a new object file to the end of the \verb#OBJ# definition in \verb#Makefile#:
 
 \begin{code} \begin{verbatim}
 OBJ = lnklst.o ... ccmain.o myFunctionFile.o
 \end{verbatim} \end{code}
 
-\noindent Second, we define our new object file by adding the following line to the very end of \verb#Makefile#:
+\noindent Second, define our new object file by adding the following line to the very end of \verb#Makefile#:
 
 \begin{code} \begin{verbatim}
 myFunctionFile.o: userfn.h myFunctionFile.h myFunctionFile.c
 \end{verbatim} \end{code}
 
-All of the Cicada source files and \verb#.cicada# files should be in the same directory together with \verb#Makefile# and our \verb#myFunctionFile.c# and \verb#myFunctionFile.h# files.  Finally, from the command prompt we can navigate to that directory and type \verb#make cicada CC=gcc#.  Assuming that both the \verb#make# tool and a C/C++ compiler like \verb#gcc# are installed, we will then have an application named \verb#cicada# with \verb#myFunction# as embedded as a command.  
+All of the Cicada source files and \verb#.cicada# files should be in the same directory together with \verb#Makefile# and our \verb#myFunctionFile.c# and \verb#myFunctionFile.h# files.  Finally, from the command prompt, navigate to that directory and type \verb#make cicada CC=gcc#.  Assuming that both the \verb#make# tool and a C/C++ compiler like \verb#gcc# are installed, we will then have an application named \verb#cicada# with \verb#myFunction# as embedded as a command.  
 
 As mentioned earlier, we can run Cicada from within another application by including \verb#ccmain.h# and making the following function call:
 
@@ -876,9 +876,7 @@ z = f(x, y)
 $myFunctionInC(x, y, z)
 \end{verbatim} \end{code}
 
-\noindent The wrapper will also allocate data storage for our function, and prevent us from crashing the C code by passing in bad arguments.
-
-Don't ask me what our C function does, but here is a pretty generic wrapper for it.\\\vspace{.2in}
+\noindent The wrapper will also allocate data storage for our function, and prevent us from crashing the C code by passing in bad arguments.  Don't ask me what this function does.\\\vspace{.2in}
 
 \noindent \underline{myFunctionWrapper.cicada}
 
@@ -932,7 +930,7 @@ result := f('a', 5; calcSize = that*2, doRecalc = false)
 
 We'll quickly go through the different parts of our wrapper function.  First, everything before the \verb#code# command just defines the variables used by our function.  These include the input and output arguments, optional parameters and even a calculation table used internally by our C code.  Importantly, by explicitly defining variables that we pass to the C code we ensure that our function call will communicate with C properly.  For example, when we write \verb#f('a', 5)# the integer argument 5 will be converted to a floating-point number before handing it off to C, because the input variable \verb#x# is defined to be of type \verb#double#.
 
-The executable part of \verb#f()# begins \emph{after} the \verb#code# marker.  The first bit of code reads the arguments of the function.  (We enclose the actual reading commands in a \verb#trap()# statement so that we can fail gracefully with an error message if the function wasn't called properly.)  Notice the two sorts of argument that the user passes.  The mandatory arguments \verb#x# and \verb#y# are copied straightforwardly from the predefined \verb#args# variable.  The optional arguments, stored in \verb#params# with the default values of 100 and \verb#true#, can be changed using a very peculiar Cicada trick:  \verb#f()# \emph{runs its own arguments} , as a function, inside of its own \verb#params# variable.  How this works is explained in the next chapter.  For now, we'll just point out that in calling \verb#f()# we separate the mandatory and optional parameters using a semicolon (which is effectively a \verb#code# command), and use ordinary scripting commands separated by commas to change the optional parameters.
+The executable part of \verb#f()# begins \emph{after} the \verb#code# marker.  The first bit of code reads the arguments of the function.  (We enclose the actual reading commands in a \verb#trap()# statement so that we can fail gracefully with an error message if the function wasn't called properly.)  Notice the two sorts of argument that the user passes.  The mandatory arguments \verb#x# and \verb#y# are copied straightforwardly from the predefined \verb#args# variable.  The optional arguments, stored in \verb#params# with the default values of 100 and \verb#true#, can be changed using a very peculiar Cicada trick:  \verb#f()# \emph{runs its own arguments} , as a function, inside of its own \verb#params# variable.  We'll go into that later.  For now, just know that when you call \verb#f()# you should separate the mandatory and optional parameters using a semicolon, and use ordinary scripting commands separated by commas to change the optional parameters.
 
 \newpage
 
@@ -975,7 +973,7 @@ The usual way to define variables in Cicada is to use the `\verb#::#' operator, 
 x :: int
 \end{verbatim} \end{code}
 
-\noindent Here \verb#x# was the variable and \verb#int# was the type.  The other possible allowed types are \verb#double#, \verb#char#, \verb#string# and \verb#bool#.  All Cicada variables \emph{must} be defined before they can be used.
+\noindent Here \verb#x# was the variable and \verb#int# was the type.  The other possible allowed primitive types are \verb#double#, \verb#char#, \verb#string# and \verb#bool#.  All Cicada variables \emph{must} be defined before they can be used.
 
 In order to define an array, add the size of each dimension in square brackets just before the type definition.  For example,
 
@@ -1420,7 +1418,7 @@ We can never reference multiple elements of a composite variable except when rem
 f :: {  int; this = args, return this  }
 \end{verbatim} \end{code}
 
-\noindent and type f(5), our function will set its internal integer variable to 5 and return itself:  \verb#{ 5 }#.  In general `\verb#this#' is whatever object contains the code that is currently running.
+\noindent and type \verb#f(5)#, our function will set its internal integer variable to 5 and return itself:  \verb#{ 5 }#.  In general `\verb#this#' is whatever object contains the code that is currently running.
 
 Be warned that there are two situations where `\verb#this#' may not point where we expect.  1) If we use the \verb#this# variable inside \emph{any} curly braces, as in
 
@@ -1484,7 +1482,7 @@ I :: {
 
 \subsubsection{Aliases} \index{aliases|(textbf}
 
-C has pointers; Cicada has \emph{aliases}.  An alias is a member that shares its data with some other member:  they lead to the same variable.  In Cicada a member and its alias are \emph{exactly} on he same terms:  Cicada doesn't even know which was the original member.
+C has pointers; Cicada has \emph{aliases}.  An alias is a member that shares its data with some other member:  they lead to the same variable.  In Cicada a member and its alias are \emph{exactly} on he same terms:  even the interpreter doesn't know which was the original member.
 
 Here is how aliases are defined:
 
@@ -1614,7 +1612,7 @@ var1 :: [1000] string
 
 \noindent We could have redefined \verb#var1# as anything:  a primitive or composite variable, function, etc.  But once it's been redefined once \verb#var1# cannot be redefined again except to the same type or a derived type (see inheritance).
 
-What is the use of defining void-typed variables (aside from the fact that they don't take up space until we redefine them)?  The main reason is that 1) members defined this way have no type until there are redefined, and 2) members without a type can alias any other member, because in a sense all data types are derived from the void.  This works as long as we don't redefine the alias (i.e. we have to just use the \verb#=@# operator, not \verb#:=@#).
+What is the use of defining void-typed variables (aside from the fact that they don't take up space until we redefine them)?  The main reason is that 1) members defined this way have no type until they are redefined, and 2) members without a type can alias any other member, because in a sense all data types are derived from the void.  This works as long as we don't redefine the alias (i.e. we have to just use the \verb#=@# operator, not \verb#:=@#).
 
 \begin{code} \begin{verbatim}
 any_var :: *
@@ -1632,7 +1630,7 @@ The fact that the void is the universal parent type also explains why void membe
 
 There are actually two uses of the word `void' in this document that are important to keep logically separate.  A void member is one that has no storage space.  But a void-\emph{typed} member is one with essentially no type restriction on what it can point to.  A definition like \verb#a :: *# does \emph{two} things:  it defines a member `\verb#a#' having no type, and it therefore neglects to give `\verb#a#' any storage space.
 
-Cicada also distinguishes between member types and variable types.  For example, after \texttt{any\_var} was aliased to \texttt{x}, did \texttt{any\_var} have a null type or was it an \verb#int#?  Well, that depends on whether you are asking about the member's type (which was void), or the type of the variable it points to (an integer).  Both members and variables have types, and in general they may be different.  A member's type specification\index{members!type|(} determines which variables it is allowed to point to.  The rule is that a member can only target variables of the same type, or having a sub-type derived from its the member's type.  (Well strictly speaking there is an exception:  any member can be aliased to the void to free up its storage space, regardless of its type.  I guess the void plays by its own rules.)\\
+Cicada also distinguishes between member types and variable types.  For example, after \texttt{any\_var} was aliased to \texttt{x}, did \texttt{any\_var} have a null type or was it an \verb#int#?  Well, that depends on whether you are asking about the member's type (which was void), or the type of the variable it points to (an integer).  Both members and variables have types, and in general they may be different.  A member's type specification\index{members!type|(} determines which variables it is allowed to point to.  The rule is that a member can only target variables of the same type, or having a sub-type derived from its the member's type.  (One exception:  any member can be aliased to the void to free up storage space.)\\
 
 
 
@@ -2250,7 +2248,7 @@ All members of \verb#params# must be explicitly named.  This would be an \emph{i
     params :: { numSides, isLoaded }
 \end{verbatim} \end{code}
 
-\noindent The problem is that neither member of \verb#params# has a name, so a function call can't easily change it.  A member aliasing the \verb#isLoaded# variable is not the same as a member named \verb#isLoaded#.\\
+\noindent The problem is that this \verb#params# is better viewed as a set -- neither element (member) has a name, so \verb#args()# can't easily change the parameters.  A nameless member aliasing the \verb#numSides# or \verb#isLoaded# variable is not the same as a member named \verb#numSides# or \verb#isLoaded#.\\
 
 
 In general, a code substitution \verb#D << F#, involving composite variables or functions \verb#D# and \verb#F#, returns the data space of \verb#D# along with the code of \verb#F#.  On the other hand, plain \verb#F# returns both the data space and the code of \verb#F#.  The two basic properties of composite variables and functions are data and code, and the code substitution operator is the tool for separating and recombining these properties.
@@ -2484,7 +2482,6 @@ Importantly, the order of inheritance affects an object's type.  \verb#C# has a 
 Cicada allows \emph{existing} objects to be redefined as a different type only if the new type is derived from its original type.  We can always specialize a member's type by adding more inheritance operators \emph{at the end} of the type specification.  All of the following commands will work in order except the last one.
 
 \begin{code} \begin{verbatim}
-C :: A : B               | sure -- was already defined this way
 C :: A : B               | we already did this, but fine
 C :: C                   | fine -- C equals A : B
 C :: C : B               | OK -- now C will be A : B : B
@@ -2793,7 +2790,7 @@ flag &= (1 << 1 = 2) + (1 << 2 = 4) + (1 << 3 = 8) + (1 << 5 = 32)\\
 \paragraph{Flag 0 -- equate:}  copies data from the source variable into the destination variable.  This is used by both the assignment \verb#=# and define-equate \verb#:=# operators, but \emph{not} the aliasing operators.\\
 
 
-\paragraph{Flag 1 -- update-members:}  causes the destination member to be updated to the type of the source \emph{variable} (not the source member!).  For example, suppose we write:
+\paragraph{Flag 1 -- update-members:}  causes the destination member to be updated to the type of the source \emph{variable} (not the source member unless the source variable is void!).  For example, suppose we write:
 
 \begin{code} \begin{verbatim}
 a :: *, b := 5
@@ -2802,13 +2799,13 @@ a = @b
 c :: a
 \end{verbatim} \end{code}
 
-\noindent Member \verb#a# has no type, but the variable it points to is an integer.  Thus the member named `\verb#c#' will be defined as an integer, because the define operator sets the update-member flag.\\
+\noindent Member \verb#a# has no type, but the variable it points to is an integer.  Thus the member named `\verb#c#' will be defined and allocate storage for an integer, because the define operator sets the update-member flag.\\
 
 
-\paragraph{Flag 2 -- add-members:}  creates the looked-for member if it doesn't already exist inside the current-running function.  Set by all define operators, even \verb#:: @# which doesn't assign a type to a new member but will create it.\\
+\paragraph{Flag 2 -- add-members:}  creates the looked-for member if it doesn't already exist inside the current-running function.  Set by all define operators, even \verb#:: @# which doesn't assign a type to the new member but will create it.\\
 
 
-\paragraph{Flag 3 -- new-target:}  does two things.  1) Creates a new destination \emph{variable} if none existed already (i.e. if the destination member was void), but it will not overwrite an existing variable.  2) This flag also updates (specializes) the type of the destination variable, regardless of whether or not it had just created that variable.  The new type is the type of the source \emph{variable} (not member), so it requires that the source member not be void.
+\paragraph{Flag 3 -- new-target:}  does two things.  1) Creates a new destination \emph{variable} if none existed already (i.e. if the destination member was void), but it will not overwrite an existing variable.  2) This flag also updates (specializes) the type of the destination variable, regardless of whether or not it had just created that variable.  The new type is the type of the source member or source variable, whichever is more restrictive.  Since a member can only point to an as-or-more-restrictively typed variable, this means that the new type will be that of the source variable unless there is none (the source member points into the void), in which case it's the type specification of the source member.
 
 The member-define operator (\verb#*::#) sets the update-members flag, but not the new-target flag, so it operates only on members.  On the other hand, the variable-define operator (\verb#@::#) has its new-target flag set but the update-members flag clear, so it will specialize variable but not member types.  It can however create new members since it sets the add-members flag.  Plain old define (\verb#::#) sets all three flags.\\
 
@@ -2818,7 +2815,7 @@ The member-define operator (\verb#*::#) sets the update-members flag, but not th
 In a sense, relink-target is the third of three pillars of the def-equate flags.  Whereas post-equate copies data, and update-members and new-target copy code, the relink-target flag copies the target reference (which is something like a pointer) of the source member.\\
 
 
-\paragraph{Flag 5 -- run-constructor:}  \index{constructor!flag in bytecode|(}causes the constructor of the destination variable to be run after it has been created/having its type updated, but before any data has been copied from the source variable.  The constructor is the part of a script before the first \verb#code# marker or semicolon.  If the variable has several concatenated codes, the constructors of each code are run in order from first code to last.  Primitive variables have no code, so they are unaffected by this flag.
+\paragraph{Flag 5 -- run-constructor:}  \index{constructor!flag in bytecode|(}causes the constructor of the destination variable to be run after it has been created/having its type updated, but before any data has been copied from the source variable if the equate flag was set.  The constructor is the part of a script before the first \verb#code# marker or semicolon.  If the variable has several concatenated codes, the constructors of each code are run in order from first code to last.  Primitive variables have no code, so they are unaffected by this flag.
 
 The constructor-run is the 2nd-to-last operation performed by the def-equate operator, with the actual equate being the last.  This is why we are able to copy composite variables in one step:
 
@@ -2840,8 +2837,6 @@ comp2 := comp1
 % --------------- Functions, revisited --------------
 
 \subsubsection{Adapters}\index{adapters|(}
-
-%As a general rule:  two things in Yazoo that look the same, smell the same and should be different, are probably really the same.
 
 There's something missing in our scripts, and the easiest place to see this is in an ordinary function call:
 
@@ -2867,7 +2862,7 @@ Let's draw an analogy.  Back in the cave man days, there were probably a lot of 
 rock
 \end{verbatim} \end{code}
 
-\noindent which in modern English would be written
+\noindent which in modern English would be
 
 \begin{code} \begin{verbatim}
 [That which I want to draw your attention to] [is] the rock.
@@ -3185,9 +3180,9 @@ Each entry in the following list consists of:  a bytecode command word (which is
 
 
 
-% --------------- Def-general operators and flags --------------
+% --------------- Define operators and flags --------------
 
-\subsubsection{Define operator flags}\index{def-general, flags|(} \index{operators!def-general|(}
+\subsubsection{Define operator flags}\index{define, flags|(} \index{operators!define|(}
 
 
 Table \ref{defineFlagsTable} lists the common define/equate/equate-at operators and their associated bytecode flag words (the bytecode word following the define operator).  Each flag word encodes the various binary properties of a define operator:  it is the decimal representation of the columns in the table treated as binary digits (where a checkmark equals 1).  The flags are:  equate (0), update-members (1), add-members (2), new-target (3), relink-target (4), run-constructor (5), hidden (6), and unjammable (7).  The last six operators that have asterisks in their names cannot be written into a script, but are generated automatically by the compiler in various situations.\\
@@ -3221,7 +3216,7 @@ $\sim$define & def-c** & N/A & 204 & \checkmark & \checkmark & & & \checkmark & 
 \end{center}
 \caption{The flags of all various define, assignment and aliasing operators}
 \label{defineFlagsTable}
-\end{table}\index{def-general, flags|)} \index{operators!def-general|)}
+\end{table}\index{define, flags|)} \index{operators!define|)}
 
 
 
@@ -3601,7 +3596,7 @@ str =! { 5, 2.7 }
 
 \noindent gives something illegible (the raw bytes encoding the two numbers in binary format).
 
-If the first argument is numeric, then it is taken as the minimum field width for numeric and Boolean (but not string or character) variables to be printed; otherwise the default minimum field width is zero.  If both the first and second arguments are numeric, then the second argument is the output precision for floating-point \texttt{single} and \texttt{double} variables; otherwise the output precision is determined by the C constant \texttt{DBL\_DIG} for \texttt{double}-typed variables.  When no precision is specified, \texttt{print\_string} prints considerably more digits than does \texttt{print()}, whose precision is set by \verb#printFloatFormatString# at the top of \verb#cmpile.c#.\\
+If the first argument is numeric, then it is taken as the minimum field width for numeric and Boolean (but not string or character) variables to be printed; otherwise the default minimum field width is zero.  If both the first and second arguments are numeric, then the second argument is the output precision for floating-point variables; otherwise the output precision is determined by the C constant \texttt{DBL\_DIG} for \texttt{double}-typed variables.  When no precision is specified, \texttt{print\_string} prints considerably more digits than does \texttt{print()}, whose precision is set by \verb#printFloatFormatString# at the top of \verb#cmpile.c#.\\
 
 \index{print_string@\verb$print_string()$|)} \index{strings!type conversion|)} \index{printing!to a string|)}
 
