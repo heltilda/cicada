@@ -30,7 +30,7 @@
 <P> 
 
 <br><P><b>Flag 1 -- update-members:</b></b>
-<P>  causes the destination member to be updated to the type of the source <i>variable</i> (not the source member!).  For example, suppose we write:
+<P>  causes the destination member to be updated to the type of the source <i>variable</i> (not the source member unless the source variable is void!).  For example, suppose we write:
 
 <P> 
 
@@ -48,17 +48,17 @@
 
 <P>
 
-<P>  Member <tt>a</tt> has no type, but the variable it points to is an integer.  Thus the member named &lsquo;<tt>c</tt>&rsquo; will be defined as an integer, because the define operator sets the update-member flag.<P>
+<P>  Member <tt>a</tt> has no type, but the variable it points to is an integer.  Thus the member named &lsquo;<tt>c</tt>&rsquo; will be defined and allocate storage for an integer, because the define operator sets the update-member flag.<P>
 
 <P> 
 
 <br><P><b>Flag 2 -- add-members:</b></b>
-<P>  creates the looked-for member if it doesn&rsquo;t already exist inside the current-running function.  Set by all define operators, even <tt>:: @</tt> which doesn&rsquo;t assign a type to a new member but will create it.<P>
+<P>  creates the looked-for member if it doesn&rsquo;t already exist inside the current-running function.  Set by all define operators, even <tt>:: @</tt> which doesn&rsquo;t assign a type to the new member but will create it.<P>
 
 <P> 
 
 <br><P><b>Flag 3 -- new-target:</b></b>
-<P>  does two things.  1) Creates a new destination <i>variable</i> if none existed already (i.e. if the destination member was void), but it will not overwrite an existing variable.  2) This flag also updates (specializes) the type of the destination variable, regardless of whether or not it had just created that variable.  The new type is the type of the source <i>variable</i> (not member), so it requires that the source member not be void.
+<P>  does two things.  1) Creates a new destination <i>variable</i> if none existed already (i.e. if the destination member was void), but it will not overwrite an existing variable.  2) This flag also updates (specializes) the type of the destination variable, regardless of whether or not it had just created that variable.  The new type is the type of the source member or source variable, whichever is more restrictive.  Since a member can only point to an as-or-more-restrictively typed variable, this means that the new type will be that of the source variable unless there is none (the source member points into the void), in which case it&rsquo;s the type specification of the source member.
 
 <P> The member-define operator (<tt>*::</tt>) sets the update-members flag, but not the new-target flag, so it operates only on members.  On the other hand, the variable-define operator (<tt>@::</tt>) has its new-target flag set but the update-members flag clear, so it will specialize variable but not member types.  It can however create new members since it sets the add-members flag.  Plain old define (<tt>::</tt>) sets all three flags.<P>
 
@@ -72,7 +72,7 @@
 <P> 
 
 <br><P><b>Flag 5 -- run-constructor:</b></b>
-<P>  causes the constructor of the destination variable to be run after it has been created/having its type updated, but before any data has been copied from the source variable.  The constructor is the part of a script before the first <tt>code</tt> marker or semicolon.  If the variable has several concatenated codes, the constructors of each code are run in order from first code to last.  Primitive variables have no code, so they are unaffected by this flag.
+<P>  causes the constructor of the destination variable to be run after it has been created/having its type updated, but before any data has been copied from the source variable if the equate flag was set.  The constructor is the part of a script before the first <tt>code</tt> marker or semicolon.  If the variable has several concatenated codes, the constructors of each code are run in order from first code to last.  Primitive variables have no code, so they are unaffected by this flag.
 
 <P> The constructor-run is the 2nd-to-last operation performed by the def-equate operator, with the actual equate being the last.  This is why we are able to copy composite variables in one step:
 
@@ -104,4 +104,4 @@
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_42.html">Prev: Cicada bytecode</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_422.html">Next: Adapters</a>
-</div><br><br><P>Last update: July 25, 2021
+</div><br><br><P>Last update: May 8, 2024

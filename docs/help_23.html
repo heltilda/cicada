@@ -156,7 +156,7 @@
 
 <P>
 
-<P>  We should save NN.cicada in same directory that contains the <tt>cicada</tt> application, <tt>start.cicada</tt> and <tt>user.cicada</tt>.  (start.cicada runs the command prompt, and user.cicada pre-loads a number of useful functions.)
+<P>  We should save NN.cicada in same directory that contains the <tt>cicada</tt> application, <tt>start.cicada</tt> and <tt>user.cicada</tt>.  <tt>start.cicada</tt> runs the command prompt, and <tt>user.cicada</tt> pre-loads a number of useful functions.
 
 <P> Assuming we are at Cicada&rsquo;s command prompt, we can try out our new wrapper by typing:
 
@@ -180,7 +180,7 @@
 
 <P>
 
-<P>  Hmm..  we&rsquo;re obviously not finished with NN.cicada yet.  Fortunately compile-time errors like the one above are usually easy to sort out.  In our case we accidentally wrote a C-style comment &lsquo;<tt>//</tt>&rsquo; in place of a Cicada comment &lsquo;<tt>|</tt>&rsquo;, which Cicada interpreted as a pair of division signs.  We make the straightforward fix to NN.cicada:
+<P>  Hmm..  we&rsquo;re obviously not finished with NN.cicada yet.  Fortunately compile-time errors like the one above are usually easy to sort out.  In our case we accidentally wrote a C-style comment &lsquo;<tt>//</tt>&rsquo; in place of a Cicada comment &lsquo;<tt>|</tt>&rsquo;, which Cicada interpreted as a pair of division signs.  Make the straightforward fix to NN.cicada
 
 <P> 
 
@@ -192,7 +192,7 @@
 
 <P>
 
-<P>  and try running the script again.
+<P>  and try again.
 
 <P> 
 
@@ -214,7 +214,7 @@
 
 <P>
 
-<P> We have made progress:  NN.cicada successfully compiled and began running --- before impaling itself on line 4 and duly filing a complaint.  Runtime errors can be more difficult to debug than compile-time errors, but the interactive environment helps somewhat.
+<P> We have made progress:  NN.cicada successfully &lsquo;compiled&rsquo; and began running --- before impaling itself on line 4 and duly filing a complaint.  There&rsquo;s no debugger, but we can often troubleshoot runtime crashes using the command prompt.
 
 <P> 
 
@@ -230,7 +230,7 @@
 
 <P>
 
-<P>  With a little knowledge of the scripting language we would see that we tried to define <tt>numInputs</tt> and <tt>numOutputs</tt> to be of type <tt>numHiddens</tt>, which would be allowed except that <tt>numHiddens</tt> has not been defined yet.  What we meant to do was to define all three of these variables to be of type <tt>int</tt>.  Make the following correction to line 4:
+<P>  With a little knowledge of the scripting language we would see that we tried to define <tt>numInputs</tt> and <tt>numOutputs</tt> to be of type <tt>numHiddens</tt>, which would be allowed except that <tt>numHiddens</tt> itself was never defined.  What we meant to do was to define all three of these variables to be of type <tt>int</tt>.  Make the following correction to line 4:
 
 <P> 
 
@@ -258,7 +258,7 @@
 
 <P>
 
-<P> This time the script successfully compiled and ran, although it printed out a suspicious &lsquo;usage&rsquo; message even though we never tried initializing a neural network.  Let&rsquo;s see if <tt>init()</tt> works when we&rsquo;re actually trying to run it.
+<P> This time the script successfully &lsquo;compiled&rsquo; and ran, or at least did something (unexpected) -- it printed out a usage message even though we never tried initializing a neural network.  Let&rsquo;s see if <tt>init()</tt> works when we&rsquo;re actually trying to run it.
 
 <P> 
 
@@ -330,7 +330,7 @@
 
 <P>
 
-<P>  The last line takes us back to our normal workspace.  So our <tt>init()</tt> call was a dud -- nothing happened.  Well, the next step is to put a trace statement in the coding section of the function.. wherever that is...  So, ho ho, we find that we forgot the <tt>code</tt> marker in the <tt>init()</tt> method, which explains all of our problems.  That should go at the beginning of <tt>init()</tt>; the method should now begin:
+<P>  The last line takes us back to our normal workspace.  So our <tt>init()</tt> call was a dud -- nothing happened.  So let&rsquo;s put a trace statement in the coding section of the <tt>init()</tt> function.. wherever that is...  ho ho, well we forgot the <tt>code</tt> marker, which explains why there isn&rsquo;t any coding section.  That should go at the beginning of <tt>init()</tt>; the method should now begin:
 
 <P> 
 
@@ -350,7 +350,7 @@
 
 <P>
 
-<P> etc.  For the last time, let&rsquo;s go back and try
+<P> etc.  For the last time, go back and try
 
 <P> 
 
@@ -377,4 +377,4 @@
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_22.html">Prev: Putting the C in Cicada</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_24.html">Next: The Anagrambler</a>
-</div><br><br><P>Last update: July 25, 2021
+</div><br><br><P>Last update: May 8, 2024

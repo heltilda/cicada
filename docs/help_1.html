@@ -12,15 +12,15 @@
 
 
 
-<P> Cicada script is a simple, interpreted language that interfaces naturally with C and C++.  Its goal is to have the best from two worlds:  an interactive and portable scripting language, embedded with our C routines that run at the top speed of the machine.  We build a Cicada program by compiling the Cicada source files (which are written in C/C++) together with our own C/C++ files.  Voil&agrave;, this gives us a command-line environment for executing our C routines and managing their data.
+<P> Cicada is a simple, interpreted language that that embeds the user&rsquo;s fast C and C++ routines.  Compile the Cicada source code together with our own C/C++ files, and voil&agrave;, we have a command-line environment for executing our C routines and managing their data.
 
-<P> For example, suppose we want to write a program to alphabetize a list of names.  It&rsquo;s a large list and will take quite a while to process, so we opt to write the sorting routine in C.
+<P> For example, suppose we&rsquo;re writing a program to alphabetize a list of names.  It&rsquo;s a large list and will take quite a while to process, so we opt to write the sorting routine in C.
 
 <P> 
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; int SortPhoneBook(int argc, char **argv)&nbsp;&nbsp;&nbsp;&nbsp;// format explained later
+<br>&nbsp;&nbsp;&nbsp; int SortPhoneBook(int argc, char **argv)&nbsp;&nbsp;&nbsp;&nbsp;// must be int(int, char**)
 
 <br>&nbsp;&nbsp;&nbsp; {
 
@@ -32,19 +32,19 @@
 
 <P>
  
- Speed is not critical for the rest of the job, but it would be nice to be able to call our routine from the command line.  So we paste our C routine into Cicada, specifically in the source file userfn.c.  We then give our sorting routine a name within Cicada, by modifying one of the pre-existing lines in userfn.c.
+ Having written the time-consuming step in C, it&rsquo;ll be nice to be able to control it from a command line environment.  So let&rsquo;s incorporate <tt>SortPhoneBook()</tt> into Cicada, specifically the source file called <tt>userfn.c</tt>, and give it a name within the scripting language.
 
 <P> 
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; UserFunction UserFunctionSet[] = { { &quot;DoSort&quot;, &amp;SortPhoneBook } };
+<br>&nbsp;&nbsp;&nbsp; UserFunction UserFunctionSet[] = { { &quot;doSort&quot;, &amp;SortPhoneBook } };
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
-<P>  Finally, we update our Makefile and re-compile Cicada.
+<P>  Finally, update Cicada&rsquo;s Makefile if we added new source files, and re-compile.
 
 <P> 
 
@@ -56,25 +56,25 @@
 
 <P>
 
-<P>  Finally we run Cicada, which brings up a command prompt allowing us to make our list and sort it.
+<P>  Running Cicada now brings up a command prompt allowing us to make our list and sort it.
 
 <P> 
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; &gt; ListUSA := load(&quot;AllUSA.txt&quot;)
+<br>&nbsp;&nbsp;&nbsp; &gt; US_numbers := load(&quot;AllUSA.txt&quot;)
 
-<br>&nbsp;&nbsp;&nbsp; &gt; $DoSort(ListUSA)
+<br>&nbsp;&nbsp;&nbsp; &gt; $doSort(US_numbers)
 
-<br>&nbsp;&nbsp;&nbsp; &gt; save(&quot;/Documents/SortedList.txt&quot;, ListUSA)
+<br>&nbsp;&nbsp;&nbsp; &gt; save(&quot;/Documents/SortedList.txt&quot;, US_numbers)
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
-<P>  And we are done.  Of course there are a few details.  The syntax should be easy to grasp at a glance -- in fact you can change the default syntax if you want -- but at its heart this language is a bit of an oddball.  For example, many Cicada functions will call their own arguments.
+<P>  That&rsquo;s it in a nutshell, modulo a few details.  The scripting syntax should be straightforward, and you can change it if you don&rsquo;t like it -- but at its heart this language has some unusual abilities.  For example, many Cicada functions will call their own arguments.
 
-<P> The rest of this document explains the Cicada language in more detail three times over:  through an extended example (Chapter 2), a textbook-style explanation (Chapters 3 and 4), and a reference section (Chapter 5).
+<P> The rest of this document describes the Cicada language three times over:  through a longer example (Section 2), an explanation (Section 3 and 4), and a reference section (Section 5).
 
 <P> 
 
@@ -83,4 +83,4 @@
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/toc.html">Prev: Table of Contents</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_2.html">Next: Example:  neural networks in Cicada</a>
-</div><br><br><P>Last update: July 25, 2021
+</div><br><br><P>Last update: May 8, 2024

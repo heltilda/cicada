@@ -12,7 +12,7 @@
 
 
 
-<P> An C/C++ function needs to be of type <tt>(ccInt)(ccInt, char **)</tt> in order to be called from within Cicada.  Normally, <tt>ccInt</tt> is just C&rsquo;s basic <tt>int</tt> type.  The two arguments to the C function are:  1) the number of variables/arrays passed to the function, and 2) an array of pointers to these variables; and its return value is usually interpreted as an error code.  (This is the same function type as C&rsquo;s <tt>main()</tt> function, making it easy to adapt a stand-alone C program.)  Each variable or array passed to the function is a list of one or more Booleans, characters, integers, floating-point numbers, or strings stored in linked lists.
+<P> A C/C++ function needs to be of type <tt>(ccInt)(ccInt, char **)</tt> in order to be called from within Cicada.  <tt>ccInt</tt> will just be C&rsquo;s basic <tt>int</tt> type unless you go in and change it.  The two arguments to the C function are:  1) the number of variables/arrays passed to the function, and 2) an array of pointers to these variables; and its return value is usually interpreted as an error code.  Each variable or array passed to the function is a list of one or more Booleans, characters, integers, floating-point numbers, or strings stored in linked lists.
 
 <P> Here is an example of a Cicada-compatible function that has one argument of each possible data type:
 
@@ -32,11 +32,11 @@
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;char secondArg = *argv[1];
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccInt *thirdArg = argv[2];
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccInt *thirdArg = (ccInt *) argv[2];
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccFloat *fourthArg = argv[3];
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccFloat *fourthArg = (ccFloat *) argv[3];
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;linkedlist *fifthArg = argv[4];
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;linkedlist *fifthArg = (linkedlist *) argv[4];
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
 
@@ -52,7 +52,7 @@
 
 <P>
 
-<P>  We want to point out several features of this function call.  First, we included Cicada&rsquo;s <tt>userfn.h</tt> header file.  Second, notice that we passed the first two arguments by value but the other three arguments by reference.  We must pass an argument by reference if it might be changed, <i>particularly</i> if it is a string (the <tt>linkedlist</tt> type).  The reason it is essential to pass strings by reference is that any resize of a string using a copy of the original linked list will probably crash the program.  Arrays are usually passed by reference because in C an array variable is the pointer to the first element.
+<P>  We want to point out several features of this function call.  First, we included Cicada&rsquo;s <tt>userfn.h</tt> header file.  Second, notice that we passed the first two arguments by value but the other three arguments by reference.  We must pass an argument by reference if it might be changed, <i>particularly</i> if it is a string (the <tt>linkedlist</tt> type).  It&rsquo;s especially important to always pass strings by reference because otherwise any resize of the string will probably crash the program.  Arrays should also be passed by reference because that&rsquo;s how they&rsquo;re represented in C.
 
 <P> Finally, we see that our C function used several Cicada-defined types:  for example <tt>ccInt</tt> rather than <tt>int</tt>.  Ordinarily these two types are interchangeable, according to definitions found in the <tt>lnklst.h</tt> header file.  However, it is possible to change Cicada&rsquo;s default integer type to, say, a long integer by making changes to two of Cicada&rsquo;s files.  The first change is the type definition in <tt>lnklst.h</tt>, which becomes
 
@@ -234,4 +234,4 @@ type # (macro) </td><td> Cicada type name </td><td> C type name </td><td> defaul
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_25.html">Prev: Rules for embedding C/C++ code</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_252.html">Next: Cicada&rsquo;s <tt>userfn</tt> source files</a>
-</div><br><br><P>Last update: July 25, 2021
+</div><br><br><P>Last update: May 8, 2024

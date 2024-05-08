@@ -36,9 +36,7 @@
 
 <P>
 
-<P>  The wrapper will also allocate data storage for our function, and prevent us from crashing the C code by passing in bad arguments.
-
-<P> Don&rsquo;t ask me what our C function does, but here is a pretty generic wrapper for it.<P>
+<P>  The wrapper will also allocate data storage for our function, and prevent us from crashing the C code by passing in bad arguments.  Don&rsquo;t ask me what this function does.<P>
 
 <P>  <u>myFunctionWrapper.cicada</u>
 
@@ -142,7 +140,7 @@
 
 <P> We&rsquo;ll quickly go through the different parts of our wrapper function.  First, everything before the <tt>code</tt> command just defines the variables used by our function.  These include the input and output arguments, optional parameters and even a calculation table used internally by our C code.  Importantly, by explicitly defining variables that we pass to the C code we ensure that our function call will communicate with C properly.  For example, when we write <tt>f('a', 5)</tt> the integer argument 5 will be converted to a floating-point number before handing it off to C, because the input variable <tt>x</tt> is defined to be of type <tt>double</tt>.
 
-<P> The executable part of <tt>f()</tt> begins <i>after</i> the <tt>code</tt> marker.  The first bit of code reads the arguments of the function.  (We enclose the actual reading commands in a <tt>trap()</tt> statement so that we can fail gracefully with an error message if the function wasn&rsquo;t called properly.)  Notice the two sorts of argument that the user passes.  The mandatory arguments <tt>x</tt> and <tt>y</tt> are copied straightforwardly from the predefined <tt>args</tt> variable.  The optional arguments, stored in <tt>params</tt> with the default values of 100 and <tt>true</tt>, can be changed using a very peculiar Cicada trick:  <tt>f()</tt> <i>runs its own arguments</i> , as a function, inside of its own <tt>params</tt> variable.  How this works is explained in the next chapter.  For now, we&rsquo;ll just point out that in calling <tt>f()</tt> we separate the mandatory and optional parameters using a semicolon (which is effectively a <tt>code</tt> command), and use ordinary scripting commands separated by commas to change the optional parameters.
+<P> The executable part of <tt>f()</tt> begins <i>after</i> the <tt>code</tt> marker.  The first bit of code reads the arguments of the function.  (We enclose the actual reading commands in a <tt>trap()</tt> statement so that we can fail gracefully with an error message if the function wasn&rsquo;t called properly.)  Notice the two sorts of argument that the user passes.  The mandatory arguments <tt>x</tt> and <tt>y</tt> are copied straightforwardly from the predefined <tt>args</tt> variable.  The optional arguments, stored in <tt>params</tt> with the default values of 100 and <tt>true</tt>, can be changed using a very peculiar Cicada trick:  <tt>f()</tt> <i>runs its own arguments</i> , as a function, inside of its own <tt>params</tt> variable.  We&rsquo;ll go into that later.  For now, just know that when you call <tt>f()</tt> you should separate the mandatory and optional parameters using a semicolon, and use ordinary scripting commands separated by commas to change the optional parameters.
 
 <P> 
 
@@ -150,4 +148,4 @@
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_252.html">Prev: Cicada&rsquo;s <tt>userfn</tt> source files</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_3.html">Next: Cicada scripting</a>
-</div><br><br><P>Last update: July 25, 2021
+</div><br><br><P>Last update: May 8, 2024
