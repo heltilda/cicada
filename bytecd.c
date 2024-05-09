@@ -2074,7 +2074,7 @@ void _append_code()
 
 void getCurrentCodeList(linkedlist *theList)
 {
-    ccInt rtrn;
+    ccInt numNewElements = 0, rtrn;
     linkedlist *listToCopy = NULL;
     
     if (GL_Object.type == composite_type)  {
@@ -2092,7 +2092,9 @@ void getCurrentCodeList(linkedlist *theList)
     }
     else  {  setError(not_a_function_err, pcCodePtr-1);  return;  }
     
-    rtrn = newLinkedList(theList, listToCopy->elementNum, sizeof(code_ref), 0., ccFalse);
+    if (listToCopy != NULL)  numNewElements = listToCopy->elementNum;
+    
+    rtrn = newLinkedList(theList, numNewElements, sizeof(code_ref), 0., ccFalse);
     if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
     if (listToCopy != NULL)  copyElements(listToCopy, 1, theList, 1, listToCopy->elementNum);
     
