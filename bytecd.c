@@ -2074,18 +2074,27 @@ void _append_code()
 
 void getCurrentCodeList(linkedlist *theList)
 {
-    ccInt numCodes = 0, rtrn;
+    ccInt rtrn;
+    linkedlist *listToCopy = NULL;
     
-    if (GL_Object.type == composite_type)  numCodes = GL_Object.codeList->elementNum;
-    else if ((GL_Object.type == var_type) && (searchView.windowPtr != NULL))  {
-    if (searchView.windowPtr->variable_ptr->eventualType == composite_type)  {
-        numCodes = GL_Object.codeList->elementNum;
-    }}
+    if (GL_Object.type == composite_type)  {
+        listToCopy = GL_Object.codeList;        }
+    else if ((GL_Object.type == var_type) || (GL_Object.type == no_type))  {
+        if ((GL_Object.type == var_type) && (searchView.windowPtr != NULL))  {
+            if (searchView.windowPtr->variable_ptr->eventualType == composite_type)  {
+                listToCopy = GL_Object.codeList;
+        }   }
+        else if ((searchView.windowPtr == NULL) && (GL_Path.stemMember != NULL))  {
+            if (GL_Path.stemMember->eventualType == composite_type)  {
+                listToCopy = &GL_Path.stemMember->codeList;
+        }   }
+        else if (GL_Object.type == var_type)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    }
     else  {  setError(not_a_function_err, pcCodePtr-1);  return;  }
     
-    rtrn = newLinkedList(theList, numCodes, sizeof(code_ref), 0., ccFalse);
+    rtrn = newLinkedList(theList, listToCopy->elementNum, sizeof(code_ref), 0., ccFalse);
     if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
-    if (numCodes > 0)  copyElements(GL_Object.codeList, 1, theList, 1, numCodes);
+    if (listToCopy != NULL)  copyElements(listToCopy, 1, theList, 1, listToCopy->elementNum);
     
     refCodeList(theList);
 }
