@@ -2752,11 +2752,11 @@ void beginExecution(code_ref *theCode, ccBool ifStorePC, ccInt newPCOffset, ccIn
 
 void runBytecode()
 {
-    while (*pcCodePtr != end_of_script)   {
+    while ((*pcCodePtr != end_of_script) && (*pcCodePtr != code_marker))   {
         callSentenceStartFunction();
         if (errCode != passed)  return;         }
     
-    pcCodePtr++;         // over the 0
+    pcCodePtr++;         // over the 0 or code marker
 }
 
 
