@@ -1229,7 +1229,7 @@ sort :: {
 
 sort.sortpart :: {
     
-    sortingList *:: linklist *:: *
+    sortingList *:: *, linklist *:: *
     left :: right :: middle :: smallest :: toWrite :: direction :: side :: nextSide :: int
     idx :: [2] int
     
