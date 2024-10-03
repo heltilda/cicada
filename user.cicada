@@ -1036,61 +1036,60 @@ what :: {
 | min(list; rtrn = value/index/both)
 | - these return the maximum/minimum value of a list
 
-maxmin_template :: {
+numArrayOp *:: {
     
-    mult :: max_index :: c1 :: list_top :: int
-    max_val :: dummy :: double
     name :: string
-    the_list :: *
-    
-    params :: {  rtrn := value := 1, index := 2, both := 3  }
+    the_list *:: [] double
+    listTop :: int
+    params :: {}
     
     code
     
     if top(args) == 0  then return
     
-    params.rtrn = params.value
-    if trap(dummy = args[1], (params<<args)()) == passed  then (
-        the_list = @args
-        list_top = top(args)      )
+    params(), (params<<args)()
     
-    else if trap(
-        if top(args) /= 1  then throw(1)
-        if top(args[1]) == 0  then (  printl(name, "() error:  list cannot be of length zero"), return  )
-        list_top = top(args[1])
-        the_list = @args[1]
-        (params<<args)()
-    ) == passed  then the_list = @args[1]
+    if trap(the_list = @args[1]) /= passed then  (
+        the_list @:: the_list
+        if trap(
+            the_list[^top(args[1])]
+            the_list = args[1]
+        ) /= passed then (
+            if trap(
+                the_list[^top(args)]
+                the_list = args
+            ) /= passed  then (
+                printl("usage: ", name, "(numeric list [; rtrn = index/value/both])")
+                the_list =@ *
+                return
+    )   )   )
     
-    else  (
-        printl("usage: ", name, "(list [; rtrn = index/value/both])")
-        return      )
-    
-    if trap(
-        max_index = 1
-        max_val = mult*the_list[1]
-        
-        for c1 in <2, list_top>  (
-        if mult*the_list[c1] > max_val  then (
-            max_index = c1
-            max_val = mult*the_list[c1]
-        ))
-        
-        the_list = @nothing
-        if params.rtrn == params.value  then return new(mult*max_val)
-        else if params.rtrn == params.index  then return new(max_index)
-        else if params.rtrn == params.both  then return new({ mult*max_val, max_index })
-        else  return *
-        
-    ) /= passed  then (
-        the_list = @nothing
-        printl(name, "() error:  list is not numeric")
-        return      )
+    listTop = top(the_list)
 }
 
-max :: min :: maxmin_template
-max.name = "max", min.name = "min"
-max.mult = 1, min.mult = -1
+
+maxmin_template :: numArrayOp : {
+    
+    mult :: max_index :: int
+    max_val :: double
+    
+    params :: params : {  rtrn := value := 1, index := 2, both := 3;  rtrn = value  }
+    
+    code
+    
+    if listTop == 0  then (  printl(name, "() error:  list cannot be of length zero"), the_list =@ *, return  )
+    
+    $minmax(the_list, mult, max_index, max_val)
+    
+    the_list = @nothing
+    if params.rtrn == params.value  then return new(mult*max_val)
+    else if params.rtrn == params.index  then return new(max_index)
+    else if params.rtrn == params.both  then return new({ mult*max_val, max_index })
+    else  return *
+}
+
+min :: maxmin_template : { name = "min", mult = -1 }
+max :: maxmin_template : { name = "max", mult = 1 }
 
 
 
@@ -1098,41 +1097,19 @@ max.mult = 1, min.mult = -1
 
 | sum(list) and mean(list) return the sum/arithmetic mean of elements of a numeric list
 
-sum :: {
+sum :: numArrayOp : {
     
-    c1 :: list_top :: int
-    dummy :: the_sum :: double
-    name := "sum"
-    the_list :: *
+    the_sum :: double
     
     code
     
-    if top(args) /= 1 or trap(dummy = args[1]) == passed  then
-        the_list = @args
-    else if trap(
-        if top(args) /= 1  then throw(1)
-        the_list = @args[1]
-    ) == passed  then (
-        the_list = @args[1]     )
-    else  (
-        printl("usage: ", name, "(numeric_list)")
-        return      )
-    
-    list_top = top(the_list)
-    
-    if trap(
-        the_sum = 0
-        for c1 in <1, list_top>  the_sum = that + the_list[c1]
-    ) /= passed  then (
-        the_list = @nothing
-        printl(name, "() error:  list is not numeric")
-        return      )
+    $sum(the_list, the_sum)
     
     the_list = @nothing
 }
 
-mean :: sum : {  name = "mean", code, return new(the_sum/list_top)  }
-sum :: sum : {  code, return new(the_sum)  }
+mean :: sum : {  name = "mean"; return new(the_sum/listTop)  }
+sum :: sum : {  name = "sum"; return new(the_sum)  }
 
 
 
@@ -1147,6 +1124,8 @@ round :: { ; return floor(args[1] + 0.5) }
 sort :: {
     tableToSort :: sortingList :: sortedTable :: *
     c1 :: totalIndices :: oneIndex :: sortIndex :: int
+    slowSort :: bool
+    sortingListFloat :: [] double
     linklist :: [] int
     
     params :: { direction :: increasing :: decreasing :: int }
@@ -1214,64 +1193,23 @@ sort :: {
                 return
     )   )   )
     
-    linklist[^totalIndices] = 0
+    linklist[^totalIndices] = -1
+    if trap(sortingListFloat = @sortingList) /= passed  then (
+        sortingListFloat @:: sortingListFloat
+        sortingListFloat[^totalIndices] = sortingList[]     )
     
-    oneIndex = (firstSort::sortpart)(1, totalIndices)
+    oneIndex = $makeLinkList(sortingListFloat, linklist, params.direction)
     
-    for c1 in <1, totalIndices>  (
-        sortedTable[c1] = tableToSort[oneIndex]
-        oneIndex = linklist[oneIndex]     )
+    slowSort = ($sort(linklist, oneIndex, tableToSort, sortedTable) /= passed)              | use autoNN's C-coded sort() if possible
+    if slowSort  then (
+        oneIndex = that + 1
+        for c1 in <1, totalIndices>  (
+            sortedTable[c1] = tableToSort[oneIndex]
+            oneIndex = linklist[oneIndex]
+    )   )
     
     tableToSort = sortedTable
-    remove firstSort                       | unjam the lists
-    tableToSort =@ sortingList =@ *
-}
-
-sort.sortpart :: {
-    
-    sortingList *:: *, linklist *:: *
-    left :: right :: middle :: smallest :: toWrite :: direction :: side :: nextSide :: int
-    idx :: [2] int
-    
-    code
-    
-    sortingList = @sort.sortingList
-    linklist = @sort.linklist
-    direction = sort.params.direction
-    
-    { left, right } = args
-    
-    if right /= left  then (
-        
-        nextsort :: this
-        
-        middle = floor((right + left)/2)
-        idx[1] = nextsort(left, middle)
-        idx[2] = nextsort(middle + 1, right)
-        
-        if (sortingList[idx[1]] - sortingList[idx[2]])*direction <= 0  then side = 1
-        else side = 2
-        
-        smallest = toWrite = idx[side]
-        idx[side] = linklist[that]
-        
-        while idx[1] /= 0 and idx[2] /= 0  do (
-            
-            if (sortingList[idx[1]] - sortingList[idx[2]])*direction <= 0  then nextSide = 1
-            else nextSide = 2
-            
-            if side /= nextSide  then (
-                linklist[toWrite] = idx[nextSide]
-                side = nextSide        )
-            
-            toWrite = idx[side]
-            idx[side] = linklist[idx[side]]     )
-        
-        linklist[toWrite] = idx[3-side]
-        
-        return smallest     )
-        
-    else  return left
+    tableToSort =@ sortingList =@ sortingListFloat =@ *
 }
 
 
@@ -1387,7 +1325,7 @@ disassembler :: {
         
         if trap(
             returnDisassembly = (top(args) <= 2)
-            if returnDisassembly  then { bytecodeString } = args
+            if returnDisassembly  then ( { bytecodeString } = args, disasmStartPos = 1 )
             else  { bytecodeString, disasmStartPos } = { args[1], args[3] }
             
             if top(args) >= 2  then (
