@@ -65,6 +65,12 @@ extern const ccInt userFunctionsNum;
 
 extern ccInt pass2nums(ccInt, char **);
 
+extern ccInt callMinMax(ccInt, char **);
+extern ccInt callSum(ccInt, char **);
+extern ccInt callMakeLinkList(ccInt, char **);
+extern ccInt makeLinkList(const ccInt, const ccInt, const ccInt, const ccFloat *, ccInt *);
+extern ccInt callSort(ccInt, char **);
+
 extern void getArgs(ccInt, char **, ...);
 
 #ifdef __cplusplus
