@@ -1193,7 +1193,7 @@ sort :: {
                 return
     )   )   )
     
-    linklist[^totalIndices] = -1
+    linklist[^totalIndices]
     if trap(sortingListFloat = @sortingList) /= passed  then (
         sortingListFloat @:: sortingListFloat
         sortingListFloat[^totalIndices] = sortingList[]     )

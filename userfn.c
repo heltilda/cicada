@@ -129,11 +129,13 @@ ccInt callSum(ccInt argc, char **argv)
 
 ccInt callMakeLinkList(ccInt argc, char **argv)
 {
-    ccInt *linkList, firstIndex, direction;
+    ccInt *linkList, firstIndex, direction, cl;
     ccFloat *sortingList;
     arg_info *argInfo = (arg_info *) argv[argc];
     
     getArgs(argc, argv, &sortingList, &linkList, byValue(&direction));
+    
+    for (cl = 0; cl < argInfo[0].argIndices; cl++)  linkList[cl] = -1;
     
     firstIndex = makeLinkList(0, argInfo[0].argIndices-1, direction, sortingList, linkList);
     
@@ -143,7 +145,7 @@ ccInt callMakeLinkList(ccInt argc, char **argv)
 
 ccInt makeLinkList(const ccInt left, const ccInt right, const ccInt direction, const ccFloat *sortingList, ccInt *linklist)
 {
-    ccInt middle, smallest, toWrite, side, nextSide, idx[2];
+    ccInt middle, first, toWrite, side, nextSide, idx[2];
     
     if (right > left)  {
         
@@ -154,7 +156,7 @@ ccInt makeLinkList(const ccInt left, const ccInt right, const ccInt direction, c
         if ((sortingList[idx[0]] - sortingList[idx[1]])*direction <= 0)  side = 0;
         else  side = 1;
         
-        smallest = toWrite = idx[side];
+        first = toWrite = idx[side];
         idx[side] = linklist[idx[side]];
         
         while ((idx[0] != -1) && (idx[1] != -1))  {
@@ -171,7 +173,7 @@ ccInt makeLinkList(const ccInt left, const ccInt right, const ccInt direction, c
         
         linklist[toWrite] = idx[1-side];
         
-        return smallest;    }
+        return first;    }
         
     else  return left;
 }
