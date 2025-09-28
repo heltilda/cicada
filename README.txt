@@ -1,4 +1,4 @@
-Cicada script is a simple, interpreted language that can be extended with the user's own C/C++ code.  For details, see the website:
+Cicada is a minimal scripting language that talks to C.  For details, see the website:
 
 http://heltilda.github.io/cicada
 
