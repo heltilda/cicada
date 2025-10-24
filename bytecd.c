@@ -207,45 +207,182 @@ void _user_function()
 
 void _built_in_function()
 {
-    view holdBIFArgsView;
-    void(*theBuiltInFunction)(void);
-    ccInt biFunctionID;
+    view argView;
+    argsType fArgs, oneArg;
+    variable *argsVariable;
+    ccInt (*theF)(argsType);
+//    void(*theBuiltInFunction)(void);
+    ccInt fList = -1, functionID, numDataWindows, numStrings, numArgs, memberCounter, argCounter;
+    const char *fArgsFormat;
+    
+    const Cfunction *functionLists[2] = { inbuiltFunctions, userFunctions };
+    const int functionsNum[2] = { inbuiltFunctionsNum, userFunctionsNum };
+    const char **functionArgs[2] = { inbuiltFunctionsArgs, userFunctionsArgs };
     
     
         // read in the function ID
     
-    callNumericFunction(int_type);
-    if (errCode != passed)  return;
+    functionID = *pcCodePtr;
+    pcCodePtr++;
     
-    if ((intRegister < 0) || (intRegister >= bi_commands_num))  {
-        setError(nonexistent_built_in_function_err, pcCodePtr);
-        return;         }
+    if (functionID < 0)  {  fList = 0; functionID = -functionID - 1;  }
+    else if (functionID < 0)  {  fList = 1; functionID--;  }
+    if ((fList < 0) || (functionID >= functionsNum[fList]))
+        {  setError(nonexistent_C_function_err, pcCodePtr);  return;  }
     
-    biFunctionID = intRegister;
-    theBuiltInFunction = BuiltInFunctionJumpTable[biFunctionID];
-    
+    fArgsFormat = functionArgs[fList][functionID];
     
         // get the argument variable
     
     callBytecodeFunction();
     if (errCode != passed)  return;
     
-    holdBIFArgsView = BIF_argsView;
-    BIF_argsView = searchView;
-    
     
         // run the function and set the return variable
     
     returnView.windowPtr = NULL;
-    theBuiltInFunction();
     
-    GL_Object.type = BIF_Types[biFunctionID];
+    
+        // Count the number of primitive arrays to pass to the function (note that variables count as arrays of 1)
+    
+    argsVariable = searchView.windowPtr->variable_ptr;
+    
+    numArgs = 0;
+    for (memberCounter = 1; memberCounter <= argsVariable->mem.members.elementNum; memberCounter++)   {
+    if (!(LL_member(argsVariable, memberCounter)->ifHidden))   {
+        numArgs++;
+    }}
+    
+    extCallMode = ccTrue;
+    
+    if (CargType(fArgsFormat, 0) == 'a')  {
+        numDataWindows = 1;
+        numStrings = 0;     }
+    else  {
+        numDataWindows = numStrings = 0;
+        for (argCounter = 1; argCounter <= numArgs; argCounter++)  {
+            const char argChar = CargType(fArgsFormat, argCounter-1);
+            if (argChar == 'w')  numDataWindows++;
+            else  {
+                argView.windowPtr = getViewMember(argCounter);
+                if (argView.windowPtr != NULL)   {
+                    argView.offset = argView.windowPtr->offset;
+                    argView.width = argView.windowPtr->width;
+                    countDataLists(&argView, (void *) &numDataWindows, (void *) &numStrings);
+                    if (errCode != passed)  break;
+    }   }   }   }
+    if (errCode != passed)  {  extCallMode = ccFalse;  return;  }
+    
+    
+        // Allocate space both for our argument pointers and for the info list that Cicada provides.
+    
+    fArgs.num = numDataWindows+numStrings;
+    fArgs.p = (void **) malloc(fArgs.num*sizeof(char *));
+    fArgs.type = (ccInt *) malloc(fArgs.num*sizeof(ccInt));
+    fArgs.indices = (ccInt *) malloc(fArgs.num*sizeof(ccInt));
+    if ((fArgs.p == NULL) || (fArgs.type == NULL) || (fArgs.indices == NULL))
+        {  setError(out_of_memory_err, pcCodePtr-1);  extCallMode = ccFalse;  return;  }
+    
+    
+        // Now fill the argument pointer/info lists.
+    
+    if (CargType(fArgsFormat, 0) == 'a')  {
+        *(fArgs.p) = (void *) &searchView;
+        *(fArgs.type) = composite_type;
+        *(fArgs.indices) = 1;           }
+    else  {
+        oneArg = fArgs;
+        for (argCounter = 1; argCounter <= numArgs; argCounter++)  {
+            const char argChar = CargType(fArgsFormat, argCounter-1);
+            window *argWindow = getViewMember(argCounter);
+            if (argChar == 'w')  {
+                *(oneArg.p) = (void *) getViewMember(argCounter);
+                if (argWindow == NULL)  {
+                    *(oneArg.type) = no_type;
+                    *(oneArg.indices) = 0;      }
+                else  {
+                    *(oneArg.type) = argWindow->variable_ptr->type;
+                    *(oneArg.indices) = argWindow->width;       }
+                incrementArg(&oneArg);
+            }
+            else  {
+                argView.windowPtr = argWindow;
+                if (argView.windowPtr != NULL)  {
+                    argView.offset = argView.windowPtr->offset;
+                    argView.width = argView.windowPtr->width;
+                    argvFillHandles(&argView, (void *) &oneArg, NULL);
+                    if (errCode != passed)  break;
+    }   }   }   }
+    
+    
+        // store the return value of the function in intRegister
+    
+    theF = functionLists[fList][functionID].functionPtr;
+    
+    if (errCode == passed)
+        intRegister = (ccInt) theF(fArgs);
+    
+    
+        // fix the string windows (in case the string linked lists were resized) and clean up
+    
+    if (CargType(fArgsFormat, 0) != 'a')  {
+        oneArg = fArgs;
+        for (argCounter = 1; argCounter <= numArgs; argCounter++)  {
+            const char argChar = CargType(fArgsFormat, argCounter-1);
+            argView.windowPtr = getViewMember(argCounter);
+            if (argChar == 'w')  incrementArg(&oneArg);
+            else if (argView.windowPtr != NULL)  {
+                argView.offset = argView.windowPtr->offset;
+                argView.width = argView.windowPtr->width;
+                argvFixStrings(&argView, (void *) &oneArg, NULL);
+    }   }   }
+    
+    free((void *) fArgs.p);
+    free((void *) fArgs.type);
+    free((void *) fArgs.indices);
+    
+    extCallMode = ccFalse;
+    
+    GL_Object.type = no_type; //BIF_Types[functionID];
     GL_Path.stemMember = NULL;
     
+    if ((theF == &cc_top) || (theF == &cc_trap))  GL_Object.type = int_type;
+    else if ((fList == 0) && (intRegister != 0))  setError(intRegister, pcCodePtr-1);
+}
+
+
+const char CargType(const char *argString, ccInt argNum)
+{
+    if (argString == NULL)  return 'd';
+    return argString[argNum];
+}
+
+
+void incrementArg(argsType *oneArg)
+{
+    (oneArg->p)++;
+    (oneArg->type)++;
+    (oneArg->indices)++;
+}
+
+
+window *getViewMember(ccInt soughtMemberIndex)
+{
+    variable *searchVariable = searchView.windowPtr->variable_ptr;
+    ccInt counter, memberCounter = 0;
+    member *loopMember;
     
-        // restore the old args variable
+    for (counter = 1; counter <= searchVariable->mem.members.elementNum; counter++)   {
+        loopMember = LL_member(searchVariable, counter);
+        if (!loopMember->ifHidden)  {
+            memberCounter++;
+            if (memberCounter == soughtMemberIndex)  {
+                if (loopMember->memberWindow == NULL)  return NULL;
+                else if (loopMember->memberWindow->jamStatus == unjammed)  return NULL;
+                else  return loopMember->memberWindow;
+    }   }   }
     
-    BIF_argsView = holdBIFArgsView;
+    return NULL;    // should never happen
 }
 
 
@@ -1215,6 +1352,7 @@ void _object_step_to_indices()  {  navigate(&sticsStep, ccFalse, ccTrue, ccTrue)
 void sticsStep(ccBool allowAddMember)
 {
     ccInt firstIndex, lastIndex, secondMemberNumber = 0, secondOffset, rtrn;
+    variable *searchVar;
     
     
         // get the first steps in the path
@@ -1243,24 +1381,26 @@ void sticsStep(ccBool allowAddMember)
     
         // special case:  allow us to step into 0 indices of a size-0 array
     
-    if ((GL_Path.indices == 0) && (searchView.windowPtr->variable_ptr->type == array_type))  {
-        GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, 1);
+    searchVar = searchView.windowPtr->variable_ptr;
+    if ((GL_Path.indices == 0) && ((searchVar->type == string_type) || (searchVar->type == array_type)))  {
+        ccInt searchIdx = 1;
+        if (searchVar->type == string_type)  searchIdx += searchView.offset;
+        GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, searchIdx);
         if ((firstIndex >= 1) && (lastIndex <= GL_Path.stemMember->indices))  {
             GL_Path.stemMemberNumber = 1;
             GL_Path.offset = firstIndex - 1;
-            
             return;
     }   }
     
     
         // otherwise find the first and last indices, and make sure they're in the same member
     
-    rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, firstIndex, &(GL_Path.stemMember),
+    rtrn = findMemberIndex(searchVar, searchView.offset, firstIndex, &(GL_Path.stemMember),
                                                                 &(GL_Path.stemMemberNumber), &(GL_Path.offset), allowAddMember);
     if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
     
     if (lastIndex > firstIndex)  {
-        rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, intRegister, &(GL_Path.stemMember),
+        rtrn = findMemberIndex(searchVar, searchView.offset, intRegister, &(GL_Path.stemMember),
                                                     &secondMemberNumber, &secondOffset, allowAddMember);
         if (rtrn != passed)  setError(rtrn, pcCodePtr-1);       }
 }
@@ -2545,7 +2685,13 @@ void checkBackCommand(ccInt theCmd)
 
 void checkFunction(ccInt theCmd)      // checks user-defined/built-in functions
 {
-    if (theCmd == built_in_function)  checkBytecodeArg(data_arg);
+    if (theCmd == built_in_function)  {
+        ccInt fID = *pcCodePtr;
+/*        if (fID == 0)  setError(user_function_not_found_err, pcCodePtr);
+        else if (fID < 0)  {  if (fID < -inbuiltFunctionsNum)  setError(user_function_not_found_err, pcCodePtr);  }
+        else  {  if (fID > userFunctionsNum)  setError(user_function_not_found_err, pcCodePtr);  }*/
+        pcCodePtr++;
+    }
     else if (theCmd == user_function)  checkBytecodeArg(var_arg);
     
     if (errCode == passed)  checkBytecodeArg(var_arg);
@@ -3028,7 +3174,7 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
 
 void(*skipJumpTable[commands_num])(void) = {     // for skipping over code
     &_illegal, &skipInt, &skipIntAndOneArg, &skipIntAndOneArg, &skipNoArgs,
-        &skipOneArg, &skipTwoArgs, &skipTwoArgs, &skipIntAndTwoArgs, &skipTwoArgs,
+        &skipOneArg, &skipTwoArgs, &skipIntAndOneArg, &skipIntAndTwoArgs, &skipTwoArgs,
     &skipInt, &skipOneArgAndInt, &skipTwoArgs, &skipThreeArgs, &skipOneArg,
         &skipTwoArgs, &skipTwoArgs, &skipThreeArgs, &skipOneArg, &skipTwoArgs,
     &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs,

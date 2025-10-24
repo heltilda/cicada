@@ -34,7 +34,7 @@
 // These can be changed (e.g. int --> long if we need to work with large numbers);
 // just remember to also change the 4 read/printXXXFormatStrings variables at the top of cmpile.c
 
-typedef char ccBool;
+typedef unsigned char ccBool;
 
 typedef int ccInt;
 #define ccIntMax INT_MAX

@@ -145,8 +145,9 @@ typedef struct {
 #define typeXarg "\x1A"
 #define chararg "\x1B"
 #define stringarg "\x1C"
-#define commentarg "\x1D"
-#define optionalargs "\x1E"
+#define Cfunctionarg "\x1D"
+#define commentarg "\x1E"
+#define optionalargs "\x1F"
 
 #define type0arg_adapter "\xf0"
 #define type1arg_adapter "\xf1"
@@ -222,7 +223,7 @@ typedef struct {
 
 // use this instead of the lettertypeArray[] directly (because of char signage issues)
 
-#define lettertype(a) lettertypeArray[*(unsigned char *) (a)]
+#define lettertype(a) lettertypeArray[*(const unsigned char *) (a)]
 
 #define unprintable 0
 #define a_space 1
@@ -245,7 +246,7 @@ typedef struct {
 } cc_compile_global_struct;
 
 extern const int maxPrintableDigits;
-extern const int maxFieldWidth;
+//extern const int maxFieldWidth;
 extern const char *printFloatFormatString;
 extern const char *print_stringFloatFormatString;
 extern const char *readFloatFormatString;
@@ -254,7 +255,6 @@ extern const char *readIntFormatString;
 
 extern cc_compile_global_struct cc_compile_globals;
 
-#define currentCompiler cc_compile_globals._currentCompiler
 #define errPosition cc_compile_globals._errPosition
 #define compilerWarning cc_compile_globals._compilerWarning
 #define expectedTokenName cc_compile_globals._expectedTokenName
@@ -268,16 +268,16 @@ extern "C" {
 #endif
 
 extern compiler_type *newCompiler(commandTokenType *, ccInt, ccInt *, ccInt, ccInt *);
-extern ccInt addTokenSpec(compiler_type *, char **, char **, ccInt, ccBool, ccBool, ccBool, ccInt, ccInt);
-extern ccInt findToken(compiler_type *, linkedlist *, char **, ccInt *, ccBool, ccBool);
+extern ccInt addTokenSpec(compiler_type *, const char **, char **, ccInt, ccBool, ccBool, ccBool, ccInt, ccInt);
+extern ccInt findToken(compiler_type *, linkedlist *, const char **, ccInt *, ccBool, ccBool);
 extern void freeCompiler(compiler_type *);
 extern void freeBytecode(compiler_type *);
-extern ccInt compile(compiler_type *, char *);
-extern ccInt tokenize(compiler_type *, char *, ccInt);
+extern ccInt compile(compiler_type *, const char *);
+extern ccInt tokenize(compiler_type *, const char *, ccInt);
 extern ccInt addScriptToken(compiler_type *compiler, ccInt, ccInt, ccInt *, ccInt);
-extern ccInt readNum(char **, ccFloat *, ccBool *);
-extern ccInt readTextString(char **, char *, ccInt **, ccInt *, ccBool);
-extern void nextChar(char **);
+extern ccInt readNum(const char **, ccFloat *, ccBool *);
+extern ccInt readTextString(const char **, char *, ccInt **, ccInt *, ccBool);
+extern void nextChar(const char **);
 extern ccInt reorderTokens(compiler_type *, ccInt, ccBool);
 extern ccInt relinkExpression(compiler_type *, ccInt *, ccInt, ccInt, ccInt, ccInt **, ccBool **, ccInt *);
 extern ccInt relinkBestToken(compiler_type *, linkedlist *, ccInt, ccInt, ccInt, ccInt **, ccBool **, ccInt *);

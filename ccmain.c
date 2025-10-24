@@ -26,7 +26,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include "lnklst.h"
+#include "ciclib.h"
 #include "ccmain.h"
 #include "cmpile.h"
 #include "intrpt.h"
@@ -42,8 +44,8 @@ extern void test_MM_CountRefs(void);
 
 
 
-// Below:  the lists of error messages for cases where the main script (start.cicada or the argument to Cicada) blows up.
-// The provided start.cicada file has its own copy of these lists, since it manually flags errors that occur under its watch.
+// Below:  the lists of error messages for cases where the starting script blows up.
+// The provided terminal.c file has its own copy of these lists, since it manually flags errors that occur under its watch.
 
 const char *errorStrings[] = {
     "", "out of memory", "out of range", "initialization error", "mismatched indices",
@@ -54,20 +56,28 @@ const char *errorStrings[] = {
         "no member leads to variable", "member is void", "cannot step to multiple members", "incomplete member", "incomplete variable",
     "invalid index", "multiple indices not allowed", "invalid index", "variable has no parent", "not a variable",
         "not a function", "not composite", "string expected", "illegal target", "target was deleted",
-    "unequal data sizes", "not a number", "overlapping alias", "nonexistent Cicada function", "call() can't find C function",
+    "unequal data sizes", "not a number", "overlapping alias", "call() can't find C function", "call() can't find C function",
         "wrong number of arguments", "error in argument", "self reference", "recursion depth too high", "I/O error"  };
 
+const char *defsScript =
+#include "defs.c"
+;
 
+const char *terminalScript =
+#include "terminal.c"
+;
+
+const char *userDefsScript;
 
 
 // * * * * *  The code that boots up Cicada and cleans after it  * * * * *
 
 
 
-// runCicada() and cicadaMain() are the outermost functions.  These initializes Cicada's memory,
-// load and run the required script start.cicada, flag any error, and then quit.
+// runCicada() and cicadaMain() are the outermost functions.  These initialize Cicada's memory,
+// load and run the required script stored in terminal.c, flag any error, and then quit.
 
-ccInt runCicada(ccInt argc, char **argv)
+ccInt runCicada(const Cfunction *Cfunctions, const char *scriptToRun, const ccBool runTerminal)
 {
     ccInt rtrn;
     
@@ -75,7 +85,7 @@ ccInt runCicada(ccInt argc, char **argv)
     cc_interpret_global_struct hold_interpret_globals = cc_interpret_globals;
     cc_bytecode_global_struct hold_bytecode_globals = cc_bytecode_globals;
     
-    rtrn = cicadaMain(argc, argv);
+    rtrn = cicadaMain(Cfunctions, scriptToRun, runTerminal);
     
     cc_compile_globals = hold_compile_globals;
     cc_interpret_globals = hold_interpret_globals;
@@ -85,15 +95,20 @@ ccInt runCicada(ccInt argc, char **argv)
 }
 
 
-ccInt cicadaMain(ccInt argc, char **argv)
+ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccBool runTerminal)
 {
-    ccInt mainErrorCode = 0, startupFileNameLength, loopCompiler, rtrn;
-    char *firstChar, *startupFileName;
-    const char *defaultStartupFileName = "start.cicada";
-    linkedlist sourceCode;
+    compiler_type *baseCompiler = NULL;
+    ccInt mainErrorCode = 0, scriptNameLength, scriptLength, loopCompiler, rtrn, cs, firstScriptToRun;
+    ccInt *bytecodePtr = NULL, bytecodeLength = 0, c2, cf, cc;
+    const char *scriptPtr[2], *scriptName[2];
+    const Cfunction *functionLists[2] = { inbuiltFunctions, userFunctions };
+    const int functionsNum[2] = { inbuiltFunctionsNum, userFunctionsNum };
+    const char ***functionArgs[2] = { &inbuiltFunctionsArgs, &userFunctionsArgs };
+    
+    if ((scriptToRun == NULL) && (!runTerminal))  return passed;
     
 #ifdef CicadaTest_ON
-    if (argc == 0)  TestCicada();
+    if (scriptToRun == NULL)  TestCicada();
 #endif
     
     
@@ -103,104 +118,120 @@ ccInt cicadaMain(ccInt argc, char **argv)
     rand();  rand();  rand();  rand();      // otherwise the first couple of random numbers are suspiciously consistent
     
     
-        // initialize the compiler
+        // Initialize the C function lists
+    
+    userFunctions = Cfunctions;
+    
+    for (c2 = 0; c2 < 2; c2++)  {           // for functions with a ':' in their names, store the arg types
+        *(functionArgs[c2]) = (const char **) malloc(functionsNum[c2]*sizeof(char *));
+        if (*(functionArgs[c2]) == NULL)  return out_of_memory_err;
+        for (cf = 0; cf < functionsNum[c2]; cf++)  {
+            const char *fName = functionLists[c2][cf].functionName;
+            (*(functionArgs[c2]))[cf] = NULL;
+            for (cc = 0; fName[cc] != 0; cc++)  {
+            if (fName[cc] == ':')  {
+                (*(functionArgs[c2]))[cf] = fName + cc + 1;
+                break;
+    }   }   }}
+    
+    
+        // Initialize the compiler
     
     rtrn = newLinkedList(&allCompilers, 1, sizeof(compiler_type *), 1., ccFalse);
-    if (rtrn == passed)  {
-        whichCompiler = 1;
-        currentCompiler = newCompiler(cicadaLanguage, cicadaLanguageNumCommands,
-                        cicadaLanguageAssociativity, cicadaNumPrecedenceLevels, &rtrn);
-        *(compiler_type **) element(&allCompilers, 1) = currentCompiler;         }
-    
+    if (rtrn == passed)  baseCompiler = newCompiler(cicadaLanguage, cicadaLanguageNumCommands,
+                    cicadaLanguageAssociativity, cicadaNumPrecedenceLevels, &rtrn);
     if (rtrn != passed)  {
-        printf("Error loading compiler (error code %i on command %i)\n", (int) errCode, (int) errPosition);
+        printf("Error loading compiler (error code %i on command %i)\n", (int) rtrn, (int) errPosition);
         return rtrn;       }
     
-    
-        // Set up a buffer for loading the script
-    
-    rtrn = newLinkedList(&sourceCode, 0, sizeof(char), 0, ccFalse);
-    if (rtrn != passed)  {  printf("cicada:  %s\n", errorStrings[rtrn]);  return 1;  }
+    *(compiler_type **) element(&allCompilers, 1) = baseCompiler;
     
     
-        // Open the file specified in the first argument, if given; otherwise, open start.cicada
+        // Initialize the interpreter
     
-    if (argc > 1)  {  printf("usage: cicada [source_file]\n");  return 1;  }
-    
-    if (argc == 0)  startupFileName = (char *) defaultStartupFileName;
-    else  startupFileName = (char *) argv[0];
-    
-    startupFileNameLength = 0;
-    while (startupFileName[startupFileNameLength] != 0)  startupFileNameLength++;
-    
-    if (loadFile(startupFileName, &sourceCode, ccTrue) != passed)  {
-        printf("Error:  Could not open %s\n", startupFileName);
-        return 1;      }
-    
-    rtrn = defragmentLinkedList(&sourceCode);
-    if (rtrn != passed)  {  printf("cicada:  %s\n", errorStrings[rtrn]);  return 1;  }
+    rtrn = initCicada();
+    if (rtrn != passed)  {  printf("Error:  initialization returned \"%s\"\n", (char *) errorStrings[rtrn]);  return 1;  }
     
     
-        // (compile and) transform the starting script.
+        // Set the script to either the terminal script or a user-provided script
     
-    firstChar = (char *) element(&sourceCode, 1);
-    rtrn = compile(currentCompiler, firstChar);
-    
-    if (rtrn != passed)  {
-        errCode = rtrn;
-        printError(startupFileName, startupFileNameLength, firstChar, errPosition-1, ccFalse);
-        return rtrn;    }
-    else if (compilerWarning != passed)  {
-        warningCode = compilerWarning;
-        printError(startupFileName, startupFileNameLength, firstChar, errPosition-1, ccFalse);     }
-    
-    defragmentLinkedList(&(currentCompiler->opCharNum));
-    
-    
-        // initialize all the global variables used by Cicada
-    
-    rtrn = initCicada(LL_int(&(currentCompiler->bytecode), 1), currentCompiler->bytecode.elementNum,
-            startupFileName, startupFileNameLength, firstChar, LL_int(&(currentCompiler->opCharNum), 1), sourceCode.elementNum);
-    if (rtrn != passed)  {  printf("Cicada error:  initialization returned \"%s\"\n", (char *) errorStrings[rtrn]);  return 1;  }
-    
-    
-        // check the bytecode of the script (should be OK if we're using the 'default' Cicada language)
-    
-    startCodePtr = PCCodeRef.code_ptr;
-    endCodePtr = startCodePtr + currentCompiler->bytecode.elementNum;
-    
-    pcCodePtr = startCodePtr;
-    checkBytecode();
-    
-    if ((errCode != passed) || (warningCode != passed))  {
+    if (runTerminal)  {             // the terminal manually preloads defs.cicada
+        scriptName[1] = "terminal script";
+        scriptPtr[1] = terminalScript;
+        firstScriptToRun = 1;
+        userDefsScript = scriptToRun;        }
+    else  {
+        scriptName[0] = "predefinitions script";
+        scriptName[1] = "user script";
+        scriptPtr[0] = defsScript;
+        scriptPtr[1] = scriptToRun;
+        firstScriptToRun = 0;       }
         
-        printError(startupFileName, startupFileNameLength, firstChar, *LL_int(&(currentCompiler->opCharNum), errIndex)-1, ccFalse);
         
-        if (errCode != passed)  return errCode;         }
+            // Compile & run all scripts
     
-    
-        // run the script
-    
-    beginExecution(&PCCodeRef, ccFalse, 0, 1, 0);
-    if (errCode == return_flag)  errCode = passed;
-    
-    
-        // if there was an error in the script, print out the line that caused it (if possible)
-    
-    if ((errCode != passed) && (errCode != finished_signal))  {
+    for (cs = firstScriptToRun; cs < 2; cs++)  {
+        scriptLength = scriptNameLength = 0;
+        while (scriptPtr[cs][scriptLength] != 0)  scriptLength++;
+        while (scriptName[cs][scriptNameLength] != 0)  scriptNameLength++;
         
-        storedCodeType *errorBaseScript = storedCode(errScript.PLL_index);
-        ccInt errCharNum = 0;
+        rtrn = compile(baseCompiler, scriptPtr[cs]);
         
-        if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
-                    errIndex + (ccInt) (errScript.code_ptr - errorBaseScript->bytecode) - 1] - 1;
+        if (rtrn != passed)  {
+            errCode = rtrn;
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1);
+            return rtrn;    }
+        else if (compilerWarning != passed)  {
+            warningCode = compilerWarning;
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1);     }
         
-        printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse);
+        bytecodePtr = LL_int(&baseCompiler->bytecode, 1);
+        bytecodeLength = baseCompiler->bytecode.elementNum;
+        defragmentLinkedList(&(baseCompiler->opCharNum));
         
-        mainErrorCode = 1;         }
+        
+            // check the bytecode of the script (should be OK if we're using the 'default' Cicada language)
+        
+        startCodePtr = bytecodePtr; //PCCodeRef.code_ptr;
+        endCodePtr = startCodePtr + bytecodeLength;
+        
+        pcCodePtr = startCodePtr;
+        checkBytecode();
+        
+        if ((errCode != passed) || (warningCode != passed))  {
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], *LL_int(&(baseCompiler->opCharNum), errIndex)-1, ccFalse, 1);
+            if (errCode != passed)  return errCode;
+        }
+        
+        
+        
+            // run the script
+        
+        rtrn = attachStartingCode(bytecodePtr, bytecodeLength,
+                scriptName[cs], scriptNameLength, scriptPtr[cs], LL_int(&(baseCompiler->opCharNum), 1), scriptLength);
+        if (rtrn != passed)  {  printf("Error:  code initialization returned \"%s\"\n", (char *) errorStrings[rtrn]);  return 1;  }
+        
+        beginExecution(&PCCodeRef, ccFalse, 0, 1, 0);
+        if (errCode == return_flag)  errCode = passed;
+        
+        
+            // if there was an error in the script, print out the line that caused it (if possible)
+        
+        if ((errCode != passed) && (errCode != finished_signal))  {
+            
+            storedCodeType *errorBaseScript = storedCode(errScript.PLL_index);
+            ccInt errCharNum = 0;
+            
+            if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
+                        errIndex + (ccInt) (errScript.code_ptr - errorBaseScript->bytecode) - 1] - 1;
+            
+            printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse, errorBaseScript->compilerID);
+            
+            mainErrorCode = 1;
+    }   }
     
     
-        // clean up after ourselves and exit
+        // Clean up after ourselves and exit
     
 #ifdef CicadaTest_ON
 test_MM_CountRefs();
@@ -212,8 +243,6 @@ test_MM_CountRefs();
         freeCompiler(*(compiler_type **) element(&allCompilers, loopCompiler));
     deleteLinkedList(&allCompilers);
     
-    deleteLinkedList(&sourceCode);
-    
     return mainErrorCode;
 }
 
@@ -221,17 +250,14 @@ test_MM_CountRefs();
 // initCicada() initializes the interpreter when Cicada boots up.
 // Allocates memory for things like VariableList, the PCStack, Zero, etc.
 
-ccInt initCicada(ccInt *zeroCode, ccInt zeroCodeLength,
-        char *fileName, ccInt fileNameLength, char *sourceCode, ccInt *opCharNum, ccInt sourceCodeLength)
+ccInt initCicada()
 {
     variable *varZero;
-    ccInt zeroCodeIndex, *zeroCodeEntryPtr, rtrn;
+    ccInt rtrn;
     
-    baseView.windowPtr = NULL;              // these can confuse addMemory if not initialized to NULL first
-    searchView.windowPtr = NULL;            // to prevent an error on startup when addMemory checks baseView.windowPtr->variable_ptr
-    topView.windowPtr = NULL;
+    baseView.windowPtr = searchView.windowPtr = topView.windowPtr = NULL;   // these can confuse addMemory if not initialized to NULL first
     
-    rtrn = newPLL(&VariableList, 0, sizeof(variable), LLFreeSpace);        // make space for variables & codes
+    rtrn = newPLL(&VariableList, 0, sizeof(variable), LLFreeSpace);         // make space for variables & codes
     if (rtrn != passed)  return rtrn;
     rtrn = newPLL(&MasterCodeList, 0, sizeof(storedCodeType), LLFreeSpace);
     if (rtrn != passed)  return rtrn;
@@ -245,24 +271,12 @@ ccInt initCicada(ccInt *zeroCode, ccInt zeroCodeLength,
     rtrn = drawPath(&ZeroSuspensor, Zero, NULL, 1, 1);
     if (rtrn != passed)  return rtrn;
     
-    rtrn = addCode(zeroCode, &zeroCodeEntryPtr, &zeroCodeIndex, zeroCodeLength,
-                fileName, fileNameLength, sourceCode, opCharNum, sourceCodeLength);
-    if (rtrn != passed)  return rtrn;
-    rtrn = addCodeRef(&(varZero->codeList), ZeroSuspensor, zeroCodeEntryPtr, zeroCodeIndex);
-    if (rtrn != passed)  return rtrn;
-    PCCodeRef = *(code_ref *) element(&(varZero->codeList), 1);
-    
-    refWindow(Zero);
-    refPath(ZeroSuspensor);
-    
-    pcCodePtr = zeroCodeEntryPtr;        // should immediately call checkBytecode()
-    
     rtrn = newLinkedList(&(GL_Object.arrayDimList), 0, sizeof(ccInt), 2., ccFalse);
     if (rtrn != passed)  return rtrn;
     rtrn = newLinkedList(&codeRegister, 0, sizeof(code_ref), 0., ccFalse);      // used in bytecd.c to pass codes from code blocks
     if (rtrn != passed)  return rtrn;
     
-    rtrn = newLinkedList(&stringRegister, 0, sizeof(char), 0., ccFalse);     // set up the string register
+    rtrn = newLinkedList(&stringRegister, 0, sizeof(char), 0., ccFalse);        // set up the string register
     if (rtrn != passed)  return rtrn;
     
     errCode = warningCode = passed;
@@ -272,13 +286,37 @@ ccInt initCicada(ccInt *zeroCode, ccInt zeroCodeLength,
     
     recursionCounter = 0;
     pcSearchPath = NULL;
-    BIF_argsView.windowPtr = NULL;
     argsView.windowPtr = NULL;
     returnView.windowPtr = NULL;
     thatView.windowPtr = NULL;
     
     extCallMode = ccFalse;
     doPrintError = ccFalse;
+    
+    return passed;
+}
+
+
+// attachStartingCode() adds a new script to Zero's code list.
+
+ccInt attachStartingCode(ccInt *zeroCode, ccInt zeroCodeLength,
+        const char *fileName, ccInt fileNameLength, const char *sourceCode, ccInt *opCharNum, ccInt sourceCodeLength)
+{
+    variable *varZero = Zero->variable_ptr;
+    ccInt zeroCodeIndex, *zeroCodeEntryPtr, rtrn;
+    
+    rtrn = addCode(zeroCode, &zeroCodeEntryPtr, &zeroCodeIndex, zeroCodeLength,
+                fileName, fileNameLength, sourceCode, opCharNum, sourceCodeLength, 1);
+    if (rtrn != passed)  return rtrn;
+    rtrn = addCodeRef(&(varZero->codeList), ZeroSuspensor, zeroCodeEntryPtr, zeroCodeIndex);
+    if (rtrn != passed)  return rtrn;
+    PCCodeRef = *(code_ref *) element(&(varZero->codeList), varZero->codeList.elementNum);
+    
+    if (varZero->codeList.elementNum == 1)  {
+        refWindow(Zero);
+        refPath(ZeroSuspensor);     }
+    
+    pcCodePtr = zeroCodeEntryPtr;        // should immediately call checkBytecode()
     
     return passed;
 }
@@ -297,6 +335,9 @@ void cleanUp()
     deleteLinkedList(&(GL_Object.arrayDimList));
     deleteLinkedList(&stringRegister);
     
+    free(inbuiltFunctionsArgs);
+    free(userFunctionsArgs);
+    
     return;
 }
 
@@ -305,7 +346,8 @@ void cleanUp()
 // printError() converts the character number of an error into a line number, then outputs
 // that line number along with the line of text and an error flagging the offending character.
 
-void printError(char *errFileName, ccInt errFileNameLength, char *errText, ccInt errCharNum, ccBool forceLineNo)
+void printError(const char *errScriptName, ccInt errFileNameLength,
+        const char *errText, ccInt errCharNum, ccBool forceLineNo, const ccInt compilerID)
 {
     
         // print the error/warning message, if there is one
@@ -319,9 +361,10 @@ void printError(char *errFileName, ccInt errFileNameLength, char *errText, ccInt
             const char *defaultMemberName = "";
             char *memberName = (char *) defaultMemberName;
             ccInt soughtMember = *(errScript.code_ptr + errIndex - 1);
+            compiler_type *theCompiler = *(compiler_type **) element(&allCompilers, compilerID);
             
-            if ((soughtMember >= 1) && (soughtMember <= currentCompiler->varNames.elementNum))  {
-                memberName = ((varNameType *) element(&(currentCompiler->varNames), soughtMember))->theName;    }
+            if ((soughtMember >= 1) && (soughtMember <= theCompiler->varNames.elementNum))  {
+                memberName = ((varNameType *) element(&(theCompiler->varNames), soughtMember))->theName;    }
             
             printf("Error:  member '%s' not found", memberName);
     }   }
@@ -336,9 +379,9 @@ void printError(char *errFileName, ccInt errFileNameLength, char *errText, ccInt
     
         // print the file that caused the error, if its name was recorded
     
-    if (errFileName != NULL)  {
-        if (errFileNameLength < 0)  printf(" in file %s", errFileName);
-        else  printf(" in file %.*s", errFileNameLength, errFileName);      }
+    if ((errScriptName != NULL) && (errFileNameLength != 0))  {
+        if (errFileNameLength < 0)  printf(" in %s", errScriptName);
+        else  printf(" in %.*s", errFileNameLength, errScriptName);      }
     printf("\n");
     
     
@@ -362,7 +405,7 @@ void printError(char *errFileName, ccInt errFileNameLength, char *errText, ccInt
         
             // calculate and print out the line number (if we have a file name)
         
-        if ((errFileName == NULL) && (!forceLineNo))  numLineNoChars = 0;
+        if ((errScriptName == NULL) && (!forceLineNo))  numLineNoChars = 0;
         else  {
             
             for (loopChar = 0; loopChar < lineBeginningChar; loopChar++)  {

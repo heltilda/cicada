@@ -23,6 +23,7 @@
  *  SOFTWARE.
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
@@ -30,8 +31,7 @@
 #include <time.h>
 #include "intrpt.h"
 #include "bytecd.h"
-#include "cicada.h"
-#include "userfn.h"
+#include "cclang.h"
 
 
 
@@ -526,149 +526,6 @@ void readString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeofS
 }
 
 
-// Next 2 routines, along with readString() (above):  used by print_string().
-// These copy data from a window into a buffer, writing out any numeric data in ASCII format (rather than binary)
-
-void printViewString(view *theView, void *stringPtr, void *sizeofStrings)
-{  doReadWrite(theView, stringPtr, sizeofStrings, ccTrue, ccFalse, ccFalse, &printViewString, &printDataString, &readString);  }
-
-void printDataString(view *theView, void *destString, void *dummy)
-{
-    ccInt counter, numChars;
-    
-    if (theView->windowPtr->variable_ptr->type == bool_type)  {
-    for (counter = 1; counter <= theView->width; counter++)  {
-        char *destChar = *(char **) destString;
-        loadBoolRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        if (boolRegister)  {
-            destChar[0] = 't'; destChar[1] = 'r'; destChar[2] = 'u'; destChar[3] = 'e';
-            (*(char **) destString) += 4;
-            for (numChars = 4; numChars < fieldWidth; numChars++)  {  destChar[numChars] = ' ';  (*(char **) destString)++;  }    }
-        else  {
-            destChar[0] = 'f'; destChar[1] = 'a'; destChar[2] = 'l'; destChar[3] = 's'; destChar[4] = 'e';
-            (*(char **) destString) += 5;
-            for (numChars = 5; numChars < fieldWidth; numChars++)  {  destChar[numChars] = ' ';  (*(char **) destString)++;  }
-    }}  }
-    
-    else if (theView->windowPtr->variable_ptr->type == char_type)  {
-    for (counter = 1; counter <= theView->width; counter++)  {
-        loadIntRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        **((char **) destString) = intRegister;
-        (*(char **) destString)++;
-    }}
-    
-    else  {
-    for (counter = 1; counter <= theView->width; counter++)  {
-        loadDoubleRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        printNumber(*(char **) destString, doubleRegister, &numChars, theView->windowPtr->variable_ptr->type);
-        (*(char **) destString) += numChars;
-        for (numChars++; numChars <= fieldWidth; numChars++)  {  **(char **) destString = ' ';  (*(char **) destString)++;  }
-    }}
-}
-
-
-// Next 2 routines:  invoked by print_string()
-// They calculate the size in bytes of a string that will be the 'printout' of a window
-// (i.e. with numbers written out in ASCII).
-
-void sizeViewString(view *theView, void *dataSize, void *sizeofStrings)
-{  doReadWrite(theView, dataSize, sizeofStrings, ccFalse, ccFalse, ccFalse, &sizeViewString, &sizeDataString, &sizeString);  }
-
-void sizeDataString(view *theView, void *dataSize, void *dummy)
-{
-    ccInt counter, numChars;
-    
-    if (theView->windowPtr->variable_ptr->type == bool_type)  {
-    for (counter = 1; counter <= theView->width; counter++)  {
-        loadBoolRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        if (boolRegister)  numChars = 4;
-        else  numChars = 5;
-        if (numChars < fieldWidth)  numChars = fieldWidth;
-        *(ccInt *) dataSize += numChars;
-    }}
-    
-    else if (theView->windowPtr->variable_ptr->type == char_type)  {
-        *(ccInt *) dataSize += theView->width;        }
-    
-    else  {
-    for (counter = 1; counter <= theView->width; counter++)  {
-        loadDoubleRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
-        printNumber(NULL, doubleRegister, &numChars, theView->windowPtr->variable_ptr->type);
-        if (numChars < fieldWidth)  numChars = fieldWidth;
-        *(ccInt *) dataSize += numChars;
-    }}
-}
-
-
-// Next 3 routines:  called by read_string()
-// Copies data from the source string into the destination window.
-// Numbers are parsed and converted from ASCII to binary in the process.
-
-void readViewString(view *theView, void *stringPtr, void *overflowMarker)
-{  doReadWrite(theView, stringPtr, overflowMarker, ccTrue, ccFalse, ccFalse, &readViewString, &readDataString, &readStringFromString);  }
-
-void readDataString(view *theView, void *sourceString, void *overflowMarker)
-{
-    ccInt oneLetterType, counter, rtrn, charType = lettertype(*(char **) sourceString);
-    
-    
-        // white space in the source string is skipped over
-        // (lettertype[], a_space, etc. are defined in cmpile.c(pp)/h)
-    
-    while ((charType == a_space) || (charType == a_eol) || (charType == unprintable))
-        {  (*(char **) sourceString)++;  charType = lettertype(*(char **) sourceString);  }
-    
-    
-        // numeric types in the destination window are parsed using readNum() (defined in cmpile.c(pp))
-    
-    for (counter = 1; counter <= theView->width; counter++)  {
-        rtrn = readNum((char **) sourceString, &doubleRegister, NULL);
-        if (rtrn != passed)  {
-            if ((rtrn != underflow_err) && (rtrn != overflow_err))  rtrn = read_number_err;
-            if (warningCode == passed)  ((char **) overflowMarker)[1] = *(char **) sourceString;
-            setWarning(rtrn, pcCodePtr-1);
-            if (rtrn == read_number_err)  return;       }
-        
-        oneLetterType = lettertype(*(char **) sourceString);
-        while ((oneLetterType != a_symbol) && (oneLetterType != a_number) && (oneLetterType != a_letter) &&
-                                                    (*(char **) sourceString < *(char **) overflowMarker))
-            {  (*(char **) sourceString)++; oneLetterType = lettertype(*(char **) sourceString);  }
-        saveDoubleRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);      }
-}
-
-void readStringFromString(view *theView, ccInt stringIndex, void *sourcePtr, void *overflowMarker)
-{
-    member *stringMember;
-    view stringView;
-    linkedlist *stringLL;
-    ccInt newStringSize = 0, charType = lettertype(*(char **) sourcePtr);
-    
-    stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
-    stringView.windowPtr = stringMember->memberWindow;
-    stringLL = &(stringMember->memberWindow->variable_ptr->mem.data);
-
-
-        // the leading spaces are skipped even for a string-to-string copy
-        
-    while ((charType == a_space) || (charType == a_eol) || (charType == unprintable))
-        {  (*(char **) sourcePtr)++;  charType = lettertype(*(char **) sourcePtr);  }
-    while ((charType == a_letter) || (charType == a_number) || (charType == a_symbol))
-        {  newStringSize++;  charType = lettertype(((*(char **) sourcePtr)+newStringSize));  }
-    
-    resizeMember(stringMember, 1, newStringSize);
-    if (errCode != passed)  return;
-    
-    setElements(stringLL, stringMember->memberWindow->offset+1,
-            stringMember->memberWindow->offset+stringLL->elementNum, *(void **) sourcePtr);
-    *(char **) sourcePtr += newStringSize;
-    if (newStringSize == 0)  {
-        if (warningCode == passed)  ((char **) overflowMarker)[1] = *(char **) sourcePtr;
-        setWarning(string_read_err, pcCodePtr-1);       }
-    
-    if ((**(char **) sourcePtr == 0) && (*(char **) sourcePtr < *(char **) overflowMarker))  (*(char **) sourcePtr) += 1;
-}
-
-
 // Next 3 routines:  invoked by call()
 // These count the number of seperate arguments that will go into the 'argv' array.
 
@@ -685,28 +542,30 @@ void countStringView(view *theView, ccInt stringIndex, void *windowCount, void *
 // Next 3 routines:  invoked by call()
 // These fill the argv array of a call() function with the addresses of the data lists.
 
-void argvFillHandles(view *theView, void *ptrHandle, void *infoHandle)
-{  doReadWrite(theView, ptrHandle, infoHandle, ccFalse, ccFalse, ccTrue, &argvFillHandles, &passDataView, &passString);  }
+void argvFillHandles(view *theView, void *argsPtr, void *dummy)
+{  doReadWrite(theView, argsPtr, dummy, ccFalse, ccFalse, ccTrue, &argvFillHandles, &passDataView, &passString);  }
 
-void passDataView(view *theView, void *ptrHandle, void *infoHandle)
+void passDataView(view *theView, void *argsPtr, void *dummy)
 {
     variable *theVar = theView->windowPtr->variable_ptr;
+    argsType *oneArg = (argsType *) argsPtr;
     ccInt rtrn;
-
+    
     rtrn = defragmentLinkedList(&(theVar->mem.data));
     if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
-
+    
     if (theView->offset == theVar->mem.data.elementNum)  
-        **(char ***) ptrHandle = ((char *) theVar->mem.data.memory) + sublistHeaderSize;
-    else  **(char ***) ptrHandle = (char *) element(&(theVar->mem.data), theView->offset+1);
-    (*(arg_info **) infoHandle)->argType = theVar->type;
-    (*(arg_info **) infoHandle)->argIndices = theView->width;
-    (*(char ***) ptrHandle)++;
-    (*(arg_info **) infoHandle)++;
+        *(oneArg->p) = (void *) (((char *) theVar->mem.data.memory) + sublistHeaderSize);
+    else  *(oneArg->p) = element(&(theVar->mem.data), theView->offset+1);
+    *(oneArg->type) = theVar->type;
+    *(oneArg->indices) = theView->width;
+    
+    incrementArg(oneArg);
 }
 
-void passString(view *theView, ccInt stringDummyIndex, void *ptrHandle, void *infoHandle)
+void passString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dummy)
 {
+    argsType *oneArg = (argsType *) argsPtr;
     ccInt windowCounter, stringIndex, rtrn;
     
     linkedlist *stringListCopy = (linkedlist *) malloc((size_t) (theView->width*sizeof(linkedlist)));
@@ -739,30 +598,31 @@ void passString(view *theView, ccInt stringDummyIndex, void *ptrHandle, void *in
         stringListCopy[stringIndex-theView->offset-1] = *theStringLL;
     }
     
-    **(char ***) ptrHandle = (char *) stringListCopy;
-    (*(arg_info **) infoHandle)->argType = string_type;
-    (*(arg_info **) infoHandle)->argIndices = theView->width;
-    (*(char ***) ptrHandle)++;
-    (*(arg_info **) infoHandle)++;
+    *(oneArg->p) = (void *) stringListCopy;
+    *(oneArg->type) = string_type;
+    *(oneArg->indices) = theView->width;
+    
+    incrementArg(oneArg);
 }
-
 
 // Next 3 routines:  again, used by call()
 // This adjusts the size of our string member windows to match the size of the character arrays (in case the user changed those).
 
-void argvFixStrings(view *theView, void *ptrHandle, void *infoHandle)
-{  doReadWrite(theView, ptrHandle, infoHandle, ccFalse, ccFalse, ccTrue, &argvFixStrings, &fixNothing, &fixString);  }
+void argvFixStrings(view *theView, void *argsPtr, void *dummy)
+{  doReadWrite(theView, argsPtr, dummy, ccFalse, ccFalse, ccTrue, &argvFixStrings, &fixNothing, &fixString);  }
 
-void fixNothing(view *theView, void *ptrHandle, void *infoHandle)
+void fixNothing(view *theView, void *argsPtr, void *dummy)
 {
-    (*(char ***) ptrHandle)++;
+    argsType *oneArg = (argsType *) argsPtr;
+    (oneArg->p)++;
 }
 
-void fixString(view *theView, ccInt stringDummyIndex, void *ptrHandle, void *infoHandle)
+void fixString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dummy)
 {
     ccInt stringIndex;
+    argsType *oneArg = (argsType *) argsPtr;
     
-    linkedlist *stringListCopy = (linkedlist *) **(char ***) ptrHandle;
+    linkedlist *stringListCopy = (linkedlist *) *(oneArg->p);
     
     for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
         
@@ -777,55 +637,8 @@ void fixString(view *theView, ccInt stringDummyIndex, void *ptrHandle, void *inf
     }
     
     free((void *) stringListCopy);
-    (*(char ***) ptrHandle)++;
-}
-
-
-// Next 3 routines:  used by print()
-// These output the contents of an object to the screen.
-
-void printView(view *theView, void *bufferPtr, void *sizeofStrings)
-{  doReadWrite(theView, bufferPtr, sizeofStrings, ccTrue, ccFalse, ccFalse, &printView, &printData, &printString);  }
-
-void printData(view *theView, void *bufferPtr, void *dummy)
-{
-    ccInt counter, windowOffset = theView->offset, theType = theView->windowPtr->variable_ptr->type;
-    variable *theVar = theView->windowPtr->variable_ptr;
-    unsigned char theChar;
     
-    for (counter = windowOffset; counter < windowOffset+theView->width; counter++)  {
-        
-        if (theType == char_type)  {
-            loadIntRegister(theVar, counter);
-            theChar = (unsigned char) intRegister;
-            if (lettertype(&theChar) != unprintable)  printf("%c", (unsigned char) theChar);
-            else  printf("\\%c%c", hexDigit(theChar/16), hexDigit(theChar % 16));     }
-        
-        else if (theType == int_type)  {
-            loadIntRegister(theVar, counter);
-            printf(printIntFormatString, (ccInt) intRegister);     }
-        
-        else if (theType == double_type)  {
-            loadDoubleRegister(theVar, counter);
-            printf(printFloatFormatString, (ccFloat) doubleRegister);  }
-        
-        else if (theType == bool_type)  {
-            loadBoolRegister(theVar, counter);
-            if (boolRegister)  printf("true");
-            else  printf("false");      }
-    }
-}
-
-void printString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeofStrings)
-{
-    view charView;
-    member *charMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
-    
-    charView.windowPtr = charMember->memberWindow;
-    charView.offset = charView.windowPtr->offset;
-    charView.width = charMember->indices;
-    
-    printData(&charView, bufferPtr, sizeofStrings);
+    (oneArg->p)++;
 }
 
 
@@ -903,16 +716,16 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, ccBool doIn
 
 
 // printNumber() prints a number out in characters, and returns a count of the number of characters.
-// This is used by print_string(), in the sizeDataString() and printDataString() routines above.
+// This is used by print_string().
 // If destString == NULL, we are just getting the size of the string, not writing anything.
 // Otherwise, we write destString in the confidence that print_string() has given it the required storage.
 
-void printNumber(char *destString, ccFloat numberToPrint, ccInt *characterCount, ccInt numberType)
+void printNumber(char *destString, const ccFloat numberToPrint, ccInt *characterCount, const ccInt numberType, const ccInt maxFloatingDigits)
 {
     char theChars[50];
     
     if (numberType != double_type)  *characterCount = sprintf(theChars, printIntFormatString, (ccInt) numberToPrint);
-    else  *characterCount = sprintf(theChars, print_stringFloatFormatString, maxDigits, numberToPrint);
+    else  *characterCount = sprintf(theChars, print_stringFloatFormatString, maxFloatingDigits, numberToPrint);
     
     if (destString != NULL)  memcpy((void *) destString, (void *) theChars, *characterCount);
     
@@ -1538,8 +1351,8 @@ ccInt drawPath(searchPath **newPath, window *destWindow, searchPath *newPathStem
 // The reason to copy the code is that Cicada will have a personal copy regardless
 // of what happens to codeSource (which may be stored in a user variable).
 
-ccInt addCode(ccInt *codeSource, ccInt **newCodePtr, ccInt *newCodeElement, ccInt codeLength,
-        char *fileName, ccInt fileNameLength, char *sourceCode, ccInt *opCharNum, ccInt sourceCodeLength)
+ccInt addCode(ccInt *codeSource, ccInt **newCodePtr, ccInt *newCodeElement, ccInt codeLength, const char *fileName,
+        ccInt fileNameLength, const char *sourceCode, ccInt *opCharNum, ccInt sourceCodeLength, const ccInt compilerID)
 {
     ccInt rtrn;
     storedCodeType *newCodeEntry;
@@ -1552,6 +1365,7 @@ ccInt addCode(ccInt *codeSource, ccInt **newCodePtr, ccInt *newCodeElement, ccIn
     
     newCodeEntry->fileName = newCodeEntry->sourceCode = NULL;
     newCodeEntry->opCharNum = newCodeEntry->bytecode = NULL;
+    newCodeEntry->compilerID = compilerID;
     
     *newCodePtr = (ccInt *) malloc((codeLength+1)*sizeof(ccInt));
     if (*newCodePtr == NULL)  return out_of_memory_err;

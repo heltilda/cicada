@@ -24,78 +24,136 @@
  */
  
 
-#ifndef Externals_h
-#define Externals_h
+#ifndef CicadaLibrary_h
+#define CicadaLibrary_h
 
-#include "cicada.h"
+#include "cclang.h"
 #include "lnklst.h"
 #include "intrpt.h"
 
 
 
-// Prototypes
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void(*BuiltInFunctionJumpTable[])(void);
-extern ccInt bi_commands_num;
 
-extern void cclib_call(void);
-extern void cclib_setCompiler(void);
-extern char *getCompilerString(window *, ccInt, ccInt);
-extern void cclib_compile(void);
-extern void cclib_transform(void);
-extern void cclib_load(void);
-extern ccInt loadFile(char *, linkedlist *, ccBool);
-extern void cclib_save(void);
-extern void cclib_input(void);
-extern void cclib_print(void);
-extern void cclib_read_string(void);
-extern void cclib_print_string(void);
-extern void cclib_trap(void);
-extern void cclib_throw(void);
-extern void cclib_top(void);
-extern void cclib_size(void);
+// Prototypes & misc definitions
 
-extern void cclib_abs(void);
+#define byValue(a) NULL,a
+#define fromArg(n) NULL,NULL,n
+#define endArgs NULL,NULL,-1
+
+
+// arg_info:  a data type for the final argv parameter to each user function call.
+// This gives a report on the sizes, etc. of each argument.
+
+typedef struct {
+    ccInt num;
+    void **p;
+    ccInt *type;
+    ccInt *indices;
+} argsType;
+
+#define scalar(t) (-t-1)
+#define vector(t) (t+1)
+
+
+// The required type of user-defined C or C++ functions
+
+typedef struct {
+    const char *functionName;
+    ccInt(*functionPtr)(argsType);
+} Cfunction;
+
+
+// Function prototypes
+
+extern const Cfunction inbuiltFunctions[];
+extern const ccInt inbuiltFunctionsNum;
+extern const char **inbuiltFunctionsArgs;
+
+extern const Cfunction *userFunctions; 
+extern ccInt userFunctionsNum;
+extern const char **userFunctionsArgs;
+
+
+extern ccInt cc_newCompiler(argsType);
+extern ccInt cc_compile(argsType);
+extern ccInt cc_getMemberNames(argsType);
+extern ccInt cc_transform(argsType);
+extern ccInt cc_trap(argsType);
+extern ccInt cc_throw(argsType);
+
+extern ccInt cc_top(argsType);
+extern ccInt cc_size(argsType);
+extern ccInt cc_type(argsType);
+extern ccInt cc_member_ID(argsType);
+extern ccInt cc_bytecode(argsType);
+
+extern ccInt cc_minmax(argsType);
+extern ccInt cc_sum(argsType);
+extern ccInt cc_makeLinkList(argsType);
+extern ccInt makeLinkList(const ccInt, const ccInt, const ccInt, const ccFloat *, ccInt *);
+extern ccInt cc_sort(argsType);
+
+extern ccInt cc_load(argsType);
+extern ccInt loadFile(const char *, linkedlist *, ccBool);
+extern ccInt cc_save(argsType);
+extern char *LL2Cstr(linkedlist *);
+extern ccInt cc_input(argsType);
+extern ccInt cc_print(argsType);
+extern void printChar(const unsigned char *);
+
+extern ccInt cc_read_string(argsType);
+extern ccBool isWordChar(const char *);
+extern ccInt cc_print_string(argsType);
+extern ccInt copyStr(const char *, char *);
+
+extern ccInt cc_find(argsType);
+
+extern ccInt cc_random(argsType);
+
+extern ccInt cc_abs(argsType);
 extern ccFloat doAbs(ccFloat);
-extern void cclib_floor(void);
+extern ccInt cc_floor(argsType);
 extern ccFloat doFloor(ccFloat);
-extern void cclib_ceil(void);
+extern ccInt cc_ceil(argsType);
 extern ccFloat doCeil(ccFloat);
-extern void cclib_log(void);
+extern ccInt cc_exp(argsType);
+extern ccFloat doExp(ccFloat);
+extern ccInt cc_log(argsType);
 extern ccFloat doLog(ccFloat);
-extern void cclib_cos(void);
+extern ccInt cc_cos(argsType);
 extern ccFloat doCos(ccFloat);
-extern void cclib_sin(void);
+extern ccInt cc_sin(argsType);
 extern ccFloat doSin(ccFloat);
-extern void cclib_tan(void);
+extern ccInt cc_tan(argsType);
 extern ccFloat doTan(ccFloat);
-extern void cclib_acos(void);
+extern ccInt cc_acos(argsType);
 extern ccFloat doArccos(ccFloat);
-extern void cclib_asin(void);
+extern ccInt cc_asin(argsType);
 extern ccFloat doArcsin(ccFloat);
-extern void cclib_atan(void);
+extern ccInt cc_atan(argsType);
 extern ccFloat doArctan(ccFloat);
-extern void doMath(ccFloat(*)(ccFloat));
+extern ccInt mathUnaryOp(argsType, ccFloat(MathFunction)(ccFloat));
 
-extern void cclib_random(void);
-extern void cclib_find(void);
+extern ccInt cc_add(argsType);
+extern ccFloat doAdd(ccFloat, ccFloat);
+extern ccInt cc_subtract(argsType);
+extern ccFloat doSubtract(ccFloat, ccFloat);
+extern ccInt cc_multiply(argsType);
+extern ccFloat doMultiply(ccFloat, ccFloat);
+extern ccInt cc_divide(argsType);
+extern ccFloat doDivide(ccFloat, ccFloat);
+extern ccInt cc_pow(argsType);
+extern ccFloat doPow(ccFloat, ccFloat);
+extern ccInt mathBinaryOp(argsType, ccFloat(f)(ccFloat, ccFloat));
 
-extern void cclib_type(void);
-extern void cclib_member_ID(void);
-extern void cclib_bytecode(void);
+extern ccInt cc_springCleaning(argsType);
 
-extern void springCleaning(void);
-
-extern ccInt numBIF_args(void);
-extern window *getBIFmember(ccInt);
-extern ccFloat getBIFnumArg(ccInt, ccFloat, ccFloat);
-extern ccBool getBIFboolArg(ccInt);
-extern void writeBIFintArg(ccInt, ccInt);
-extern window *getBIFstringArg(ccInt);
+extern void getArgs(argsType, ...);
+extern ccInt checkArgs(argsType, ...);
 
 #ifdef __cplusplus
 }

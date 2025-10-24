@@ -28,7 +28,7 @@
 
 #include "lnklst.h"
 #include "intrpt.h"
-#include "cicada.h"
+#include "cclang.h"
 #include "ciclib.h"
 
 
@@ -105,15 +105,12 @@ typedef struct {
     
         // A series of lesser Cicada memory addresses, holding args, that, the return variable, etc.  BIF = built-in-function.
     
-    view _BIF_argsView, _argsView, _returnView, _thatView, _topView;
+    view _argsView, _returnView, _thatView, _topView;
     
     
         // Miscellaneous globals
     
-    ccInt _whichCompiler;               // the number of the compiler currently in use
     ccInt _CodeNumber;                  // set by the # operator
-    ccInt _GL_MaxDigits;                // for printing numbers
-    ccInt _GL_FieldWidth;               // also for printing numbers
     ccInt _GL_RecursionCounter;         // current nesting of running codes
     code_ref _PCCodeRef;
     linkedlist _JumpList, _JumpFromList, _SentenceList;         // these are used for checking code
@@ -155,16 +152,12 @@ extern cc_bytecode_global_struct cc_bytecode_globals;
 #define baseView cc_bytecode_globals._baseView
 #define searchView cc_bytecode_globals._searchView
 
-#define BIF_argsView cc_bytecode_globals._BIF_argsView
 #define argsView cc_bytecode_globals._argsView
 #define returnView cc_bytecode_globals._returnView
 #define thatView cc_bytecode_globals._thatView
 #define topView cc_bytecode_globals._topView
 
-#define whichCompiler cc_bytecode_globals._whichCompiler
 #define codeNumber cc_bytecode_globals._CodeNumber
-#define maxDigits cc_bytecode_globals._GL_MaxDigits
-#define fieldWidth cc_bytecode_globals._GL_FieldWidth
 #define recursionCounter cc_bytecode_globals._GL_RecursionCounter
 #define PCCodeRef cc_bytecode_globals._PCCodeRef
 #define codeRegister cc_bytecode_globals._codeRegister
@@ -192,6 +185,9 @@ extern void _code_marker(void);
 extern void _func_return(void);
 extern void _user_function(void);
 extern void _built_in_function(void);
+extern const char CargType(const char *, ccInt);
+extern void incrementArg(argsType *);
+extern window *getViewMember(ccInt);
 
 extern void _def_general(void);
 extern void copyCompareMultiView(void(*)(view *, view *), view *, view *);

@@ -29,6 +29,7 @@
 // #define CicadaTest_ON    /* this line should be commented or nothing will work */
 
 
+#include "ciclib.h"
 #include "lnklst.h"
 
 
@@ -40,12 +41,16 @@ extern "C" {
 #endif
 
 extern const char *errorStrings[];
+extern const char *terminalScript;
+extern const char *defsScript;
+extern const char *userDefsScript;
 
-extern ccInt runCicada(ccInt, char **);
-extern ccInt cicadaMain(ccInt, char **);
-extern ccInt initCicada(ccInt *, ccInt, char *, ccInt, char *, ccInt *, ccInt);
+extern ccInt runCicada(const Cfunction *, const char *, const ccBool);
+extern ccInt cicadaMain(const Cfunction *, const char *,  const ccBool);
+extern ccInt initCicada(void);
+extern ccInt attachStartingCode(ccInt *, ccInt, const char *, ccInt, const char *, ccInt *, ccInt);
 extern void cleanUp(void);
-extern void printError(char *, ccInt, char *, ccInt, ccBool);
+extern void printError(const char *, ccInt, const char *, ccInt, ccBool, const ccInt);
 
 #ifdef __cplusplus
 }

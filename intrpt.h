@@ -42,6 +42,8 @@
 #define array_type 6
 #define no_type 7
 
+#define numeric_type 10
+
 
 
 // Runtime error codes -- starting after the compile error codes
@@ -77,8 +79,8 @@
 #define not_a_number_err 41
 #define overlapping_window_err 42
 
-#define nonexistent_built_in_function_err 43
-#define user_function_not_found_err 44
+#define nonexistent_C_function_err 44
+//#define user_function_not_found_err 44
 #define wrong_argument_count_err 45
 #define library_argument_err 46
 
@@ -230,6 +232,7 @@ typedef struct {
     char *sourceCode;
     ccInt *bytecode;
     ccInt *opCharNum;
+    ccInt compilerID;
 } storedCodeType;
 
 
@@ -337,7 +340,7 @@ extern void doReadWrite(view *, void *, void *, ccBool, ccBool, ccBool,
     void(*)(view *, void *, void *),
     void(*)(view *, void *, void *),
     void(*)(view *, ccInt, void *, void *));
-extern void printNumber(char *, ccFloat, ccInt *, ccInt);
+extern void printNumber(char *, const ccFloat, ccInt *, const ccInt, const ccInt);
 
 extern void searchMember(ccInt, member **, ccInt *, ccBool, ccBool);
 extern ccInt findMemberID(variable *, ccInt, member **, ccInt *, ccBool, ccBool);
@@ -363,7 +366,7 @@ extern void removeMember(variable *, ccInt);
 extern void refPath(searchPath *);
 extern void derefPath(searchPath **);
 extern ccInt drawPath(searchPath **, window *, searchPath *, ccInt, ccInt);
-extern ccInt addCode(ccInt *, ccInt **, ccInt *, ccInt, char *, ccInt, char *, ccInt *, ccInt);
+extern ccInt addCode(ccInt *, ccInt **, ccInt *, ccInt, const char *, ccInt, const char *, ccInt *, ccInt, const ccInt);
 extern void refCode(ccInt *);
 extern void derefCode(ccInt *, ccInt);
 extern ccInt addCodeRef(linkedlist *, searchPath *, ccInt *, ccInt);

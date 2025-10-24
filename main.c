@@ -23,6 +23,7 @@
  *  SOFTWARE.
  */
 
+#include <stddef.h>
 #include "main.h"
 #include "lnklst.h"
 #include "ccmain.h"
@@ -34,5 +35,5 @@
 
 int main(int argc, char **argv)
 {
-    return (int) runCicada((ccInt) (argc-1), argv+1);         // we ignore the first argument
+    return (int) runCicada(NULL, NULL, ccTrue);
 }

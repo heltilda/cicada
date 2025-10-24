@@ -632,7 +632,7 @@ ccInt elementExists(linkedlist *theList, ccInt theElement)
 }
 
 
-// element() returns a pointer to the memory location of theElement (or NULL if it is nonexistent)
+// element() returns a pointer to the memory location of theElement, or NULL if it is nonexistent
 
 void *findElement(linkedlist *theList, ccInt theElement)
 {
@@ -650,7 +650,7 @@ void *element(linkedlist *theList, ccInt theElement)
     
     headerOfSublist = findSublist(theList, theElement, &bottom);
     
-    return (void *) ((char *) headerOfSublist + sublistHeaderSize + theList->elementSize*(theElement-bottom));
+    return (void *) (((char *) headerOfSublist) + sublistHeaderSize + theList->elementSize*(theElement-bottom));
 }
 
 

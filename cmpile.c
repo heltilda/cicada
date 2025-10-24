@@ -32,6 +32,7 @@
 #include <string.h>
 #include <float.h>
 #include "cmpile.h"
+#include "ciclib.h"
 
 
 
@@ -40,7 +41,7 @@
 // **** make sure the readXXXFormatStrings end with a %n ****
 
 const int maxPrintableDigits = DBL_DIG;
-const int maxFieldWidth = 1000;
+//const int maxFieldWidth = 1000;
 const char *printFloatFormatString = "%lg";
 const char *print_stringFloatFormatString = "%.*lg";
 const char *readFloatFormatString = "%lg%n";
@@ -72,7 +73,7 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
     compiler_type *compiler = (compiler_type *) malloc(sizeof(compiler_type));
     ccInt loopList, loopCmd, loopTokenString, loopOoO, loopArgCmd, loopArgType, loopRtrnType, loopToken = 3;
     ccInt jumpTo[9], jumpMarkers[9], loopJump, loopStartingChar;
-    char *oneChar;
+    const char *oneChar;
     ccFloat theNum;
     ccBool ifFloat;
     
@@ -104,9 +105,9 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
                 || (newLinkedList(&(compiler->allCodeWords), 0, sizeof(ccInt), 1., ccFalse) != passed)
                 || (compiler->OoOdirections == NULL)
                 || (newLinkedList(&(compiler->scriptTokens), 0, sizeof(scriptTokenType), 1., ccFalse) != passed)
-                || (newLinkedList(&(compiler->bytecode), 0, sizeof(ccInt), 0, ccFalse) != passed)
-                || (newLinkedList(&(compiler->opCharNum), 0, sizeof(ccInt), 0, ccFalse) != passed)
-                || (newLinkedList(&(compiler->varNames), 0, sizeof(varNameType), 0, ccFalse) != passed))
+                || (newLinkedList(&(compiler->bytecode), 0, sizeof(ccInt), 1., ccFalse) != passed)
+                || (newLinkedList(&(compiler->opCharNum), 0, sizeof(ccInt), 1., ccFalse) != passed)
+                || (newLinkedList(&(compiler->varNames), 0, sizeof(varNameType), 1., ccFalse) != passed))
         errOut(out_of_memory_err, 0)
     
     for (loopStartingChar = 0; loopStartingChar < 128; loopStartingChar++)  {
@@ -172,7 +173,7 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
     
     for (loopCmd = 0; loopCmd < numCommands; loopCmd++)  {
         
-        char *tokenChar = (char *) commandTokens[loopCmd].cmdString;
+        const char *tokenChar = (char *) commandTokens[loopCmd].cmdString;
         ccInt firstToken = loopToken+1, LHarg = -1, RHarg = -1, firstRtrnType = -1, numJumps = 0, aOrtrn, numArgs = 0;
         ccBool expectLHarg = ccFalse, optionalLHarg;
         ccBool tobeRemoved = ( (*commandTokens[loopCmd].rtrnTypeString == *removedexpression)
@@ -321,7 +322,7 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
                 if (*oneChar != 0)  {
                     
                     ccInt intNum = 0, wordsToAdd = 1, wordPosition, wordType = -1;          // an ordinary command word
-                    char *holdNumPos = NULL;
+                    const char *holdNumPos = NULL;
                     
                     if (*oneChar == anonymousmember[1])  {
                         oneChar++;
@@ -397,6 +398,23 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
     }
     
     
+        // add the C functions as known tokens, so that we can easily identify them later
+    
+/*    for (loopF = 0; loopF < inbuiltFunctionsNum+userFunctionsNum; loopF++)  {
+        const Cfunction *oneCfunction;
+        const char *CfunctionName;
+        
+        if (loopF < inbuiltFunctionsNum)  oneCfunction = inbuiltFunctions + loopF;
+        else  oneCfunction = userFunctions + (loopF-inbuiltFunctionsNum);
+        
+        compiler->numVariables++;
+        
+        CfunctionName = (char *) oneCfunction->functionName;
+        *rtrn = addTokenSpec(compiler, &CfunctionName, NULL, compiler->specialTokens[2], ccTrue, ccFalse, ccFalse, 0, compiler->numVariables);
+        if (*rtrn != passed)  errOut(*rtrn, 0)
+    }*/
+    
+    
         // defragment all the linked lists to make the parsing faster, and count number of operators
     
     if ((defragmentLinkedList(&(compiler->allCodeWords)) != passed)
@@ -417,12 +435,13 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
 // addTokenSpec() adds a token string or variable name to the compiler's list of known strings,
 // and makes a copy of the string to store
 
-ccInt addTokenSpec(compiler_type *compiler, char **tokenCharPtr, char **newName, ccInt tokenID, ccBool isVariableName,
+ccInt addTokenSpec(compiler_type *compiler, const char **tokenCharPtr, char **newName, ccInt tokenID, ccBool isVariableName,
         ccBool expectLHarg, ccBool optionalLHarg, ccInt nthToken, ccInt varID)
 {
     linkedlist *theList = compiler->tokens + ((ccInt) **tokenCharPtr);
     ccInt whichElement, ifFound, LLrtrn, numChars = 1;
-    char *tokenStringCopy = NULL, *tokenStringCopy2, *tokenChar = *tokenCharPtr;
+    char *tokenStringCopy = NULL, *tokenStringCopy2;
+    const char *tokenChar = *tokenCharPtr;
     tokenStringType *oneTokenString;
     
     
@@ -459,7 +478,7 @@ ccInt addTokenSpec(compiler_type *compiler, char **tokenCharPtr, char **newName,
         // findToken() returns the alphabetical location in the list where we need to insert this pointer
     
     tokenStringCopy2 = tokenStringCopy;
-    ifFound = findToken(compiler, theList, &tokenStringCopy2, &whichElement, ccTrue, isVariableName);
+    ifFound = findToken(compiler, theList, (const char **) &tokenStringCopy2, &whichElement, ccTrue, isVariableName);
     
     if (!ifFound)  {
         if (!isVariableName)  compiler->numLanguageOps[(ccInt) **tokenCharPtr]++;
@@ -506,12 +525,12 @@ ccInt addTokenSpec(compiler_type *compiler, char **tokenCharPtr, char **newName,
 //    so we exhaustively search the list from the beginning until we are alphabetically past where the token can be
 // * words -- we know where the end of the word is (it's a non-letter), so can use a binary search
 
-ccInt findToken(compiler_type *compiler, linkedlist *tokenStringList, char **scriptStringPtr, ccInt *whichElement,
+ccInt findToken(compiler_type *compiler, linkedlist *tokenStringList, const char **scriptStringPtr, ccInt *whichElement,
         ccBool endWithNull, ccBool maybeVariableName)
 {
     ccInt loopElement, searchBottom = 1, searchTop = tokenStringList->elementNum;
     ccInt numLanguageOps = compiler->numLanguageOps[(ccInt) **scriptStringPtr], directionToAdjust;
-    char *scriptChar, *storedChar, *scriptStringStart = *scriptStringPtr;
+    const char *scriptChar, *storedChar, *scriptStringStart = *scriptStringPtr;
     ccBool isWord = ccFalse, comparingLanguageOp = ccTrue, maybeFinishedScriptToken, finishedScriptToken, finishedStoredToken;
     
     if (searchTop == 0)  {  *whichElement = 1;  return ccFalse;  }
@@ -650,7 +669,7 @@ void freeBytecode(compiler_type *compiler)
 // Compile():  translates a script (text) into bytecode.  Expects a null character at the end (eof).
 // This routine calls all the subsequent functions in this file.
 
-ccInt compile(compiler_type *compiler, char *programString)
+ccInt compile(compiler_type *compiler, const char *programString)
 {
     ccInt rtrn;
     
@@ -671,13 +690,13 @@ ccInt compile(compiler_type *compiler, char *programString)
 
 ccInt lastScriptChar;
 
-ccInt tokenize(compiler_type *compiler, char *charPtr, ccInt scriptType)
+ccInt tokenize(compiler_type *compiler, const char *charPtr, ccInt scriptType)
 {
     linkedlist nextTokenStack;
     ccInt prevTokenType = 0, theTokenType = 0, tokenErrPosition = 1, prevErrPosition, rtrn;
     ccInt nextRightArgType = scriptType, lastRightArgType = scriptType, loopSkippedToken, expectedArgType;
     ccFloat theNum;
-    char *tokenCharStartPtr = charPtr, *scriptStartPtr = charPtr;
+    const char *tokenCharStartPtr = charPtr, *scriptStartPtr = charPtr;
     ccBool expectLHarg = ccFalse, ifFloat;
     tokenSpecType *theTokenSpec = NULL;
     
@@ -935,7 +954,7 @@ ccInt tokenize(compiler_type *compiler, char *charPtr, ccInt scriptType)
         
         if (nextRightArgType == (ccInt) (*commentarg - *type0arg))  {
             
-            char *holdCharPtr;
+            const char *holdCharPtr;
             tokenSpecType *LHtokenSpec = theTokenSpec;
             
             
@@ -1048,18 +1067,18 @@ ccInt addScriptToken(compiler_type *compiler, ccInt tokenID, ccInt tokenCharNum,
 const ccInt numBufferSize = 999;
 char numBuffer[numBufferSize+1];
 
-ccInt readNum(char **charPtr, ccFloat *returnedNum, ccBool *ifFloat)
+ccInt readNum(const char **charPtr, ccFloat *returnedNum, ccBool *ifFloat)
 {
     ccInt intnum, intnumsread, doublenumsread, cc;
     int intcharsread, doublecharsread;
     ccFloat doublenum;
-    char *newCharPtr, *numStart;
+    const char *newCharPtr, *numStart;
     
     while ((lettertype(*charPtr) == a_space) || (lettertype(*charPtr) == unprintable))  (*charPtr)++;
     numStart = *charPtr;
     
     for (cc = 0; cc < numBufferSize; cc++)  {       // super stupid -- sscanf() will copy the whole string up to \x00 into a file stream,
-        char *oneChar = numStart + cc;              // so let's make sure it only copies the number we're reading
+        const char *oneChar = numStart + cc;              // so let's make sure it only copies the number we're reading
         if ((lettertype(oneChar) == a_space) || (lettertype(oneChar) == a_eol) || (lettertype(oneChar) == a_null) || (*oneChar == ','))  break;
         numBuffer[cc] = *oneChar;       }
     
@@ -1075,7 +1094,7 @@ ccInt readNum(char **charPtr, ccFloat *returnedNum, ccBool *ifFloat)
             *ifFloat = ((intnumsread != 1) || (intcharsread != doublecharsread) || (doublenum != (ccFloat) intnum));    }
         
         errno = 0;
-        doublenum = strtod(numStart, &newCharPtr);      // reread to check for over/underflow
+        doublenum = strtod(numStart, (char **) &newCharPtr);      // reread to check for over/underflow
         *returnedNum = doublenum;
         *charPtr += doublecharsread;
         
@@ -1092,10 +1111,11 @@ ccInt readNum(char **charPtr, ccFloat *returnedNum, ccBool *ifFloat)
 // readTextString() compiles a string enclosed in quotes (or, if CodeLLPtr == NULL, just skips over it).
 // Doesn't write the constant_string code word -- that is done by GetOperation().
 
-ccInt readTextString(char **scanPtr, char *closingString, ccInt **stringBuffer, ccInt *stringSizeInInts, ccBool isChar)
+ccInt readTextString(const char **scanPtr, char *closingString, ccInt **stringBuffer, ccInt *stringSizeInInts, ccBool isChar)
 {
     ccInt chars_num = 0, numPriorSlashes;
-    char *startPtr = *scanPtr, *endPtr, *charPtr;
+    const char *startPtr = *scanPtr, *scanBackPtr, *endPtr;
+    char *charPtr;
     
     
         // First, count the number of characters in the string.
@@ -1108,8 +1128,8 @@ ccInt readTextString(char **scanPtr, char *closingString, ccInt **stringBuffer, 
             return string_read_err;     }
         
         numPriorSlashes = 0;
-        charPtr = endPtr-1;
-        while (*charPtr == '\\')  {  numPriorSlashes++;  charPtr--;  }
+        scanBackPtr = endPtr-1;
+        while (*scanBackPtr == '\\')  {  numPriorSlashes++;  scanBackPtr--;  }
     }  while (numPriorSlashes % 2 == 1);
     
     while (*scanPtr < endPtr)   {
@@ -1208,7 +1228,7 @@ ccInt readTextString(char **scanPtr, char *closingString, ccInt **stringBuffer, 
 // nextChar() skips to the next character; ignores unprintable ones.
 // Used for parsing strings when we don't have to worry about comments.
 
-void nextChar(char **charPtr)
+void nextChar(const char **charPtr)
 {
     if (lettertype(*charPtr) != a_null) do  {
         (*charPtr)++;
@@ -1331,6 +1351,8 @@ ccInt relinkExpression(compiler_type *compiler, ccInt *loopToken, ccInt topToken
 
 
 // relinkBestToken() finds the highest-precedence token in a 'block', and links that to the previous/next operations
+// The OoOblock is a list of the token indexes in an expression that are being considered for reordering
+// (i.e. this list skips over tokens that are in sub-expressions flanked by operators contained in OoOblock).
 // Called recursively for the sub-blocks before and after the highest-precedence token
 
 ccInt relinkBestToken(compiler_type *compiler, linkedlist *OoOblock, ccInt firstToken, ccInt lastToken, ccInt expectedType,
@@ -1487,6 +1509,27 @@ ccInt relinkBestToken(compiler_type *compiler, linkedlist *OoOblock, ccInt first
     else if (lowOoOpos != lastToken)  {
         errPosition = scriptToken(bestToken)->tokenCharNum;
         return no_right_arg_allowed_err;     }
+    
+    
+        // for C function calls, replace varIDs with Cfunction IDs
+    
+    if (expectedType == (ccInt) (*Cfunctionarg - *type0arg))  {
+        scriptTokenType *dataToken = scriptToken(*argPtr);
+        varNameType *tokenName = ((varNameType *) element(&(compiler->varNames), *dataToken->constData));
+        const char *tokenNameStr = tokenName->theName, *compareStr;
+        ccInt cf, cc;
+        
+        for (cf = 0; cf < inbuiltFunctionsNum+userFunctionsNum; cf++)  {
+            if (cf < inbuiltFunctionsNum)  compareStr = inbuiltFunctions[cf].functionName;
+            else  compareStr = userFunctions[cf-inbuiltFunctionsNum].functionName;
+            for (cc = 0; cc < tokenName->nameLength; cc++)  {
+                if (tokenNameStr[cc] != compareStr[cc])  break;    }
+            if (cc == tokenName->nameLength)  {
+            if ((compareStr[cc] == ':') || (compareStr[cc] == 0))  {
+                if (cf < inbuiltFunctionsNum)  *dataToken->constData = -(cf+1);
+                else  *dataToken->constData = (cf-inbuiltFunctionsNum+1);
+                break;
+    }   }   }}
     
     
         // finally, prepare to link to the token of the next argument bestToken
