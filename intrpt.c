@@ -919,7 +919,7 @@ void stepView(view *viewToStep, member *startingMember, ccInt entryOffset, ccInt
 
 void setError(ccInt errorCode, ccInt *errorPtr)
 {
-    setErrIndex(errorPtr, errorCode, &errCode, &errIndex, &errScript);
+    setErrIndex(errorPtr, errorCode, &PCCodeRef, &errCode, &errIndex, &errScript);
 }
 
 
@@ -927,18 +927,18 @@ void setError(ccInt errorCode, ccInt *errorPtr)
 
 void setWarning(ccInt warnCode, ccInt *warnPtr)
 {
-    setErrIndex(warnPtr, warnCode, &warningCode, &warningIndex, &warningScript);
+    setErrIndex(warnPtr, warnCode, &PCCodeRef, &warningCode, &warningIndex, &warningScript);
 }
 
 
 // setErrIndex(), called by both setError() and setWarning(), stores information about the error location in the code
 
-void setErrIndex(ccInt *errPtr, ccInt theError, ccInt *errCodePtr, ccInt *errIndexPtr, code_ref *errScriptPtr)
+void setErrIndex(ccInt *errPtr, ccInt theError, code_ref *theScript, ccInt *errCodePtr, ccInt *errIndexPtr, code_ref *errScriptPtr)
 {
     *errCodePtr = theError;
     
     if (errScriptPtr->code_ptr != NULL)  derefCodeRef(errScriptPtr);
-    *errScriptPtr = PCCodeRef;
+    *errScriptPtr = *theScript;
     errScriptPtr->anchor = NULL;
     refCodeRef(errScriptPtr);
     

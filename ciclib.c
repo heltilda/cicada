@@ -156,7 +156,7 @@ ccInt cc_compile(argsType args)
         if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
         else  setWarning(compilerWarning, pcCodePtr-1);
         
-        printError(fileNamePtr, fileName->elementNum, (const char *) scriptCopy, errPosition-1, ccFalse, compilerID);
+        printError(fileNamePtr, fileName->elementNum, (const char *) scriptCopy, errPosition-1, ccFalse, compilerID, ccFalse);
         doPrintError = ccFalse;             }
     
     free((void *) scriptCopy);
@@ -288,7 +288,7 @@ ccInt cc_transform(argsType args)
     if ((errCode != passed) && (doPrintError))  {
         if (opCharNum == NULL)  theOpChar = 0;
         else  theOpChar = opCharNum[errIndex-1]-1;
-        printError(fileName, fileNameLL->elementNum, sourceCode, theOpChar, ccFalse, 1);
+        printError(fileName, fileNameLL->elementNum, sourceCode, theOpChar, ccFalse, 1, ccFalse);
         
         doPrintError = ccFalse;        }
     
@@ -369,7 +369,7 @@ ccInt cc_trap(argsType args)
 {
     code_ref argCodeRef;
     view *allArgs;
-    ccInt counter, codeNo;
+    ccInt loopCode, codeNo, *codeMarkers, *scoutAhead;
     ccBool ifErrorWasTrapped = ccFalse, holdDoPrintError = doPrintError, doClearError = ccTrue;
     
     getArgs(args, &allArgs);
@@ -377,58 +377,106 @@ ccInt cc_trap(argsType args)
     
         // run each code in our args constructor
     
-    for (counter = 1; counter <= allArgs->windowPtr->variable_ptr->codeList.elementNum; counter++)  {
+    for (loopCode = 1; loopCode <= allArgs->windowPtr->variable_ptr->codeList.elementNum; loopCode++)  {
         
+        code_ref *errScriptToPrint = NULL;
         
             // get a handle on the code
         
-        argCodeRef = *(code_ref *) element(&(allArgs->windowPtr->variable_ptr->codeList), counter);
-        argCodeRef.anchor = pcSearchPath;
+        argCodeRef = *(code_ref *) element(&(allArgs->windowPtr->variable_ptr->codeList), loopCode);
         refCodeRef(&argCodeRef);   // in case bE() changes something
         
-        doPrintError = (argCodeRef.code_ptr[0] == code_marker);
-        if (doPrintError)  {
-            doClearError = (argCodeRef.code_ptr[1] != code_marker);
-            if (doClearError)  codeNo = 1;
-            else  codeNo = 2;       }
-        else  codeNo = 0;
+        codeMarkers = argCodeRef.code_ptr;
+        
+        if ((*argCodeRef.code_ptr != end_of_script) && (*argCodeRef.code_ptr != code_marker))  {
+            ccInt *holdPC = pcCodePtr;
+            pcCodePtr = argCodeRef.code_ptr;
+            runSkipMode(1);
+            
+            if (*pcCodePtr == code_marker)  {           // run in the args so the user can specify a target script
+                
+                codeMarkers = pcCodePtr;
+                
+                beginExecution(&argCodeRef, ccTrue, allArgs->offset, allArgs->width, 0);
+                
+                if (allArgs->windowPtr->variable_ptr->type == composite_type)  {
+                if (allArgs->windowPtr->variable_ptr->mem.members.elementNum > 0)  {
+                    window *errScriptWindow = getViewMember(1);
+                    if (errScriptWindow != NULL)  {
+                    if (errScriptWindow->variable_ptr->type == composite_type)  {
+                        errScriptToPrint = (code_ref *) element(&(errScriptWindow->variable_ptr->codeList), 1);
+                        refCodeRef(errScriptToPrint);
+                }}  }}
+            }
+            pcCodePtr = holdPC;
+        }
+        derefCodeRef(&argCodeRef);   // in case bE() changes something
+        
+        scoutAhead = codeMarkers;
+        while (*scoutAhead == code_marker)  scoutAhead++;
+        codeNo = (ccInt) (scoutAhead-codeMarkers);
+        doPrintError = ((codeNo == 1) || (codeNo == 3));
+        doClearError = ((codeNo == 0) || (codeNo == 1));
         
         
             // run the code
         
         warningCode = passed;
+        argCodeRef.anchor = pcSearchPath;               // run in the calling script
+        refCodeRef(&argCodeRef);
         beginExecution(&argCodeRef, ccTrue, allArgs->offset, allArgs->width, codeNo);
-        derefCodeRef(&argCodeRef);
         if (errCode == return_flag)  errCode = passed;
+        
+        if (errScriptToPrint != NULL)  {
+            derefCodeRef(errScriptToPrint);
+            if (errScriptToPrint->references == 0)  errScriptToPrint = NULL;    }
         
         
             // print errors/warnings if we are instructed to do so
         
         if ((errCode != passed) || (warningCode != passed))  {
             
+            code_ref *errScriptToPassBack = NULL;
+            
+            if ((!doClearError) && (errScriptToPrint != NULL))  {
+                errScriptToPassBack = errScriptToPrint;
+                errScriptToPrint = NULL;     }
+            
             if (doPrintError)  {
                 
                 storedCodeType *errorBaseScript;
                 ccInt errIndexToPrint, errCharNum = 0;
-                code_ref *errScriptToPrint;
-                
-                if (errCode != passed)  {  errIndexToPrint = errIndex;  errScriptToPrint = &errScript;  }
+                if (errScriptToPrint != NULL)  errIndexToPrint = 1;
+                else if (errCode != passed)  {  errIndexToPrint = errIndex;  errScriptToPrint = &errScript;  }
                 else  {  errIndexToPrint = warningIndex;  errScriptToPrint = &warningScript;  }
                 
                 errorBaseScript = storedCode(errScriptToPrint->PLL_index);
                 if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
                                    errIndexToPrint + (ccInt) (errScriptToPrint->code_ptr - errorBaseScript->bytecode) - 1] - 1;
                 
-                printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse, errorBaseScript->compilerID);
+                printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse, errorBaseScript->compilerID, errIndexToPrint==1);
             }
             
-            if (errCode != passed)  {  intRegister = errCode;  if (doClearError)  errCode = passed;  }
+            if ((codeNo == 3) || (errScriptToPassBack != NULL))  {
+                ccBool doErr = (errCode != passed);
+                if (errScriptToPassBack == NULL)  {
+                    if (doErr)  errCode = thrown_to_err;
+                    else  warningCode = thrown_to_err;      }
+                else  {
+                    setErrIndex(errScriptToPassBack->code_ptr, codeNo==3? thrown_to_err : errCode, errScriptToPassBack,
+                                doErr? &errCode : &warningCode, doErr? &errIndex : &warningIndex, doErr? &errScript : &warningScript);
+            }   }
+            
+            if (errCode != passed)  intRegister = errCode;
             else  intRegister = -warningCode;
-            if (doClearError)  warningCode = passed;
+            if (doClearError)  errCode = warningCode = passed;
             
             ifErrorWasTrapped = ccTrue;
-            if (intRegister > passed)  break;       // break if it was an error that stops execution
-    }   }
+        }
+        
+        derefCodeRef(&argCodeRef);
+        if ((ifErrorWasTrapped) && (intRegister > passed))  break;
+    }
     
     
         // clear intRegister if no error and no warning
@@ -1057,7 +1105,7 @@ ccInt cc_read_string(argsType args)
     
     if (warningChar != NULL)  {
         setWarning(string_read_err, pcCodePtr-1);
-        if (doPrintError)  printError(NULL, -1, holdString, (ccInt) (warningChar-holdString), ccTrue, 1);      }
+        if (doPrintError)  printError(NULL, -1, holdString, (ccInt) (warningChar-holdString), ccTrue, 1, ccFalse);      }
     
     free(holdString);
     return passed;

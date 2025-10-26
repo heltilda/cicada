@@ -56,7 +56,7 @@ const char *errorStrings[] = {
         "no member leads to variable", "member is void", "cannot step to multiple members", "incomplete member", "incomplete variable",
     "invalid index", "multiple indices not allowed", "invalid index", "variable has no parent", "not a variable",
         "not a function", "not composite", "string expected", "illegal target", "target was deleted",
-    "unequal data sizes", "not a number", "overlapping alias", "call() can't find C function", "call() can't find C function",
+    "unequal data sizes", "not a number", "overlapping alias", "thrown here", "call() can't find C function",
         "wrong number of arguments", "error in argument", "self reference", "recursion depth too high", "I/O error"  };
 
 const char *defsScript =
@@ -179,11 +179,11 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
         
         if (rtrn != passed)  {
             errCode = rtrn;
-            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1);
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1, ccFalse);
             return rtrn;    }
         else if (compilerWarning != passed)  {
             warningCode = compilerWarning;
-            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1);     }
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1, ccFalse);     }
         
         bytecodePtr = LL_int(&baseCompiler->bytecode, 1);
         bytecodeLength = baseCompiler->bytecode.elementNum;
@@ -199,7 +199,7 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
         checkBytecode();
         
         if ((errCode != passed) || (warningCode != passed))  {
-            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], *LL_int(&(baseCompiler->opCharNum), errIndex)-1, ccFalse, 1);
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], *LL_int(&(baseCompiler->opCharNum), errIndex)-1, ccFalse, 1, ccFalse);
             if (errCode != passed)  return errCode;
         }
         
@@ -225,7 +225,7 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
             if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
                         errIndex + (ccInt) (errScript.code_ptr - errorBaseScript->bytecode) - 1] - 1;
             
-            printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse, errorBaseScript->compilerID);
+            printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse, errorBaseScript->compilerID, ccFalse);
             
             mainErrorCode = 1;
     }   }
@@ -347,8 +347,12 @@ void cleanUp()
 // that line number along with the line of text and an error flagging the offending character.
 
 void printError(const char *errScriptName, ccInt errFileNameLength,
-        const char *errText, ccInt errCharNum, ccBool forceLineNo, const ccInt compilerID)
+        const char *errText, ccInt errCharNum, ccBool forceLineNo, const ccInt compilerID, const ccBool ignoreMemberName)
 {
+    ccBool fromTerminal = ccFalse;
+    
+    if (errScriptName != NULL)  fromTerminal = (strcmp(errScriptName, "terminal command") == 0);
+    
     
         // print the error/warning message, if there is one
     
@@ -356,17 +360,23 @@ void printError(const char *errScriptName, ccInt errFileNameLength,
         if ((errCode < passed) || (errCode > finished_signal))  printf("Unknown error #%i\n", (int) errCode);
         else if ((errCode == return_flag) || (errCode == finished_signal))  return;
         else if (errCode == token_expected_err)  printf("Error:  '%s' expected", expectedTokenName);
+        else if (errCode == thrown_to_err)  {
+            if (errScriptName != NULL)  printf("Error was thrown");
+            else  printf("Error was thrown at unnamed script");     }
         else if (errCode != member_not_found_err)  printf("Error:  %s", errorStrings[errCode]);
         else  {
             const char *defaultMemberName = "";
-            char *memberName = (char *) defaultMemberName;
+            char *memberName = (char *) defaultMemberName, *str0 = (char *) defaultMemberName, *strf = (char *) defaultMemberName;
             ccInt soughtMember = *(errScript.code_ptr + errIndex - 1);
             compiler_type *theCompiler = *(compiler_type **) element(&allCompilers, compilerID);
             
+            if (!ignoreMemberName)  {
             if ((soughtMember >= 1) && (soughtMember <= theCompiler->varNames.elementNum))  {
-                memberName = ((varNameType *) element(&(theCompiler->varNames), soughtMember))->theName;    }
+                str0 = " '";  strf = "'";
+                memberName = ((varNameType *) element(&(theCompiler->varNames), soughtMember))->theName;
+            }}
             
-            printf("Error:  member '%s' not found", memberName);
+            printf("Error:  member%s%s%s not found", str0, memberName, strf);
     }   }
     
     else if (warningCode != passed)  {
@@ -380,14 +390,17 @@ void printError(const char *errScriptName, ccInt errFileNameLength,
         // print the file that caused the error, if its name was recorded
     
     if ((errScriptName != NULL) && (errFileNameLength != 0))  {
+    if ((errCode == thrown_to_err) || (!fromTerminal))  {
         if (errFileNameLength < 0)  printf(" in %s", errScriptName);
-        else  printf(" in %.*s", errFileNameLength, errScriptName);      }
+        else  printf(" in %.*s", errFileNameLength, errScriptName);
+    }}
     printf("\n");
     
     
         // if we have the source text, flag the line that caused the error
     
     if (errText != NULL)  {
+    if ((errCode == thrown_to_err) || (!fromTerminal))  {
         
         ccInt lineNo = 1, loopChar, lineBeginningChar, lineEndChar;
         int numLineNoChars;
@@ -435,5 +448,6 @@ void printError(const char *errScriptName, ccInt errFileNameLength,
         if (lettertype(errText + loopChar) != unprintable)  {
             printf(" ");
         }}
-        printf("^\n");        }
+        printf("^\n");
+    }}
 }

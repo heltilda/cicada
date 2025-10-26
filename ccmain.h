@@ -50,7 +50,7 @@ extern ccInt cicadaMain(const Cfunction *, const char *,  const ccBool);
 extern ccInt initCicada(void);
 extern ccInt attachStartingCode(ccInt *, ccInt, const char *, ccInt, const char *, ccInt *, ccInt);
 extern void cleanUp(void);
-extern void printError(const char *, ccInt, const char *, ccInt, ccBool, const ccInt);
+extern void printError(const char *, ccInt, const char *, ccInt, ccBool, const ccInt, const ccBool);
 
 #ifdef __cplusplus
 }

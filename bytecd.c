@@ -203,9 +203,9 @@ void _user_function()
 }
 
 
-// _built_in_function() runs a built-in Cicada function and returns the appropriate register, if applicable.
+// _C_function() runs a built-in Cicada function and returns the appropriate register, if applicable.
 
-void _built_in_function()
+void _C_function()
 {
     view argView;
     argsType fArgs, oneArg;
@@ -2813,7 +2813,7 @@ void beginExecution(code_ref *theCode, ccBool ifStorePC, ccInt newPCOffset, ccIn
     
     
         // point to the code we will run
-        
+    
     PCCodeRef = *theCode;
     startCodePtr = storedCode(theCode->PLL_index)->bytecode;
     pcCodePtr = PCCodeRef.code_ptr;
@@ -3188,7 +3188,7 @@ void(*skipJumpTable[commands_num])(void) = {     // for skipping over code
 
 void(*sentenceStartJumpTable[commands_num])(void) = {    // start-of-sentence:  resize/insert will not step
     &_illegal, &_jump_always, &_jump_if_true, &_jump_if_false, &_code_marker,
-        &_func_return, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
+        &_func_return, &_user_function, &_C_function, &_def_general, &_forced_equate,
     &_search_member, &_step_to_memberID, &_step_to_index, &_step_to_indices, &_step_to_all_indices,
         &_resize_start, &_insert_index_start, &_insert_indices_start, &_remove, &_if_eq,
     &_if_ne, &_if_gt, &_if_ge, &_if_lt, &_if_le,
@@ -3202,7 +3202,7 @@ void(*sentenceStartJumpTable[commands_num])(void) = {    // start-of-sentence:  
 
 void(*numericJumpTable[commands_num])(void) = {     // numeric arguments
     &_illegal, &_illegal, &_illegal, &_illegal, &_illegal,
-        &doubleAdapter, &doubleAdapter, &_built_in_function, &doubleAdapter, &doubleAdapter,
+        &doubleAdapter, &doubleAdapter, &_C_function, &doubleAdapter, &doubleAdapter,
     &doubleAdapter, &doubleAdapter, &doubleAdapter, &doubleAdapter, &doubleAdapter,
         &doubleAdapter, &doubleAdapter, &doubleAdapter, &_illegal, &_illegal,
     &_illegal, &_illegal, &_illegal, &_illegal, &_illegal,
@@ -3216,7 +3216,7 @@ void(*numericJumpTable[commands_num])(void) = {     // numeric arguments
 
 void(*codeJumpTable[commands_num])(void) = {     // right argument of define when copying variable type
     &_illegal, &_illegal, &_illegal, &_illegal, &_illegal,
-        &_illegal, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
+        &_illegal, &_user_function, &_C_function, &_def_general, &_forced_equate,
     &_object_search_member, &_object_step_to_memberID, &_object_step_to_index, &_object_step_to_indices, &_step_to_all_indices,
         &_resize, &_insert_index, &_insert_indices, &_illegal, &_if_eq,
     &_if_ne, &_if_gt, &_if_ge, &_if_lt, &_if_le,
@@ -3230,7 +3230,7 @@ void(*codeJumpTable[commands_num])(void) = {     // right argument of define whe
 
 void(*bytecodeJumpTable[commands_num])(void) = {     // generic jump table for mid-sentence operators
     &_illegal, &_jump_always, &_jump_if_true, &_jump_if_false, &_code_marker,
-        &_func_return, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
+        &_func_return, &_user_function, &_C_function, &_def_general, &_forced_equate,
     &_search_member, &_step_to_memberID, &_step_to_index, &_step_to_indices, &_step_to_all_indices,
         &_resize, &_insert_index, &_insert_indices, &_remove, &_if_eq,
     &_if_ne, &_if_gt, &_if_ge, &_if_lt, &_if_le,
@@ -3244,7 +3244,7 @@ void(*bytecodeJumpTable[commands_num])(void) = {     // generic jump table for m
 
 void(*defineJumpTable[commands_num])(void) = {     // jump table for the left side of a define statement
     &_illegal, &_jump_always, &_jump_if_true, &_jump_if_false, &_code_marker,
-        &_func_return, &_user_function, &_built_in_function, &_def_general, &_forced_equate,
+        &_func_return, &_user_function, &_C_function, &_def_general, &_forced_equate,
     &_define_search_member, &_define_step_to_memberID, &_define_step_to_index, &_define_step_to_indices, &_define_step_to_all_indices,
         &_define_resize, &_define_insert_index, &_define_insert_indices, &_remove, &_if_eq,
     &_if_ne, &_if_gt, &_if_ge, &_if_lt, &_if_le,

@@ -79,8 +79,8 @@
 #define not_a_number_err 41
 #define overlapping_window_err 42
 
+#define thrown_to_err 43
 #define nonexistent_C_function_err 44
-//#define user_function_not_found_err 44
 #define wrong_argument_count_err 45
 #define library_argument_err 46
 
@@ -350,7 +350,7 @@ extern void stepView(view *, member *, ccInt, ccInt);
 
 extern void setError(ccInt, ccInt *);
 extern void setWarning(ccInt, ccInt *);
-extern void setErrIndex(ccInt *, ccInt, ccInt *, ccInt *, code_ref *);
+extern void setErrIndex(ccInt *, ccInt, code_ref *, ccInt *, ccInt *, code_ref *);
 
 extern ccInt addVariable(variable **, ccInt, ccInt, ccInt, ccBool);
 extern void refVariable(variable *);

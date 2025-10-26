@@ -184,7 +184,7 @@ extern void _jump_if_false(void);
 extern void _code_marker(void);
 extern void _func_return(void);
 extern void _user_function(void);
-extern void _built_in_function(void);
+extern void _C_function(void);
 extern const char CargType(const char *, ccInt);
 extern void incrementArg(argsType *);
 extern window *getViewMember(ccInt);
