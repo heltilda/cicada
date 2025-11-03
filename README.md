@@ -8,12 +8,16 @@ http://heltilda.github.io/cicada<br><br>
 
 `> make`
 
-`> make install`
+`> make install`<br><br>
 
-To link against the Cicada library, include its header file in your C code:
+<ins>How to use</ins>: Include the Cicada header file in your C code:
 
 `#include <cicada.h>`
 
 and pass an `lcicada` option to the linker:
 
 `gcc -lcicada -o myprogram ...`
+
+The simplest way to run Cicada is to call:
+
+`runCicada(NULL, NULL, true);`
