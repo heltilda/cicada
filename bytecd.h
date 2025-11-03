@@ -75,7 +75,7 @@ typedef struct {
     
         // the registers holds numeric quantities from conditional expressions, inlined constants, variables, etc.
     
-    ccBool _boolRegister;
+    bool _boolRegister;
     ccInt _intRegister;
     ccFloat _doubleRegister;
     linkedlist _stringRegister;
@@ -90,7 +90,7 @@ typedef struct {
     
         // the following convey type, path, define-status, etc. of objects that Cicada encounters
     
-    ccBool _canAddMembers, _isHiddenMember;
+    bool _canAddMembers, _isHiddenMember;
     object_params _GL_Object;
     step_params _GL_Path;
     ccInt _prevIndexWidth;
@@ -116,8 +116,8 @@ typedef struct {
     linkedlist _JumpList, _JumpFromList, _SentenceList;         // these are used for checking code
     linkedlist _allCompilers;           // the user can switch between these when using compile()
     
-    ccBool _extCallMode;                // set if a call() function is running
-    ccBool _doPrintError;               // set by trap( ; ... ) to cause errors within to be printed 
+    bool _extCallMode;                // set if an external C function is running
+    bool _doPrintError;               // set by trap( ; ... ) to cause errors within to be printed 
 } cc_bytecode_global_struct;
 
 extern cc_bytecode_global_struct cc_bytecode_globals;
@@ -191,48 +191,48 @@ extern window *getViewMember(ccInt);
 
 extern void _def_general(void);
 extern void copyCompareMultiView(void(*)(view *, view *), view *, view *);
-extern void encompassMultiView(view *, window *, window *, variable *, ccBool);
-extern ccInt relinkGLStemMember(view *, ccBool, ccBool, ccBool);
+extern void encompassMultiView(view *, window *, window *, variable *, bool);
+extern ccInt relinkGLStemMember(view *, bool, bool, bool);
 extern void newStringLL(view *);
-extern ccInt checkType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, view *, ccBool, ccBool);
-extern void updateType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, ccInt, ccBool);
+extern ccInt checkType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, view *, bool, bool);
+extern void updateType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, ccInt, bool);
 
 extern void _forced_equate(void);
 
 extern void _search_member(void);
 extern void _define_search_member(void);
 extern void _object_search_member(void);
-extern void smStep(ccBool);
+extern void smStep(bool);
 extern void _step_to_memberID(void);
 extern void _define_step_to_memberID(void);
 extern void _object_step_to_memberID(void);
-extern void sidStep(ccBool);
+extern void sidStep(bool);
 extern void _step_to_index(void);
 extern void _define_step_to_index(void);
 extern void _object_step_to_index(void);
-extern void stixStep(ccBool);
+extern void stixStep(bool);
 extern void _step_to_indices(void);
 extern void _define_step_to_indices(void);
 extern void _object_step_to_indices(void);
-extern void sticsStep(ccBool);
+extern void sticsStep(bool);
 extern void _step_to_all_indices(void);
 extern void _define_step_to_all_indices(void);
-extern void staiStep(ccBool);
+extern void staiStep(bool);
 extern void _resize(void);
 extern void _define_resize(void);
 extern void _resize_start(void);
-extern void doResize(ccBool);
+extern void doResize(bool);
 extern void _insert_index(void);
 extern void _define_insert_index(void);
 extern void _insert_indices(void);
 extern void _define_insert_indices(void);
-extern void do_insert_index(ccBool);
-extern void do_insert_indices(ccBool);
-extern void masterInsert(ccBool, ccBool);
+extern void do_insert_index(bool);
+extern void do_insert_indices(bool);
+extern void masterInsert(bool, bool);
 
 extern void callSearchPathFunction(void);
 extern ccInt callIndexFunction(void);
-extern void navigate(void (*)(ccBool), ccBool, ccBool, ccBool);
+extern void navigate(void (*)(bool), bool, bool, bool);
 
 extern void resizeMember(member *, ccInt, ccInt);
 extern void resizeIndices(member *, ccInt, ccInt, ccInt);
@@ -241,7 +241,7 @@ extern void _delete_indices(void);
 
 extern void _if_eq(void);
 extern void _if_ne(void);
-extern void copyCompareReadArg(void(*)(void), ccInt *, ccBool *);
+extern void copyCompareReadArg(void(*)(void), ccInt *, bool *);
 extern void _if_eq_at(void);
 extern void _if_ne_at(void);
 extern void eqaOneArg(void);
@@ -277,10 +277,10 @@ extern void _if_and(void);
 extern void _if_or(void);
 extern void _if_xor(void);
 
-extern void logicAnd(ccBool);
-extern void logicOr(ccBool);
-extern void logicXor(ccBool);
-extern void logicalOperator(void(*logicOp)(ccBool));
+extern void logicAnd(bool);
+extern void logicOr(bool);
+extern void logicXor(bool);
+extern void logicalOperator(void(*logicOp)(bool));
 
 extern void _code_number(void);
 extern void _sub_code(void);
@@ -345,7 +345,7 @@ extern void checkIndices(ccInt);
 extern void checkBytecodeArg(ccInt);
 extern void illegalCmd(ccInt);
 
-extern void beginExecution(code_ref *, ccBool, ccInt, ccInt, ccInt);
+extern void beginExecution(code_ref *, bool, ccInt, ccInt, ccInt);
 extern void runBytecode(void);
 extern void runSkipMode(ccInt);
 

@@ -45,12 +45,11 @@ extern const char *terminalScript;
 extern const char *defsScript;
 extern const char *userDefsScript;
 
-extern ccInt runCicada(const Cfunction *, const char *, const ccBool);
-extern ccInt cicadaMain(const Cfunction *, const char *,  const ccBool);
+extern ccInt cicadaMain(const Cfunction *, const ccInt, const char *,  const bool);
 extern ccInt initCicada(void);
 extern ccInt attachStartingCode(ccInt *, ccInt, const char *, ccInt, const char *, ccInt *, ccInt);
 extern void cleanUp(void);
-extern void printError(const char *, ccInt, const char *, ccInt, ccBool, const ccInt, const ccBool);
+extern void printError(const char *, ccInt, const char *, ccInt, bool, const ccInt, const bool);
 
 #ifdef __cplusplus
 }

@@ -27,6 +27,7 @@
 #define Compile_h
 
 #include "lnklst.h"
+#include "cicada.h"
 
 
 typedef struct {
@@ -57,12 +58,12 @@ typedef struct {
 
 typedef struct {
     char *name;                 // a duplicate of the 'name' field in the corresponding opString
-    ccBool isOptional;          // if this and subsequent arguments can be skipped (as in the 'else' of an 'if')
-    ccBool tobeRemoved;         // set by 'removedexpression' -- the tokens are not written to the scriptTokens list
+    bool isOptional;            // if this and subsequent arguments can be skipped (as in the 'else' of an 'if')
+    bool tobeRemoved;           // set by 'removedexpression' -- the tokens are not written to the scriptTokens list
     ccInt precedence;           // order-of-operations precedence level (low = tightly-bound)
     ccInt leftArgType;          // expected type of left-hand argument; 0 if no LH argument
     ccInt rightArgType;         // expected type of right-hand argument; 0 if no RH argument
-    ccBool rtrnTypes[11];       // the types (numeric, string, etc.) that return value can be; type 0 = sentence-starter
+    bool rtrnTypes[11];         // the types (numeric, string, etc.) that return value can be; type 0 = sentence-starter
     ccInt prevToken;            // the previous token, if it is part of a string (i.e. 'for' before 'in', 'if' before 'endif', etc)
     ccInt nextToken;            // the ending token, if one is expected (i.e. 'in' after 'for', 'endif' after 'if', etc)
     ccInt firstCodeWord;        // the first bytecode word in allCodeWords[] associated with the operator
@@ -79,7 +80,7 @@ typedef struct {
     ccInt nextScriptToken;      // the 'next token' ID in scriptTokens; 0 if no next token for this op or a nonexistent optional arg
     ccInt *constData;           // for numeric or string constants, this points to the buffer storing the constant
     ccInt constDataSize;        // size in ints of numeric or string constants
-    ccBool *rtrnTypes;          // for typeXarg operators such as (..), this points to the type array of what is inside
+    bool *rtrnTypes;            // for typeXarg operators such as (..), this points to the type array of what is inside
     ccInt adapterTokenToFix;    // this, or an enclosed, token # if it contains a typeX adapter that needs fixing
 } scriptTokenType;
 
@@ -96,31 +97,6 @@ typedef struct {
     char *theName;              // a pointer to the variable name
     ccInt nameLength;           // number of characters in variable name
 } varNameType;
-
-
-
-// Compile-time error codes; these follow the linked-list error codes
-
-
-#define char_read_err 5
-#define string_read_err 5
-#define read_number_err 6
-#define overflow_err 7
-#define underflow_err 8
-
-#define unknown_command_err 9
-#define unexpected_token_err 10
-#define token_expected_err 11
-
-#define arg_expected_err 12
-#define left_arg_expected_err 13
-#define right_arg_expected_err 14
-#define no_left_arg_allowed_err 15
-#define no_right_arg_allowed_err 16
-
-#define type_mismatch_err 17
-
-
 
 
 
@@ -239,25 +215,26 @@ typedef struct {
 // Global struct definition
 
 typedef struct {
-    compiler_type *_currentCompiler;
     ccInt _errPosition;
     ccInt _compilerWarning;
     char *_expectedTokenName;
+    
+    ccInt _numCfunctions; 
+    ccInt _numIBCfunctions;
+    const Cfunction *_inbuiltCFs;
+    const Cfunction *_userCFs;
 } cc_compile_global_struct;
-
-extern const int maxPrintableDigits;
-//extern const int maxFieldWidth;
-extern const char *printFloatFormatString;
-extern const char *print_stringFloatFormatString;
-extern const char *readFloatFormatString;
-extern const char *printIntFormatString;
-extern const char *readIntFormatString;
 
 extern cc_compile_global_struct cc_compile_globals;
 
 #define errPosition cc_compile_globals._errPosition
 #define compilerWarning cc_compile_globals._compilerWarning
 #define expectedTokenName cc_compile_globals._expectedTokenName
+
+#define numCfunctions cc_compile_globals._numCfunctions
+#define numIBCfunctions cc_compile_globals._numIBCfunctions
+#define inbuiltCFs cc_compile_globals._inbuiltCFs
+#define userCFs cc_compile_globals._userCFs
 
 
 
@@ -268,20 +245,20 @@ extern "C" {
 #endif
 
 extern compiler_type *newCompiler(commandTokenType *, ccInt, ccInt *, ccInt, ccInt *);
-extern ccInt addTokenSpec(compiler_type *, const char **, char **, ccInt, ccBool, ccBool, ccBool, ccInt, ccInt);
-extern ccInt findToken(compiler_type *, linkedlist *, const char **, ccInt *, ccBool, ccBool);
+extern ccInt addTokenSpec(compiler_type *, const char **, char **, ccInt, bool, bool, bool, ccInt, ccInt);
+extern ccInt findToken(compiler_type *, linkedlist *, const char **, ccInt *, bool, bool);
 extern void freeCompiler(compiler_type *);
 extern void freeBytecode(compiler_type *);
 extern ccInt compile(compiler_type *, const char *);
 extern ccInt tokenize(compiler_type *, const char *, ccInt);
 extern ccInt addScriptToken(compiler_type *compiler, ccInt, ccInt, ccInt *, ccInt);
-extern ccInt readNum(const char **, ccFloat *, ccBool *);
-extern ccInt readTextString(const char **, char *, ccInt **, ccInt *, ccBool);
+extern ccInt readNum(const char **, ccFloat *, bool *);
+extern ccInt readTextString(const char **, char *, ccInt **, ccInt *, bool);
 extern void nextChar(const char **);
-extern ccInt reorderTokens(compiler_type *, ccInt, ccBool);
-extern ccInt relinkExpression(compiler_type *, ccInt *, ccInt, ccInt, ccInt, ccInt **, ccBool **, ccInt *);
-extern ccInt relinkBestToken(compiler_type *, linkedlist *, ccInt, ccInt, ccInt, ccInt **, ccBool **, ccInt *);
-extern ccInt writeTokenOps(compiler_type *, ccInt, ccBool);
+extern ccInt reorderTokens(compiler_type *, ccInt, bool);
+extern ccInt relinkExpression(compiler_type *, ccInt *, ccInt, ccInt, ccInt, ccInt **, bool **, ccInt *);
+extern ccInt relinkBestToken(compiler_type *, linkedlist *, ccInt, ccInt, ccInt, ccInt **, bool **, ccInt *);
+extern ccInt writeTokenOps(compiler_type *, ccInt, bool);
 
 extern ccInt lettertypeArray[256];
 

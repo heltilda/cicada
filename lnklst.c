@@ -51,7 +51,7 @@
 
 // newSublist() makes a new sublist, to be linked to the queue of a linked sublists.
 
-sublistHeader *newSublist(ccInt numberOfElements, ccInt maximumElements, ccInt elementSize, ccBool ifCleared)
+sublistHeader *newSublist(ccInt numberOfElements, ccInt maximumElements, ccInt elementSize, bool ifCleared)
 {
     sublistHeader *temp;
     
@@ -95,7 +95,7 @@ sublistHeader *findSublist(linkedlist *theList, ccInt theElement, ccInt *bottomR
 // Spare room is the ratio of spare memory in the list to numberOfElements, as a percentage.
 // The linked list routines try to maintain this level of extra space when the list is dynamically resized.
 
-ccInt newLinkedList(linkedlist *theList, ccInt numberOfElements, ccInt elementSize, ccFloat spareRoom, ccBool ifCleared)
+ccInt newLinkedList(linkedlist *theList, ccInt numberOfElements, ccInt elementSize, ccFloat spareRoom, bool ifCleared)
 {
     ccInt maxElements;
     sublistHeader *temp;
@@ -136,7 +136,7 @@ void deleteLinkedList(linkedlist *theList)
 // insertElements() makes room for new elements in the middle of a linked list.
 // First new element goes at [insertionPoint], so all new elements are inserted before the old element at insertionPoint.
 
-ccInt insertElements(linkedlist *theList, ccInt insertionPoint, ccInt newElements, ccBool ifCleared)
+ccInt insertElements(linkedlist *theList, ccInt insertionPoint, ccInt newElements, bool ifCleared)
 {
     sublistHeader * baseSublist;
     linkedlist dummy;
@@ -226,7 +226,7 @@ ccInt insertElements(linkedlist *theList, ccInt insertionPoint, ccInt newElement
 
 // addElements():  a quick way to insert elements at the end of a linked list -- to stretch the list, in other words
 
-ccInt addElements(linkedlist *theList, ccInt newElements, ccBool ifCleared)
+ccInt addElements(linkedlist *theList, ccInt newElements, bool ifCleared)
 {
     return insertElements(theList, theList->elementNum+1, newElements, ifCleared);
 }
@@ -286,7 +286,7 @@ ccInt deleteElements(linkedlist *theList, ccInt firstDelete, ccInt lastDelete)
         // If we went too far and deleted the first sublist, recreate it
     
     if (theList->memory == NULL)  {
-        tempPtr = newSublist(0, 1, theList->elementSize, ccFalse);
+        tempPtr = newSublist(0, 1, theList->elementSize, false);
         theList->memory = tempPtr;
         if (tempPtr == NULL)  return out_of_memory_err;    }
     
@@ -307,7 +307,7 @@ ccInt deleteElement(linkedlist *theList, ccInt deletePoint)
 
 // resizeLinkedList() adds to the end or deletes elements from the end, as necessary
 
-ccInt resizeLinkedList(linkedlist *theList, ccInt newTop, ccBool ifCleared)
+ccInt resizeLinkedList(linkedlist *theList, ccInt newTop, bool ifCleared)
 {
     if (theList->memory == NULL)  return init_err;
     
@@ -332,7 +332,7 @@ ccInt defragmentLinkedList(linkedlist *theList)
     if (theList->elementNum == theList->memory->numElements)  return passed;
     
     oldList = *theList;
-    defLL_rtrn = newLinkedList(theList, oldList.elementNum, oldList.elementSize, oldList.spareRoom, ccFalse);
+    defLL_rtrn = newLinkedList(theList, oldList.elementNum, oldList.elementSize, oldList.spareRoom, false);
     if (defLL_rtrn != passed)  {
         *theList = oldList;
         return defLL_rtrn;    }
@@ -436,7 +436,7 @@ ccInt copyElements(linkedlist *sourceList, ccInt sourceBegin, linkedlist *destLi
 
 // compareElements() compares the two subsets of linked lists (of the same length) byte-by-byte to test for equality.
 
-ccBool compareElements(linkedlist *sourceList, ccInt sourceBegin, linkedlist * destList, ccInt destBegin, ccInt numberToCompare)
+bool compareElements(linkedlist *sourceList, ccInt sourceBegin, linkedlist * destList, ccInt destBegin, ccInt numberToCompare)
 {
     ccInt firstCompared, lastCompared, elementSize, sourceBottom, destBottom, rtrn;
     sublistHeader *currentSourceSublist, *currentDestSublist;
@@ -446,7 +446,7 @@ ccBool compareElements(linkedlist *sourceList, ccInt sourceBegin, linkedlist * d
     
     if ((sourceList->memory == NULL) || (destList->memory == NULL))  return init_err;
     if (sourceList->elementSize != destList->elementSize)  return mismatched_indices_err;
-    if (numberToCompare == 0)  return ccTrue;
+    if (numberToCompare == 0)  return true;
     if ((!elementExists(sourceList, sourceBegin)) || (!elementExists(destList, destBegin)))
         return out_of_range_err;
     if ((!elementExists(sourceList, sourceBegin+numberToCompare-1)) || (!elementExists(destList, destBegin+numberToCompare-1)))
@@ -482,12 +482,12 @@ ccBool compareElements(linkedlist *sourceList, ccInt sourceBegin, linkedlist * d
         rtrn = memcmp((void *) ((char *) currentSourceSublist + (firstCompared+sourceBegin-sourceBottom-1)*elementSize + sublistHeaderSize),
                         (void *) ((char *) currentDestSublist + (firstCompared+destBegin-destBottom-1)*elementSize + sublistHeaderSize),
                         (size_t) (lastCompared-firstCompared+1)*elementSize);
-        if (rtrn != 0)  return ccFalse;
+        if (rtrn != 0)  return false;
         
         firstCompared = lastCompared+1;
     }
     
-    return ccTrue;
+    return true;
 }
 
 
@@ -626,9 +626,9 @@ ccInt getElement(linkedlist *theList, ccInt theElement, void *writeAddress)
 ccInt elementExists(linkedlist *theList, ccInt theElement)
 {
     if (theList->memory == NULL)  return init_err;
-    if ((theElement > theList->elementNum) || (theElement <= 0))  return ccFalse;
+    if ((theElement > theList->elementNum) || (theElement <= 0))  return false;
     
-    return ccTrue;
+    return true;
 }
 
 
@@ -688,9 +688,9 @@ ccInt newPLL(pinned_LL *basePLL, ccInt numElements, ccInt dataSize, ccFloat spar
 {
     ccInt rtrn;
     
-    rtrn = newLinkedList(&(basePLL->data), numElements, dataSize, spareRoom, ccFalse);
+    rtrn = newLinkedList(&(basePLL->data), numElements, dataSize, spareRoom, false);
     if (rtrn != passed)  return rtrn;
-    rtrn = newLinkedList(&(basePLL->references), numElements, sizeof(ccInt), spareRoom, ccTrue);
+    rtrn = newLinkedList(&(basePLL->references), numElements, sizeof(ccInt), spareRoom, true);
     if (rtrn != passed)  return rtrn;
     basePLL->lowestFreeSpot = 1;
     basePLL->highestFreeSpot = numElements;
@@ -719,9 +719,9 @@ ccInt addPLLElement(pinned_LL *basePLL, void **newElementPtr, ccInt *newElementI
         // Case 1:  add to the top of the list
     
     if (basePLL->lowestFreeSpot > basePLL->data.elementNum)   {             // shouldn't move what's in the lower sublists
-        rtrn = addElements(&(basePLL->data), 1, ccFalse);         // with my current insertElements scheme
+        rtrn = addElements(&(basePLL->data), 1, false);         // with my current insertElements scheme
         if (rtrn != passed)  return rtrn;
-        rtrn = addElements(&(basePLL->references), 1, ccTrue);     // references must be initially set to 0
+        rtrn = addElements(&(basePLL->references), 1, true);     // references must be initially set to 0
         if (rtrn != passed)  return rtrn;
         
         *newElementIndex = basePLL->data.elementNum;
@@ -805,7 +805,7 @@ ccInt newStack(stack *theStack, ccInt elementSize, ccInt InitialAllocation, ccFl
 {
     ccInt rtrn;
     
-    rtrn = newLinkedList(&(theStack->data), (InitialAllocation/(1.+spareRoom)), elementSize, spareRoom, ccFalse);
+    rtrn = newLinkedList(&(theStack->data), (InitialAllocation/(1.+spareRoom)), elementSize, spareRoom, false);
     if (rtrn != passed)  return rtrn;
     
     theStack->top = 0;
@@ -831,7 +831,7 @@ ccInt pushStack(stack *theStack, void **newElementPtr)
     ccInt rtrn;
     
     if (theStack->top == theStack->data.elementNum)  {
-        rtrn = addElements(&(theStack->data), 1, ccFalse);
+        rtrn = addElements(&(theStack->data), 1, false);
         if (rtrn != passed)  return rtrn;         }
     
     (theStack->top)++;

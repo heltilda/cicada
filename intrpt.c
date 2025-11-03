@@ -72,7 +72,7 @@ void copyString(window *sourceStringWindow, member *destStringMember)
         window *oldDestWindow = destStringMember->memberWindow;
         destStringMember->indices = sourceStringWindow->width;
         rtrn = addWindow(sourceStringWindow->variable_ptr, sourceStringWindow->offset, sourceStringWindow->width,
-                    &(destStringMember->memberWindow), ccTrue);
+                    &(destStringMember->memberWindow), true);
         if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
         refWindow(destStringMember->memberWindow);
         derefWindow(&oldDestWindow);        }
@@ -90,7 +90,7 @@ void copyString(window *sourceStringWindow, member *destStringMember)
 }
 
 void copyBoolToBool(void *Bool1, void *Bool2)
-{  *(ccBool *) Bool2 = *(ccBool *) Bool1;  }
+{  *(bool *) Bool2 = *(bool *) Bool1;  }
 
 void copyCharToChar(void *Char1, void *Char2)
 {  *(unsigned char *) Char2 = *(unsigned char *) Char1;  }
@@ -147,8 +147,8 @@ void compareWindowData(view *sourceView, view *destView)
 void compareData(linkedlist *sourceLL, ccInt sourceIndex, linkedlist *destLL, ccInt destIndex, ccInt numberToCompare)
 {
     if (!boolRegister)  return;
-    if (sourceLL->elementSize != destLL->elementSize)  boolRegister = ccFalse;
-    else if (!compareElements(sourceLL, sourceIndex, destLL, destIndex, numberToCompare))  boolRegister = ccFalse;
+    if (sourceLL->elementSize != destLL->elementSize)  boolRegister = false;
+    else if (!compareElements(sourceLL, sourceIndex, destLL, destIndex, numberToCompare))  boolRegister = false;
 }
 
 void compareString(window *stringWindow1, member *stringMember2)
@@ -156,40 +156,40 @@ void compareString(window *stringWindow1, member *stringMember2)
     window *stringWindow2 = stringMember2->memberWindow;
     
     if (!boolRegister)  return;
-    if (stringWindow1->width != stringWindow2->width)  boolRegister = ccFalse;
+    if (stringWindow1->width != stringWindow2->width)  boolRegister = false;
     else if (!compareElements(&(stringWindow1->variable_ptr->mem.data), stringWindow1->offset+1,
-            &(stringWindow2->variable_ptr->mem.data), stringWindow2->offset+1, stringWindow1->width))  boolRegister = ccFalse;
+            &(stringWindow2->variable_ptr->mem.data), stringWindow2->offset+1, stringWindow1->width))  boolRegister = false;
 }
 
 void compareBoolToBool(void *Bool1, void *Bool2)
-{  if (*(ccBool *) Bool1 != *(ccBool *) Bool2)  boolRegister = ccFalse;  }
+{  if (*(bool *) Bool1 != *(bool *) Bool2)  boolRegister = false;  }
 
 void compareCharToChar(void *Char1, void *Char2)
-{  if (*(unsigned char *) Char1 != *(unsigned char *) Char2)  boolRegister = ccFalse;  }
+{  if (*(unsigned char *) Char1 != *(unsigned char *) Char2)  boolRegister = false;  }
 
 void compareCharToInt(void *theChar, void *theInt)
-{  if (((ccInt) *(char *) theChar) != *(ccInt *) theInt)  boolRegister = ccFalse;  }
+{  if (((ccInt) *(char *) theChar) != *(ccInt *) theInt)  boolRegister = false;  }
 
 void compareCharToDouble(void *theChar, void *theDouble)
-{  if (((ccFloat) *(char *) theChar) != *(ccFloat *) theDouble)  boolRegister = ccFalse;  }
+{  if (((ccFloat) *(char *) theChar) != *(ccFloat *) theDouble)  boolRegister = false;  }
 
 void compareIntToChar(void *theInt, void *theChar)
-{  if (*(ccInt *) theInt != ((ccInt) *(char *) theChar))  boolRegister = ccFalse;  }
+{  if (*(ccInt *) theInt != ((ccInt) *(char *) theChar))  boolRegister = false;  }
 
 void compareIntToInt(void *Int1, void *Int2)
-{  if (*(ccInt *) Int1 != *(ccInt *) Int2)  boolRegister = ccFalse;  }
+{  if (*(ccInt *) Int1 != *(ccInt *) Int2)  boolRegister = false;  }
 
 void compareIntToDouble(void *theInt, void *theDouble)
-{  if (((ccFloat) *(ccInt *) theInt) != *(ccFloat *) theDouble)  boolRegister = ccFalse;  }
+{  if (((ccFloat) *(ccInt *) theInt) != *(ccFloat *) theDouble)  boolRegister = false;  }
 
 void compareDoubleToChar(void *theDouble, void *theChar)
-{  if (*(ccFloat *) theDouble != ((ccFloat) *(char *) theChar))  boolRegister = ccFalse;  }
+{  if (*(ccFloat *) theDouble != ((ccFloat) *(char *) theChar))  boolRegister = false;  }
 
 void compareDoubleToInt(void *theDouble, void *theInt)
-{  if (*(ccFloat *) theDouble != ((ccFloat) *(ccInt *) theInt))  boolRegister = ccFalse;  }
+{  if (*(ccFloat *) theDouble != ((ccFloat) *(ccInt *) theInt))  boolRegister = false;  }
 
 void compareDoubleToDouble(void *Double1, void *Double2)
-{  if (*(ccFloat *) Double1 != *(ccFloat *) Double2)  boolRegister = ccFalse;  }
+{  if (*(ccFloat *) Double1 != *(ccFloat *) Double2)  boolRegister = false;  }
 
 void compareStringToString(void *String1, void *String2)
 {
@@ -374,7 +374,7 @@ void copyCompareListToVar(void *sourceData, ccInt sourceDataType, view *destView
 // Here we calculate the size in bytes of a window (including its members, ...)
 
 void sizeView(view *theView, void *dataSize, void *sizeofStrings)
-{  doReadWrite(theView, dataSize, sizeofStrings, ccFalse, ccFalse, ccFalse, &sizeView, &sizeData, &sizeString);  }
+{  doReadWrite(theView, dataSize, sizeofStrings, false, false, false, &sizeView, &sizeData, &sizeString);  }
 
 void sizeData(view *theView, void *dataSize, void *dummy)
 {
@@ -399,7 +399,7 @@ void sizeString(view *theView, ccInt stringIndex, void *dataSize, void *sizeofSt
 // from a later window that completely encloses it (i.e. the difference is a lower + upper piece)
 
 void storageSizeView(view *theView, void *dataSize, void *dummy)
-{  doReadWrite(theView, dataSize, dummy, ccFalse, ccTrue, ccFalse, &storageSizeView, &storageSizeData, &storageSize_String);  }
+{  doReadWrite(theView, dataSize, dummy, false, true, false, &storageSizeView, &storageSizeData, &storageSize_String);  }
 
 void storageSizeData(view *theView, void *dataSize, void *ssMode)
 {
@@ -411,7 +411,7 @@ void storageSizeData(view *theView, void *dataSize, void *ssMode)
         if (isBusy(theView->windowPtr, busy_SS_flag))  return;      }
     
     else if (mode == 2)  {
-        ccBool firstBusyWindow = ccFalse;
+        bool firstBusyWindow = false;
         ccInt windowTop, toAdd, bestOffset, bestTop, prevOffset = -1, prevTop = 0;
         
         for (loopWindowNum = 1; loopWindowNum <= windowsPLL->data.elementNum; loopWindowNum++)  {
@@ -422,7 +422,7 @@ void storageSizeData(view *theView, void *dataSize, void *ssMode)
         }   }
         
         if (firstBusyWindow)  {
-        while (ccTrue)  {
+        while (true)  {
             window *bestWindow = NULL;
             bestTop = prevTop;
             bestOffset = ccIntMax;
@@ -471,7 +471,7 @@ void storageSize_String(view *theView, ccInt stringIndex, void *dataSize, void *
 // These copy data from a source buffer into a window.
 
 void writeView(view *theView, void *bufferPtr, void *sizeofStrings)        // writes the variables
-{  doReadWrite(theView, bufferPtr, sizeofStrings, ccTrue, ccFalse, ccFalse, &writeView, &writeData, &writeString);  }
+{  doReadWrite(theView, bufferPtr, sizeofStrings, true, false, false, &writeView, &writeData, &writeString);  }
 
 void writeData(view *theView, void *bufferPtr, void *dummy)
 {
@@ -505,7 +505,7 @@ void writeString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeof
 // These copy data from a window into a destination memory buffer.
 
 void readView(view *theView, void *bufferPtr, void *sizeofStrings)
-{  doReadWrite(theView, bufferPtr, sizeofStrings, ccTrue, ccFalse, ccFalse, &readView, &readData, &readString);  }
+{  doReadWrite(theView, bufferPtr, sizeofStrings, true, false, false, &readView, &readData, &readString);  }
 
 void readData(view *theView, void *bufferPtr, void *dummy)
 {
@@ -526,11 +526,11 @@ void readString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeofS
 }
 
 
-// Next 3 routines:  invoked by call()
+// Next 3 routines:  invoked by C_function()
 // These count the number of seperate arguments that will go into the 'argv' array.
 
 void countDataLists(view *theView, void *windowCount, void *stringCount)
-{  doReadWrite(theView, windowCount, stringCount, ccFalse, ccFalse, ccTrue, &countDataLists, &countDataView, countStringView);  }
+{  doReadWrite(theView, windowCount, stringCount, false, false, true, &countDataLists, &countDataView, countStringView);  }
 
 void countDataView(view *theView, void *windowCount, void *dummy)
 {  (*(ccInt *) windowCount)++;  }
@@ -539,11 +539,11 @@ void countStringView(view *theView, ccInt stringIndex, void *windowCount, void *
 {  (*(ccInt *) stringCount)++;  }
 
 
-// Next 3 routines:  invoked by call()
-// These fill the argv array of a call() function with the addresses of the data lists.
+// Next 3 routines:  invoked by C_function()
+// These fill the argv array of a C function with the addresses of the data lists.
 
 void argvFillHandles(view *theView, void *argsPtr, void *dummy)
-{  doReadWrite(theView, argsPtr, dummy, ccFalse, ccFalse, ccTrue, &argvFillHandles, &passDataView, &passString);  }
+{  doReadWrite(theView, argsPtr, dummy, false, false, true, &argvFillHandles, &passDataView, &passString);  }
 
 void passDataView(view *theView, void *argsPtr, void *dummy)
 {
@@ -605,11 +605,11 @@ void passString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dumm
     incrementArg(oneArg);
 }
 
-// Next 3 routines:  again, used by call()
+// Next 3 routines:  again, used by C_function()
 // This adjusts the size of our string member windows to match the size of the character arrays (in case the user changed those).
 
 void argvFixStrings(view *theView, void *argsPtr, void *dummy)
-{  doReadWrite(theView, argsPtr, dummy, ccFalse, ccFalse, ccTrue, &argvFixStrings, &fixNothing, &fixString);  }
+{  doReadWrite(theView, argsPtr, dummy, false, false, true, &argvFixStrings, &fixNothing, &fixString);  }
 
 void fixNothing(view *theView, void *argsPtr, void *dummy)
 {
@@ -653,10 +653,10 @@ char hexDigit(unsigned char hexNumber)
 
 
 // doReadWrite() is used for scanning a single window tree (in comparison to doCopyCompare() which scans two at once).
-// Invoked by size(), feq, read_string(), print_string(), call().
+// Invoked by size(), feq, read_string(), print_string(), C_function().
 // This routine skips hidden members; so for example size() will not register these.
 
-void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, ccBool doInIndexOrder, ccBool skipBusyMembers, ccBool bundleStrings,
+void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIndexOrder, bool skipBusyMembers, bool bundleStrings,
         void(*srwComposite)(view *, void *, void *),
         void(*srwData)(view *, void *, void *),
         void(*srwString)(view *, ccInt, void *, void *))
@@ -742,7 +742,7 @@ void printNumber(char *destString, const ccFloat numberToPrint, ccInt *character
 // Note that the window returned is that of the stem variable; user can step from there using DefStepToIndex or just STI.
 // Assumes we are starting from a composite variable.
 
-void searchMember(ccInt soughtMemberID, member **stemMember, ccInt *stemMemberNumber, ccBool allowAddMember, ccBool ifHiddenMember)
+void searchMember(ccInt soughtMemberID, member **stemMember, ccInt *stemMemberNumber, bool allowAddMember, bool ifHiddenMember)
 {
     searchPath *searchPosition;
     ccInt rtrn;
@@ -776,7 +776,7 @@ void searchMember(ccInt soughtMemberID, member **stemMember, ccInt *stemMemberNu
         if (searchView.multipleIndices)  searchView.multipleIndices = (searchView.width != 1);
         
         searchPosition = searchPosition->stem;
-    }  while (ccTrue);
+    }  while (true);
     
     setError(member_not_found_err, pcCodePtr);
     return;
@@ -789,7 +789,7 @@ void searchMember(ccInt soughtMemberID, member **stemMember, ccInt *stemMemberNu
 // (which is not allowed since the entries in the names LL begin at one) (also since ID 0 is reserved for implicit variable definitions).
 
 ccInt findMemberID(variable *theObject, ccInt soughtMemberID, member **soughtMember, ccInt *soughtMemberNumber,
-                ccBool allowAddMember, ccBool ifHiddenMember)
+                bool allowAddMember, bool ifHiddenMember)
 {
     ccInt counter, rtrn;
     linkedlist *membersList;
@@ -810,7 +810,7 @@ ccInt findMemberID(variable *theObject, ccInt soughtMemberID, member **soughtMem
     
     else  {
         *soughtMemberNumber = theObject->mem.members.elementNum + 1;
-        rtrn = addMember(theObject, *soughtMemberNumber, 1, soughtMember, ifHiddenMember, 1, ccTrue);
+        rtrn = addMember(theObject, *soughtMemberNumber, 1, soughtMember, ifHiddenMember, 1, true);
         if (rtrn == passed)  (*soughtMember)->memberID = soughtMemberID;        }
     
     return rtrn;
@@ -822,7 +822,7 @@ ccInt findMemberID(variable *theObject, ccInt soughtMemberID, member **soughtMem
 // Returns, in addition, the member * and the 'entry offset', an offset from the first index of the member which can be 0.
 
 ccInt findMemberIndex(variable *theVariable, ccInt currentOffset, ccInt soughtMemberIndex,
-        member **soughtMember, ccInt *memberNumber, ccInt *entryOffset, ccBool allowAddMember)
+        member **soughtMember, ccInt *memberNumber, ccInt *entryOffset, bool allowAddMember)
 {
     ccInt indexCounter, rtrn;
     
@@ -847,7 +847,7 @@ ccInt findMemberIndex(variable *theVariable, ccInt currentOffset, ccInt soughtMe
         
         else  {
             *memberNumber = theVariable->mem.members.elementNum + 1;
-            rtrn = addMember(theVariable, *memberNumber, 1, soughtMember, ccFalse, 1, ccTrue);
+            rtrn = addMember(theVariable, *memberNumber, 1, soughtMember, false, 1, true);
             if (rtrn == passed)  (*soughtMember)->memberID = 0;
             return rtrn;
     }   }
@@ -955,7 +955,7 @@ void setErrIndex(ccInt *errPtr, ccInt theError, code_ref *theScript, ccInt *errC
 // Business is set to zero.  Assumes zero initial instances of the variable.
 // The new variable must be referenced by a window immediately or it will likely be overwritten.
 
-ccInt addVariable(variable **theNewVar, ccInt variableType, ccInt eventualVariableType, ccInt arrayDepth, ccBool makeSpareRoom)
+ccInt addVariable(variable **theNewVar, ccInt variableType, ccInt eventualVariableType, ccInt arrayDepth, bool makeSpareRoom)
 {
     ccInt newVarIndex, rtrn;
     ccFloat freeSpace;
@@ -967,7 +967,7 @@ ccInt addVariable(variable **theNewVar, ccInt variableType, ccInt eventualVariab
     (*theNewVar)->references = LL_int(&(VariableList.references), newVarIndex);
     (*(*theNewVar)->references) = 0;         // the windows are all the references we want
     
-    rtrn = newLinkedList(&((*theNewVar)->codeList), 0, sizeof(code_ref), 0., ccFalse);
+    rtrn = newLinkedList(&((*theNewVar)->codeList), 0, sizeof(code_ref), 0., false);
     if (rtrn != passed)  return out_of_memory_err;
     
     rtrn = newPLL(&((*theNewVar)->windows), 0, sizeof(window), LLFreeSpace);
@@ -977,7 +977,7 @@ ccInt addVariable(variable **theNewVar, ccInt variableType, ccInt eventualVariab
     
     if (makeSpareRoom)  freeSpace = LLFreeSpace;
     else  freeSpace = 0.;
-    rtrn = newLinkedList(&((*theNewVar)->mem.data), 0, typeSizes[variableType], freeSpace, ccFalse);
+    rtrn = newLinkedList(&((*theNewVar)->mem.data), 0, typeSizes[variableType], freeSpace, false);
     if (rtrn != passed)  return out_of_memory_err;
     
     (*theNewVar)->type = variableType;
@@ -1033,7 +1033,7 @@ void derefVariable(variable *theVariable)
 // If windowOffset is greater than any possible offset (given by hostVariable->instances), this routine creates new space in the variable;
 // otherwise, it is construed as an alias at windowOffset.
 
-ccInt addWindow(variable *hostVariable, ccInt windowOffset, ccInt addedInstances, window **newWindow, ccBool ifCanJam)
+ccInt addWindow(variable *hostVariable, ccInt windowOffset, ccInt addedInstances, window **newWindow, bool ifCanJam)
 {
     ccInt newIndex, rtrn;
     
@@ -1044,7 +1044,7 @@ ccInt addWindow(variable *hostVariable, ccInt windowOffset, ccInt addedInstances
     (*newWindow)->references = (ccInt *) element(&(hostVariable->windows.references), newIndex);
     (*newWindow)->variable_ptr = hostVariable;
     (*newWindow)->offset = windowOffset;
-    (*newWindow)->business = ccFalse;
+    (*newWindow)->business = false;
     if (ifCanJam)  (*newWindow)->jamStatus = can_jam;
     else  (*newWindow)->jamStatus = cannot_jam;
     
@@ -1104,9 +1104,9 @@ void combVariables()
     
         // First flag all accessible regions of memory
     
-    combBranch(baseView.windowPtr->variable_ptr, ccTrue);
+    combBranch(baseView.windowPtr->variable_ptr, true);
     for (windowCounter = 1; windowCounter <= PCStack.top; windowCounter++)
-        combBranch(((view *) element(&(PCStack.data), windowCounter))->windowPtr->variable_ptr, ccTrue);
+        combBranch(((view *) element(&(PCStack.data), windowCounter))->windowPtr->variable_ptr, true);
         
         
         // Now scan for variables that have their flags cleared
@@ -1147,9 +1147,9 @@ void combVariables()
     
         // remove the accessibility flags
     
-    combBranch(baseView.windowPtr->variable_ptr, ccFalse);
+    combBranch(baseView.windowPtr->variable_ptr, false);
     for (windowCounter = 1; windowCounter <= PCStack.top; windowCounter++)
-        combBranch(((view *) element(&(PCStack.data), windowCounter))->windowPtr->variable_ptr, ccFalse);
+        combBranch(((view *) element(&(PCStack.data), windowCounter))->windowPtr->variable_ptr, false);
     
     return;
 }
@@ -1158,7 +1158,7 @@ void combVariables()
 // combBranch() recursively scans the variable tree to find all accessible variables, and set their business comb flags.
 // This is called by CombVariables().
 
-void combBranch(variable *oneVariable, ccBool doSetFlag)
+void combBranch(variable *oneVariable, bool doSetFlag)
 {
     ccInt counter;
     member *loopMember;
@@ -1229,8 +1229,8 @@ void unlinkWindow(variable *stemVariable, window **unlinkedWindow, ccInt stemMem
 // A window in the target variable is created automatically if destWindow == NULL --> new space is being created (i.e. done with a :=).
 // Or, new space is created if destIndex > DestVariable->instances.
 
-ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices, member **newMember, ccBool ifHidden,
-        const ccInt membersToAdd, const ccBool doWrite)
+ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices, member **newMember, bool ifHidden,
+        const ccInt membersToAdd, const bool doWrite)
 {
     linkedlist *memberLL = &(hostVariable->mem.members);
     ccInt rtrn;
@@ -1239,7 +1239,7 @@ ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices,
         // add the new member and write its fields
     
     if (membersToAdd > 0)  {
-        rtrn = insertElements(memberLL, newMemberNumber, membersToAdd, ccFalse);
+        rtrn = insertElements(memberLL, newMemberNumber, membersToAdd, false);
         if (rtrn != passed)  return out_of_memory_err;      }
     
     if (doWrite)  {
@@ -1252,7 +1252,7 @@ ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices,
         (*newMember)->ifHidden = ifHidden;
         (*newMember)->business = 0;
         
-        rtrn = newLinkedList(&((*newMember)->codeList), 0, sizeof(code_ref), 0., ccFalse);
+        rtrn = newLinkedList(&((*newMember)->codeList), 0, sizeof(code_ref), 0., false);
         if (rtrn != passed)  return out_of_memory_err;          }
     
     return passed;
@@ -1419,7 +1419,7 @@ ccInt addCodeRef(linkedlist *destCodeLL, searchPath *newAnchor, ccInt *codePtr, 
     code_ref *newCodeRef;
     ccInt rtrn;
     
-    rtrn = addElements(destCodeLL, 1, ccFalse);
+    rtrn = addElements(destCodeLL, 1, false);
     if (rtrn != passed)  return out_of_memory_err;
     
     newCodeRef = (code_ref *) element(destCodeLL, destCodeLL->elementNum);
@@ -1593,11 +1593,11 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
         if (newIndices > 0)  {
             
             if (theVariable->type != string_type)  {
-                rtrn = insertElements(&(theVariable->mem.data), fullInsertionOffset+1, newIndices, ccTrue);
+                rtrn = insertElements(&(theVariable->mem.data), fullInsertionOffset+1, newIndices, true);
                 if (rtrn != passed)  return rtrn;       }
             
             else  {         // allocate one big sublist in case the members LL isn't set up with spare room
-                rtrn = addMember(theVariable, fullInsertionOffset+1, 0, NULL, ccFalse, newIndices, ccFalse);
+                rtrn = addMember(theVariable, fullInsertionOffset+1, 0, NULL, false, newIndices, false);
                 if (rtrn != passed)  return rtrn;
                 
                 for (counter = fullInsertionOffset+1; counter <= fullInsertionOffset+newIndices; counter++)  {
@@ -1606,9 +1606,9 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
                     window *oneStringWindow = NULL;
                     member *oneStringMember = NULL;
                     
-                    rtrn = addVariable(&oneStringVar, char_type, char_type, 0, ccFalse);
-                    if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneStringWindow, ccTrue);
-                    if (rtrn == passed)  rtrn = addMember(theVariable, counter, 0, &oneStringMember, ccFalse, 0, ccTrue);
+                    rtrn = addVariable(&oneStringVar, char_type, char_type, 0, false);
+                    if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneStringWindow, true);
+                    if (rtrn == passed)  rtrn = addMember(theVariable, counter, 0, &oneStringMember, false, 0, true);
                     if (rtrn != passed)  return rtrn;
                     
                     oneStringMember->memberWindow = oneStringWindow;
@@ -1629,7 +1629,7 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
 // AO&IW() updates the offset and/or index width of a window after addition/removal of elements of memory in that window's variable.
 // The offset is affected if the new/deleted memory is below the current window; the index width if affected if it is in the window.
 
-void adjustOffsetAndIW(ccBool sameWindow, ccInt *offset, ccInt *indexWidth, ccInt insertionOffset, ccInt newIndices)
+void adjustOffsetAndIW(bool sameWindow, ccInt *offset, ccInt *indexWidth, ccInt insertionOffset, ccInt newIndices)
 {
     if ((sameWindow) && (insertionOffset >= *offset))  { 
         *indexWidth += newIndices;
@@ -1704,5 +1704,5 @@ ccInt align(ccInt the_int)
 }
 
 
-const ccInt typeSizes[] = { sizeof(ccBool), sizeof(char), sizeof(ccInt), sizeof(ccFloat),
+const ccInt typeSizes[] = { sizeof(bool), sizeof(char), sizeof(ccInt), sizeof(ccFloat),
             sizeof(member), sizeof(member), sizeof(member)  };

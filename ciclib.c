@@ -39,14 +39,14 @@
 
 // **********************************************
 
-// inbuiltFunctions[] and userFunctions[] define the { names, function addresses } of user's C routines.
+// inbuiltCfunctions[] and userCfunctions[] define the { names, function addresses } of user's C routines.
 // Each routine must be of the form:  ccInt RoutineName(argType args)
 
 
 
 #define CCname(n) {#n,&cc_n}
 
-const Cfunction inbuiltFunctions[] = {
+const Cfunction inbuiltCfunctions[] = {
     { "newCompiler", &cc_newCompiler }, { "compile", &cc_compile }, { "getMemberNames", &cc_getMemberNames },
     { "transform:dwwddd", &cc_transform }, { "trap:a", &cc_trap }, { "throw:ddwdd", &cc_throw },
     { "top:wd", &cc_top }, { "size:wdd", &cc_size }, { "type:wdd", &cc_type }, { "member_ID:wdd", &cc_member_ID }, { "bytecode:wdd", &cc_bytecode },
@@ -58,13 +58,13 @@ const Cfunction inbuiltFunctions[] = {
     { "minmax", &cc_minmax }, { "sum", &cc_sum }, { "makeLinkList", &cc_makeLinkList }, { "sort", &cc_sort },
     { "springCleaning:w", &cc_springCleaning }
 };
-const ccInt inbuiltFunctionsNum = (ccInt) (sizeof(inbuiltFunctions)/sizeof(Cfunction));
-const char **inbuiltFunctionsArgs;
+const ccInt inbuiltCfunctionsNum = (ccInt) (sizeof(inbuiltCfunctions)/sizeof(Cfunction));
+const char **inbuiltCfunctionArgs;
 
 
-const Cfunction *userFunctions; 
-ccInt userFunctionsNum;
-const char **userFunctionsArgs;
+const Cfunction *userCfunctions; 
+ccInt userCfunctionsNum;
+const char **userCfunctionArgs;
 
 ccInt passbackErrCode;
 #define returnOnErr(x) if((passbackErrCode=x)!=passed) return passbackErrCode;
@@ -104,7 +104,7 @@ ccInt cc_newCompiler(argsType args)
     
     tempCompiler = newCompiler(cmdTokens, numCommands, precedenceLevelAssociativity, numPrecedenceLevels, &rtrn);
     if (rtrn == passed)  {
-        returnOnErr(addElements(&allCompilers, 1, ccFalse))
+        returnOnErr(addElements(&allCompilers, 1, false))
         *compilerID = allCompilers.elementNum;
         *(compiler_type **) element(&allCompilers, *compilerID) = tempCompiler;
     }
@@ -156,8 +156,8 @@ ccInt cc_compile(argsType args)
         if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
         else  setWarning(compilerWarning, pcCodePtr-1);
         
-        printError(fileNamePtr, fileName->elementNum, (const char *) scriptCopy, errPosition-1, ccFalse, compilerID, ccFalse);
-        doPrintError = ccFalse;             }
+        printError(fileNamePtr, fileName->elementNum, (const char *) scriptCopy, errPosition-1, false, compilerID, false);
+        doPrintError = false;             }
     
     free((void *) scriptCopy);
     
@@ -166,12 +166,12 @@ ccInt cc_compile(argsType args)
     
         // store the bytecode string
     
-    returnOnErr(resizeLinkedList(scriptBytecode, theCompiler->bytecode.elementNum * sizeof(ccInt), ccFalse))
+    returnOnErr(resizeLinkedList(scriptBytecode, theCompiler->bytecode.elementNum * sizeof(ccInt), false))
     returnOnErr(defragmentLinkedList(scriptBytecode))
     
     getElements(&(theCompiler->bytecode), 1, theCompiler->bytecode.elementNum, element(scriptBytecode, 1));
     
-    returnOnErr(resizeLinkedList(characterPositions, theCompiler->opCharNum.elementNum*sizeof(ccInt), ccFalse))
+    returnOnErr(resizeLinkedList(characterPositions, theCompiler->opCharNum.elementNum*sizeof(ccInt), false))
     returnOnErr(defragmentLinkedList(characterPositions))
     getElements(&(theCompiler->opCharNum), 1, theCompiler->opCharNum.elementNum, (void *) element(characterPositions, 1));
     
@@ -196,7 +196,7 @@ ccInt cc_getMemberNames(argsType args)
     
     for (nameID = prevNumNames; (nameID < theCompiler->varNames.elementNum) && (nameID < args.indices[1]); nameID++)  {
         varNameType *compilerVarName = (varNameType *) element(&(theCompiler->varNames), nameID+1);
-        returnOnErr(resizeLinkedList(memberNames + nameID, compilerVarName->nameLength, ccFalse))
+        returnOnErr(resizeLinkedList(memberNames + nameID, compilerVarName->nameLength, false))
         setElements(memberNames + nameID, 1, compilerVarName->nameLength, compilerVarName->theName);
     }
     
@@ -235,9 +235,9 @@ ccInt cc_transform(argsType args)
     if (pathWindow != NULL)  {
         newCodePathStem = NULL;
         pathVarMemberCounter = 0;
-        while (ccTrue)  {
+        while (true)  {
             pathVarMemberCounter++;
-            rtrn = findMemberIndex(pathWindow->variable_ptr, 0, pathVarMemberCounter, &loopMember, &dummy, &memberOffset, ccFalse);
+            rtrn = findMemberIndex(pathWindow->variable_ptr, 0, pathVarMemberCounter, &loopMember, &dummy, &memberOffset, false);
             if (rtrn == invalid_index_err)  break;
             if ((!loopMember->ifHidden) && (loopMember->memberWindow != NULL))  {
                 firstPathVarMember = pathVarMemberCounter;
@@ -254,8 +254,7 @@ ccInt cc_transform(argsType args)
             *lastArgs[cs] = (char *) element(*(lastArgLLs[cs]), 1);
     }   }
     
-    if (opCharNum != NULL)  {
-        if (sourceCode == NULL)  return void_member_err;
+    if ((opCharNum != NULL) && (sourceCode != NULL))  {
         if (inputStringLL->elementNum != opCharPositionsLL->elementNum)  return out_of_range_err;
         
         if (sourceCodeLL->elementNum > 0)  {            // even a blank script has an end-of-file token --> char #1 
@@ -263,8 +262,6 @@ ccInt cc_transform(argsType args)
         if ((opCharNum[loopCodeWord] < 1) || (opCharNum[loopCodeWord] > sourceCodeLL->elementNum))  {
             return out_of_range_err;
     }   }}}
-    
-    else if (sourceCode != NULL)  return void_member_err;
     
     
         // store some important variables since we need to overwrite these temporarily while checking the bytecode
@@ -288,9 +285,9 @@ ccInt cc_transform(argsType args)
     if ((errCode != passed) && (doPrintError))  {
         if (opCharNum == NULL)  theOpChar = 0;
         else  theOpChar = opCharNum[errIndex-1]-1;
-        printError(fileName, fileNameLL->elementNum, sourceCode, theOpChar, ccFalse, 1, ccFalse);
+        printError(fileName, fileNameLL->elementNum, sourceCode, theOpChar, false, 1, false);
         
-        doPrintError = ccFalse;        }
+        doPrintError = false;        }
     
     
         // restore the important variables
@@ -309,9 +306,9 @@ ccInt cc_transform(argsType args)
     if (firstPathVarMember != 0)    {
         
         pathVarMemberCounter = firstPathVarMember-1;
-        while (ccTrue)  {
+        while (true)  {
             pathVarMemberCounter++;
-            rtrn = findMemberIndex(pathWindow->variable_ptr, 0, pathVarMemberCounter, &loopMember, &dummy, &memberOffset, ccFalse);
+            rtrn = findMemberIndex(pathWindow->variable_ptr, 0, pathVarMemberCounter, &loopMember, &dummy, &memberOffset, false);
             if (rtrn == invalid_index_err)  break;
             if ((!loopMember->ifHidden) && (loopMember->memberWindow != NULL))  {
                 returnOnErr(drawPath(&newCodePath, loopMember->memberWindow, newCodePathStem, 1, PCCodeRef.PLL_index))
@@ -349,7 +346,7 @@ ccInt cc_transform(argsType args)
     
     derefCodeList(&codeRegister);
     
-    resizeLinkedList(&codeRegister, 0, ccFalse);
+    resizeLinkedList(&codeRegister, 0, false);
     returnOnErr(addCodeRef(&codeRegister, newCodePath, codeEntryPtr, codeIndex))
 
     derefPath(&newCodePath);
@@ -370,7 +367,7 @@ ccInt cc_trap(argsType args)
     code_ref argCodeRef;
     view *allArgs;
     ccInt loopCode, codeNo, *codeMarkers, *scoutAhead;
-    ccBool ifErrorWasTrapped = ccFalse, holdDoPrintError = doPrintError, doClearError = ccTrue;
+    bool ifErrorWasTrapped = false, holdDoPrintError = doPrintError, doClearError = true;
     
     getArgs(args, &allArgs);
     
@@ -397,7 +394,7 @@ ccInt cc_trap(argsType args)
                 
                 codeMarkers = pcCodePtr;
                 
-                beginExecution(&argCodeRef, ccTrue, allArgs->offset, allArgs->width, 0);
+                beginExecution(&argCodeRef, true, allArgs->offset, allArgs->width, 0);
                 
                 if (allArgs->windowPtr->variable_ptr->type == composite_type)  {
                 if (allArgs->windowPtr->variable_ptr->mem.members.elementNum > 0)  {
@@ -424,7 +421,7 @@ ccInt cc_trap(argsType args)
         warningCode = passed;
         argCodeRef.anchor = pcSearchPath;               // run in the calling script
         refCodeRef(&argCodeRef);
-        beginExecution(&argCodeRef, ccTrue, allArgs->offset, allArgs->width, codeNo);
+        beginExecution(&argCodeRef, true, allArgs->offset, allArgs->width, codeNo);
         if (errCode == return_flag)  errCode = passed;
         
         if (errScriptToPrint != NULL)  {
@@ -454,11 +451,11 @@ ccInt cc_trap(argsType args)
                 if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
                                    errIndexToPrint + (ccInt) (errScriptToPrint->code_ptr - errorBaseScript->bytecode) - 1] - 1;
                 
-                printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse, errorBaseScript->compilerID, errIndexToPrint==1);
+                printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, false, errorBaseScript->compilerID, errIndexToPrint==1);
             }
             
             if ((codeNo == 3) || (errScriptToPassBack != NULL))  {
-                ccBool doErr = (errCode != passed);
+                bool doErr = (errCode != passed);
                 if (errScriptToPassBack == NULL)  {
                     if (doErr)  errCode = thrown_to_err;
                     else  warningCode = thrown_to_err;      }
@@ -471,7 +468,7 @@ ccInt cc_trap(argsType args)
             else  intRegister = -warningCode;
             if (doClearError)  errCode = warningCode = passed;
             
-            ifErrorWasTrapped = ccTrue;
+            ifErrorWasTrapped = true;
         }
         
         derefCodeRef(&argCodeRef);
@@ -497,7 +494,7 @@ ccInt cc_throw(argsType args)
     code_ref *targetCodeRef = &PCCodeRef;
     ccInt *holdPC, eCode, eCodeNumber = 1, eIndex, maxIndex;
     code_ref *errorScript = &errScript;
-    ccBool doWarning;
+    bool doWarning;
     
     
         // read in the info, throwing real errors if args are wrong with the argument
@@ -565,7 +562,7 @@ ccInt cc_size(argsType args)
 {
     view viewToSize;
     ccInt dataSize = 0, sizeofStrings = 0, ssMode, *sizeRtrn;
-    ccBool storageSize;
+    bool storageSize;
     
     if (args.num != 3)  return wrong_argument_count_err;
     
@@ -630,7 +627,7 @@ ccInt cc_member_ID(argsType args)
     returnOnErr(checkArgs(args, vector(composite_type), scalar(int_type), scalar(int_type)))
     getArgs(args, &hostWindow, byValue(&memberIndex), &theID);
     
-    returnOnErr(findMemberIndex(hostWindow->variable_ptr, 0, memberIndex, &soughtMember, &memberNumber, &entryOffset, ccFalse))
+    returnOnErr(findMemberIndex(hostWindow->variable_ptr, 0, memberIndex, &soughtMember, &memberNumber, &entryOffset, false))
     
     *theID = soughtMember->memberID;
     
@@ -658,7 +655,7 @@ ccInt cc_bytecode(argsType args)
         if (memberNumber > hostWindow->variable_ptr->mem.members.elementNum)  return invalid_index_err;
         codeRefsList = (linkedlist *) &(LL_member(hostWindow->variable_ptr, memberNumber)->codeList);       }
     
-    returnOnErr(resizeLinkedList(bytecodeString, 0, ccFalse))
+    returnOnErr(resizeLinkedList(bytecodeString, 0, false))
     
     
         // copy the bytecode of each code block into a string (including the final 0)
@@ -674,7 +671,7 @@ ccInt cc_bytecode(argsType args)
         if (errCode != passed)  {  pcCodePtr = holdPC;  return errCode;  }
         pcCodePtr++;
         
-        returnOnErr(addElements(bytecodeString, (ccInt) (pcCodePtr-soughtCodeRef->code_ptr)*sizeof(ccInt), ccFalse))
+        returnOnErr(addElements(bytecodeString, (ccInt) (pcCodePtr-soughtCodeRef->code_ptr)*sizeof(ccInt), false))
         pcCodePtr = holdPC;
         
         setElements(bytecodeString, oldTop+1, oldTop+bytecodeString->elementNum, (void *) soughtCodeRef->code_ptr);
@@ -842,7 +839,7 @@ ccInt cc_load(argsType args)
         if (scriptString == NULL)  return library_argument_err;
         
         scriptSize = strlen(scriptString);
-        returnOnErr(resizeLinkedList(fileContents, (ccInt) scriptSize, ccFalse))
+        returnOnErr(resizeLinkedList(fileContents, (ccInt) scriptSize, false))
         setElements(fileContents, 1, (ccInt) scriptSize, (void *) scriptString);
         
         return passed;
@@ -854,7 +851,7 @@ ccInt cc_load(argsType args)
         
         fileNameC = LL2Cstr(fileName);
         
-        rtrn = loadFile(fileNameC, fileContents, ccFalse);
+        rtrn = loadFile(fileNameC, fileContents, false);
         
         free((void *) fileNameC);
         return rtrn;
@@ -864,7 +861,7 @@ ccInt cc_load(argsType args)
 
 // loadFile():  a routine to load a text file into a linked list
 
-ccInt loadFile(const char *fileNameC, linkedlist *textString, ccBool addFinalNull)
+ccInt loadFile(const char *fileNameC, linkedlist *textString, bool addFinalNull)
 {
     ccInt fileSize, LLsize, bytesRead = 0;
     FILE *fileToRead;
@@ -877,7 +874,7 @@ ccInt loadFile(const char *fileNameC, linkedlist *textString, ccBool addFinalNul
     
     LLsize = fileSize;
     if (addFinalNull)  LLsize++;
-    returnOnErr(resizeLinkedList(textString, LLsize, ccFalse))
+    returnOnErr(resizeLinkedList(textString, LLsize, false))
     returnOnErr(defragmentLinkedList(textString))
     
     if (fileSize > 0)  bytesRead = (ccInt) fread(element(textString, 1), 1, (size_t) fileSize, fileToRead);
@@ -950,7 +947,7 @@ ccInt cc_input(argsType args)
     const ccInt fileReadBufferSize = 1000;
     char charBuffer[1001], *readRetrn;
     linkedlist *LL;
-    ccBool done;
+    bool done;
     
     if (args.num == 0)  return wrong_argument_count_err;
     if (args.num > 1)  {  args.num--;  cc_print(args);  args.num++;  }
@@ -958,12 +955,12 @@ ccInt cc_input(argsType args)
     returnOnErr(checkArgs(args, fromArg(args.num-1), scalar(string_type)))
     getArgs(args, fromArg(args.num-1), &LL);
     
-    returnOnErr(resizeLinkedList(LL, 0, ccFalse))
+    returnOnErr(resizeLinkedList(LL, 0, false))
     
     
         // loop until all of the data has been read
     
-    done = ccFalse;
+    done = false;
     do  {
         
             // load the data into the inlined buffer (on the stack)
@@ -973,7 +970,7 @@ ccInt cc_input(argsType args)
         if (readRetrn == NULL)  {  setError(IO_error, pcCodePtr-1);  break;  }
         for (counter = 0; counter < fileReadBufferSize; counter++)  {
             if (*(charBuffer+counter) == '\n')  {
-                done = ccTrue;
+                done = true;
                 bytesRead = counter;    // don't include the terminator
                 break;
         }   }
@@ -981,7 +978,7 @@ ccInt cc_input(argsType args)
         
             // copy from the buffer into the string register
         
-        returnOnErr(addElements(LL, bytesRead, ccFalse))           // will be contiguous if spareRoom = 0
+        returnOnErr(addElements(LL, bytesRead, false))           // will be contiguous if spareRoom = 0
         setElements(LL, LL->elementNum-bytesRead+1, LL->elementNum, charBuffer);
     }  while (!done);
     
@@ -996,7 +993,7 @@ ccInt cc_print(argsType args)  {
     for (a = 0; a < args.num; a++)  {
         
         if (args.type[a] == bool_type)  {
-            ccBool *p = (ccBool *) args.p[a];
+            bool *p = (bool *) args.p[a];
             for (idx = 0; idx < args.indices[a]; idx++)  {
                 if (!p[idx])  printf("false");
                 else  printf("true");
@@ -1086,14 +1083,14 @@ ccInt cc_read_string(argsType args)
                 ((char *) oneArg)[idx] = *c;
                 c++;        }
             else if (args.type[a] == bool_type)  {
-                if (strcmp(c, "true") == 0)  {  ((ccBool *) oneArg)[idx] = ccTrue;  c+=4;  }
-                else if (strcmp(c, "false") == 0)  {  ((ccBool *) oneArg)[idx] = ccFalse;  c+=5;  }
+                if (strcmp(c, "true") == 0)  {  ((bool *) oneArg)[idx] = true;  c+=4;  }
+                else if (strcmp(c, "false") == 0)  {  ((bool *) oneArg)[idx] = false;  c+=5;  }
                 else  warningChar = c;          }
             else if (args.type[a] == string_type)  {
                 linkedlist *destStr = (linkedlist *) args.p[a];
                 const char *strStart = c;
                 while (isWordChar(c))  c++;
-                returnOnErr(resizeLinkedList(destStr, (ccInt) (c-strStart), ccFalse))
+                returnOnErr(resizeLinkedList(destStr, (ccInt) (c-strStart), false))
                 setElements(destStr, 1, destStr->elementNum, (void *) strStart);
     }   }   }
     
@@ -1105,14 +1102,14 @@ ccInt cc_read_string(argsType args)
     
     if (warningChar != NULL)  {
         setWarning(string_read_err, pcCodePtr-1);
-        if (doPrintError)  printError(NULL, -1, holdString, (ccInt) (warningChar-holdString), ccTrue, 1, ccFalse);      }
+        if (doPrintError)  printError(NULL, -1, holdString, (ccInt) (warningChar-holdString), true, 1, false);      }
     
     free(holdString);
     return passed;
 }
 
 
-ccBool isWordChar(const char *c)  {
+bool isWordChar(const char *c)  {
     ccInt charType = lettertype(c);
     return ((charType == a_letter) || (charType == a_number) || (charType == a_symbol));
 }
@@ -1142,7 +1139,7 @@ ccInt cc_print_string(argsType args)
         n = 0;
         for (a = 2; a < args.num; a++)  {
             if (args.type[a] == bool_type)  {
-                ccBool *p = (ccBool *) args.p[a];
+                bool *p = (bool *) args.p[a];
                 for (idx = 0; idx < args.indices[a]; idx++)  {
                     if (c2 == 1)  toWritePtr = strPtr+n;
                     if (!p[idx])  n += copyStr("false", toWritePtr);
@@ -1172,7 +1169,7 @@ ccInt cc_print_string(argsType args)
         
         if (c2 == 0)  {
             if (n == 0)  return passed;
-            returnOnErr(resizeLinkedList(theString, n, ccFalse))
+            returnOnErr(resizeLinkedList(theString, n, false))
             returnOnErr(defragmentLinkedList(theString))
             strPtr = (char *) element(theString, 1);
     }   }
@@ -1432,7 +1429,7 @@ ccInt checkArgs(argsType args, ...)
         nextarg = (ccInt) va_arg(theArgs, int);
         if (nextarg != 0)  {
             ccInt expectedType = nextarg;
-            ccBool expectScalar = (expectedType < 0);
+            bool expectScalar = (expectedType < 0);
             if (expectScalar)  expectedType *= -1;
             expectedType--;
             

@@ -56,7 +56,7 @@ const char *errorStrings[] = {
         "no member leads to variable", "member is void", "cannot step to multiple members", "incomplete member", "incomplete variable",
     "invalid index", "multiple indices not allowed", "invalid index", "variable has no parent", "not a variable",
         "not a function", "not composite", "string expected", "illegal target", "target was deleted",
-    "unequal data sizes", "not a number", "overlapping alias", "thrown here", "call() can't find C function",
+    "unequal data sizes", "not a number", "overlapping alias", "thrown here", "can't find C function",
         "wrong number of arguments", "error in argument", "self reference", "recursion depth too high", "I/O error"  };
 
 const char *defsScript =
@@ -77,7 +77,7 @@ const char *userDefsScript;
 // runCicada() and cicadaMain() are the outermost functions.  These initialize Cicada's memory,
 // load and run the required script stored in terminal.c, flag any error, and then quit.
 
-ccInt runCicada(const Cfunction *Cfunctions, const char *scriptToRun, const ccBool runTerminal)
+ccInt runCicadaMain(const Cfunction *userCfunctions, const ccInt numUserCfunctions, const char *scriptToRun, const bool runTerminal)
 {
     ccInt rtrn;
     
@@ -85,7 +85,7 @@ ccInt runCicada(const Cfunction *Cfunctions, const char *scriptToRun, const ccBo
     cc_interpret_global_struct hold_interpret_globals = cc_interpret_globals;
     cc_bytecode_global_struct hold_bytecode_globals = cc_bytecode_globals;
     
-    rtrn = cicadaMain(Cfunctions, scriptToRun, runTerminal);
+    rtrn = cicadaMain(userCfunctions, numUserCfunctions, scriptToRun, runTerminal);
     
     cc_compile_globals = hold_compile_globals;
     cc_interpret_globals = hold_interpret_globals;
@@ -95,15 +95,15 @@ ccInt runCicada(const Cfunction *Cfunctions, const char *scriptToRun, const ccBo
 }
 
 
-ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccBool runTerminal)
+ccInt cicadaMain(const Cfunction *CfunctionsFromUser, const ccInt numUserCfunctions, const char *scriptToRun, const bool runTerminal)
 {
     compiler_type *baseCompiler = NULL;
     ccInt mainErrorCode = 0, scriptNameLength, scriptLength, loopCompiler, rtrn, cs, firstScriptToRun;
     ccInt *bytecodePtr = NULL, bytecodeLength = 0, c2, cf, cc;
     const char *scriptPtr[2], *scriptName[2];
-    const Cfunction *functionLists[2] = { inbuiltFunctions, userFunctions };
-    const int functionsNum[2] = { inbuiltFunctionsNum, userFunctionsNum };
-    const char ***functionArgs[2] = { &inbuiltFunctionsArgs, &userFunctionsArgs };
+    const Cfunction *functionLists[2] = { inbuiltCfunctions, CfunctionsFromUser };
+    const int functionsNum[2] = { inbuiltCfunctionsNum, numUserCfunctions };
+    const char ***functionArgs[2] = { &inbuiltCfunctionArgs, &userCfunctionArgs };
     
     if ((scriptToRun == NULL) && (!runTerminal))  return passed;
     
@@ -120,8 +120,6 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
     
         // Initialize the C function lists
     
-    userFunctions = Cfunctions;
-    
     for (c2 = 0; c2 < 2; c2++)  {           // for functions with a ':' in their names, store the arg types
         *(functionArgs[c2]) = (const char **) malloc(functionsNum[c2]*sizeof(char *));
         if (*(functionArgs[c2]) == NULL)  return out_of_memory_err;
@@ -134,10 +132,18 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
                 break;
     }   }   }}
     
+    userCfunctions = CfunctionsFromUser;
+    userCfunctionsNum = numUserCfunctions;
+    
+    numCfunctions = inbuiltCfunctionsNum + userCfunctionsNum;
+    numIBCfunctions = inbuiltCfunctionsNum;
+    inbuiltCFs = inbuiltCfunctions;
+    userCFs = userCfunctions;
+    
     
         // Initialize the compiler
     
-    rtrn = newLinkedList(&allCompilers, 1, sizeof(compiler_type *), 1., ccFalse);
+    rtrn = newLinkedList(&allCompilers, 1, sizeof(compiler_type *), 1., false);
     if (rtrn == passed)  baseCompiler = newCompiler(cicadaLanguage, cicadaLanguageNumCommands,
                     cicadaLanguageAssociativity, cicadaNumPrecedenceLevels, &rtrn);
     if (rtrn != passed)  {
@@ -179,11 +185,11 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
         
         if (rtrn != passed)  {
             errCode = rtrn;
-            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1, ccFalse);
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, false, 1, false);
             return rtrn;    }
         else if (compilerWarning != passed)  {
             warningCode = compilerWarning;
-            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, ccFalse, 1, ccFalse);     }
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], errPosition-1, false, 1, false);     }
         
         bytecodePtr = LL_int(&baseCompiler->bytecode, 1);
         bytecodeLength = baseCompiler->bytecode.elementNum;
@@ -199,7 +205,7 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
         checkBytecode();
         
         if ((errCode != passed) || (warningCode != passed))  {
-            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], *LL_int(&(baseCompiler->opCharNum), errIndex)-1, ccFalse, 1, ccFalse);
+            printError(scriptName[cs], scriptNameLength, scriptPtr[cs], *LL_int(&(baseCompiler->opCharNum), errIndex)-1, false, 1, false);
             if (errCode != passed)  return errCode;
         }
         
@@ -211,7 +217,7 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
                 scriptName[cs], scriptNameLength, scriptPtr[cs], LL_int(&(baseCompiler->opCharNum), 1), scriptLength);
         if (rtrn != passed)  {  printf("Error:  code initialization returned \"%s\"\n", (char *) errorStrings[rtrn]);  return 1;  }
         
-        beginExecution(&PCCodeRef, ccFalse, 0, 1, 0);
+        beginExecution(&PCCodeRef, false, 0, 1, 0);
         if (errCode == return_flag)  errCode = passed;
         
         
@@ -225,7 +231,7 @@ ccInt cicadaMain(const Cfunction *Cfunctions, const char *scriptToRun, const ccB
             if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
                         errIndex + (ccInt) (errScript.code_ptr - errorBaseScript->bytecode) - 1] - 1;
             
-            printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, ccFalse, errorBaseScript->compilerID, ccFalse);
+            printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, false, errorBaseScript->compilerID, false);
             
             mainErrorCode = 1;
     }   }
@@ -264,19 +270,19 @@ ccInt initCicada()
     rtrn = newStack(&PCStack, sizeof(view), 100, LLFreeSpace);
     if (rtrn != passed)  return rtrn;
     
-    rtrn = addVariable(&varZero, composite_type, composite_type, 0, ccTrue);
+    rtrn = addVariable(&varZero, composite_type, composite_type, 0, true);
     if (rtrn != passed)  return rtrn;
-    rtrn = addWindow(varZero, 0, 1, &Zero, ccTrue);
+    rtrn = addWindow(varZero, 0, 1, &Zero, true);
     if (rtrn != passed)  return rtrn;
     rtrn = drawPath(&ZeroSuspensor, Zero, NULL, 1, 1);
     if (rtrn != passed)  return rtrn;
     
-    rtrn = newLinkedList(&(GL_Object.arrayDimList), 0, sizeof(ccInt), 2., ccFalse);
+    rtrn = newLinkedList(&(GL_Object.arrayDimList), 0, sizeof(ccInt), 2., false);
     if (rtrn != passed)  return rtrn;
-    rtrn = newLinkedList(&codeRegister, 0, sizeof(code_ref), 0., ccFalse);      // used in bytecd.c to pass codes from code blocks
+    rtrn = newLinkedList(&codeRegister, 0, sizeof(code_ref), 0., false);      // used in bytecd.c to pass codes from code blocks
     if (rtrn != passed)  return rtrn;
     
-    rtrn = newLinkedList(&stringRegister, 0, sizeof(char), 0., ccFalse);        // set up the string register
+    rtrn = newLinkedList(&stringRegister, 0, sizeof(char), 0., false);        // set up the string register
     if (rtrn != passed)  return rtrn;
     
     errCode = warningCode = passed;
@@ -290,8 +296,8 @@ ccInt initCicada()
     returnView.windowPtr = NULL;
     thatView.windowPtr = NULL;
     
-    extCallMode = ccFalse;
-    doPrintError = ccFalse;
+    extCallMode = false;
+    doPrintError = false;
     
     return passed;
 }
@@ -335,8 +341,8 @@ void cleanUp()
     deleteLinkedList(&(GL_Object.arrayDimList));
     deleteLinkedList(&stringRegister);
     
-    free(inbuiltFunctionsArgs);
-    free(userFunctionsArgs);
+    free(inbuiltCfunctionArgs);
+    free(userCfunctionArgs);
     
     return;
 }
@@ -347,9 +353,9 @@ void cleanUp()
 // that line number along with the line of text and an error flagging the offending character.
 
 void printError(const char *errScriptName, ccInt errFileNameLength,
-        const char *errText, ccInt errCharNum, ccBool forceLineNo, const ccInt compilerID, const ccBool ignoreMemberName)
+        const char *errText, ccInt errCharNum, bool forceLineNo, const ccInt compilerID, const bool ignoreMemberName)
 {
-    ccBool fromTerminal = ccFalse;
+    bool fromTerminal = false;
     
     if (errScriptName != NULL)  fromTerminal = (strcmp(errScriptName, "terminal command") == 0);
     

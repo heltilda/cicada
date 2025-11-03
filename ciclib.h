@@ -38,44 +38,15 @@ extern "C" {
 #endif
 
 
-// Prototypes & misc definitions
-
-#define byValue(a) NULL,a
-#define fromArg(n) NULL,NULL,n
-#define endArgs NULL,NULL,-1
-
-
-// arg_info:  a data type for the final argv parameter to each user function call.
-// This gives a report on the sizes, etc. of each argument.
-
-typedef struct {
-    ccInt num;
-    void **p;
-    ccInt *type;
-    ccInt *indices;
-} argsType;
-
-#define scalar(t) (-t-1)
-#define vector(t) (t+1)
-
-
-// The required type of user-defined C or C++ functions
-
-typedef struct {
-    const char *functionName;
-    ccInt(*functionPtr)(argsType);
-} Cfunction;
-
-
 // Function prototypes
 
-extern const Cfunction inbuiltFunctions[];
-extern const ccInt inbuiltFunctionsNum;
-extern const char **inbuiltFunctionsArgs;
+extern const Cfunction inbuiltCfunctions[];
+extern const ccInt inbuiltCfunctionsNum;
+extern const char **inbuiltCfunctionArgs;
 
-extern const Cfunction *userFunctions; 
-extern ccInt userFunctionsNum;
-extern const char **userFunctionsArgs;
+extern const Cfunction *userCfunctions; 
+extern ccInt userCfunctionsNum;
+extern const char **userCfunctionArgs;
 
 
 extern ccInt cc_newCompiler(argsType);
@@ -98,7 +69,7 @@ extern ccInt makeLinkList(const ccInt, const ccInt, const ccInt, const ccFloat *
 extern ccInt cc_sort(argsType);
 
 extern ccInt cc_load(argsType);
-extern ccInt loadFile(const char *, linkedlist *, ccBool);
+extern ccInt loadFile(const char *, linkedlist *, bool);
 extern ccInt cc_save(argsType);
 extern char *LL2Cstr(linkedlist *);
 extern ccInt cc_input(argsType);
@@ -106,7 +77,7 @@ extern ccInt cc_print(argsType);
 extern void printChar(const unsigned char *);
 
 extern ccInt cc_read_string(argsType);
-extern ccBool isWordChar(const char *);
+extern bool isWordChar(const char *);
 extern ccInt cc_print_string(argsType);
 extern ccInt copyStr(const char *, char *);
 
@@ -151,9 +122,6 @@ extern ccFloat doPow(ccFloat, ccFloat);
 extern ccInt mathBinaryOp(argsType, ccFloat(f)(ccFloat, ccFloat));
 
 extern ccInt cc_springCleaning(argsType);
-
-extern void getArgs(argsType, ...);
-extern ccInt checkArgs(argsType, ...);
 
 #ifdef __cplusplus
 }

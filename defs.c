@@ -179,6 +179,8 @@
 "    \n"
 "    params(), (params<<args)()\n"
 "    \n"
+"    if params.errInfo.filename /= \"\"  then params.errInfo.filename[+top+1] = '\\00'      | C string or else it will crash\n"
+"    \n"
 "    $transform(bytecode, target, params.codePath, params.errInfo)\n"
 "    \n"
 "    if newTarget  then return target\n"

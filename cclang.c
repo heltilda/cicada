@@ -92,10 +92,10 @@ commandTokenType cicadaLanguage[] = {
                     bc_define(defxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script) },
     
     { "cicadaLibraryFunction # " type4arg " (" type1arg ")", stepVarLevel, "123456",
-                    inbytecode bc(built_in_function) bc(0) bc_define(defxxFlags) bc(search_member) anonymousmember
+                    inbytecode bc(C_function) bc(0) bc_define(defxxFlags) bc(search_member) anonymousmember
                     bc(code_block) bcArg(2) bc(end_of_script) },
     { "$" Cfunctionarg "(" type1arg ")", stepVarLevel, "123456",
-                    inbytecode bc(built_in_function) bcArg(1) bc_define(defxxFlags) bc(search_member) anonymousmember
+                    inbytecode bc(C_function) bcArg(1) bc_define(defxxFlags) bc(search_member) anonymousmember
                     bc(code_block) bcArg(2) bc(end_of_script) },
     
     
@@ -126,7 +126,7 @@ commandTokenType cicadaLanguage[] = {
     { type2arg "[ + <" type4arg "," type4arg "> ]", stepVarLevel, "123456", inbytecode bc(insert_indices) bcArg(1) bcArg(2) bcArg(3) },
     
 //    { "top (" type1arg ")", stepVarLevel, "456", "$top(" arg1 ")" },
-    { "top (" type1arg ")", stepVarLevel, "456", inbytecode bc(built_in_function) bc(-7) bc_define(defxxFlags) bc(search_member) anonymousmember
+    { "top (" type1arg ")", stepVarLevel, "456", inbytecode bc(C_function) bc(-7) bc_define(defxxFlags) bc(search_member) anonymousmember
                     bc(code_block) bcArg(1) bc(end_of_script) },
     
     { "remove" type2arg, commandLevel, "1", inbytecode bc(remove_cmd) bcArg(1) },
@@ -262,7 +262,7 @@ commandTokenType cicadaLanguage[] = {
     { type2arg "[ - <" type4arg "," type4arg "> ]", stepVarLevel, "1", "remove " arg1 "[<" arg2 "," arg3 ">]" },
     
     { "call (" type1arg ")", stepVarLevel, "1456", "cicadaLibraryFunction#0(" arg1 ")" },
-    { "trap (" type1arg ")", stepVarLevel, "1456", inbytecode bc(built_in_function) bc(-5)
+    { "trap (" type1arg ")", stepVarLevel, "1456", inbytecode bc(C_function) bc(-5)
                 bc_define(defcxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(1) bc(end_of_script) },   // trap() is special
     
     { "exit", 0, "1", "throw(51)" }

@@ -31,68 +31,6 @@
 
 
 
-// variable data types; also we use var_type which is defined as -1 in bytecd.h
-
-#define bool_type 0
-#define char_type 1
-#define int_type 2
-#define double_type 3
-#define string_type 4
-#define composite_type 5
-#define array_type 6
-#define no_type 7
-
-#define numeric_type 10
-
-
-
-// Runtime error codes -- starting after the compile error codes
-
-#define illegal_command_err 18
-#define code_overflow_err 19
-#define inaccessible_code_warning 20
-#define bad_jump_err 21
-
-#define divide_by_zero_warning 22
-
-#define member_not_found_err 23
-#define no_member_err 24
-#define undefined_member_err 25
-#define void_member_err 26
-#define step_multiple_members_err 27
-#define incomplete_member_err 28
-#define incomplete_variable_err 29
-#define invalid_index_err 30
-#define multiple_indices_not_allowed_err 31
-#define index_argument_err 32
-#define no_parent_err 33
-
-#define not_a_variable_err 34
-#define not_a_function_err 35
-#define not_composite_err 36
-#define string_expected_err 37
-
-#define illegal_target_err 38
-#define target_deleted_err 39
-
-#define unequal_data_size_err 40
-#define not_a_number_err 41
-#define overlapping_window_err 42
-
-#define thrown_to_err 43
-#define nonexistent_C_function_err 44
-#define wrong_argument_count_err 45
-#define library_argument_err 46
-
-#define self_reference_err 47
-#define recursion_depth_err 48
-#define IO_error 49
-
-#define return_flag 50
-#define finished_signal 51
-
-
-
 // flags used in the "business" field of objects & windows
 
 #define busy_SS_flag (1<<0)
@@ -122,12 +60,6 @@
 #define cbo_check 2
 #define cbo_unjam 3
 #define cbo_unset_flags 4
-
-
-// members of Zero
-
-#define _cc_registers 1
-
 
 
 // Structures forming Cicada's runtime memory
@@ -186,7 +118,7 @@ typedef struct {
     ccInt arrayDepth;       // array dimension spanned by this member (not the whole array) 
     linkedlist codeList;    // parallels the codeList in the targeted variable, but may be less restrictive
     
-    ccBool ifHidden;        // hidden members don't have indices associated with them
+    bool ifHidden;        // hidden members don't have indices associated with them
     int business;           // to use when checking to see if a window is part of an 'island'
 } member;
 
@@ -213,7 +145,7 @@ typedef struct {
     window *windowPtr;      // window that the view is taken from
     ccInt offset;           // additional offset (starting at 0) on top of the window offset
     ccInt width;            // number of the window's elements being viewed
-    ccBool multipleIndices; // true if and only if a [*] or [<..>] operator was used (even if width == 1)
+    bool multipleIndices; // true if and only if a [*] or [<..>] operator was used (even if width == 1)
 } view;
 
 
@@ -336,15 +268,15 @@ extern void printView(view *, void *, void *);
 extern void printData(view *, void *, void *);
 extern void printString(view *, ccInt, void *, void *);
 extern char hexDigit(unsigned char);
-extern void doReadWrite(view *, void *, void *, ccBool, ccBool, ccBool,
+extern void doReadWrite(view *, void *, void *, bool, bool, bool,
     void(*)(view *, void *, void *),
     void(*)(view *, void *, void *),
     void(*)(view *, ccInt, void *, void *));
 extern void printNumber(char *, const ccFloat, ccInt *, const ccInt, const ccInt);
 
-extern void searchMember(ccInt, member **, ccInt *, ccBool, ccBool);
-extern ccInt findMemberID(variable *, ccInt, member **, ccInt *, ccBool, ccBool);
-extern ccInt findMemberIndex(variable *, ccInt, ccInt, member **, ccInt *, ccInt *, ccBool);
+extern void searchMember(ccInt, member **, ccInt *, bool, bool);
+extern ccInt findMemberID(variable *, ccInt, member **, ccInt *, bool, bool);
+extern ccInt findMemberIndex(variable *, ccInt, ccInt, member **, ccInt *, ccInt *, bool);
 extern ccInt numMemberIndices(view *);
 extern void stepView(view *, member *, ccInt, ccInt);
 
@@ -352,16 +284,16 @@ extern void setError(ccInt, ccInt *);
 extern void setWarning(ccInt, ccInt *);
 extern void setErrIndex(ccInt *, ccInt, code_ref *, ccInt *, ccInt *, code_ref *);
 
-extern ccInt addVariable(variable **, ccInt, ccInt, ccInt, ccBool);
+extern ccInt addVariable(variable **, ccInt, ccInt, ccInt, bool);
 extern void refVariable(variable *);
 extern void derefVariable(variable *);
-extern ccInt addWindow(variable *, ccInt, ccInt, window **, ccBool);
+extern ccInt addWindow(variable *, ccInt, ccInt, window **, bool);
 extern void refWindow(window *);
 extern void derefWindow(window **);
 extern void combVariables(void);
-extern void combBranch(variable *, ccBool);
+extern void combBranch(variable *, bool);
 extern void unlinkWindow(variable *, window **, ccInt);
-extern ccInt addMember(variable *, ccInt, ccInt, member **, ccBool, const ccInt, const ccBool);
+extern ccInt addMember(variable *, ccInt, ccInt, member **, bool, const ccInt, const bool);
 extern void removeMember(variable *, ccInt);
 extern void refPath(searchPath *);
 extern void derefPath(searchPath **);
@@ -374,7 +306,7 @@ extern void refCodeRef(code_ref *);
 extern void derefCodeRef(code_ref *);
 extern ccInt checkMemberOverlap(window *, ccInt, ccInt, ccInt);
 extern ccInt addMemory(window *, ccInt, ccInt);
-extern void adjustOffsetAndIW(ccBool, ccInt *, ccInt *, ccInt, ccInt);
+extern void adjustOffsetAndIW(bool, ccInt *, ccInt *, ccInt, ccInt);
 extern void unflagVariables(variable *, unsigned char);
 extern void unflagWindow(window *, unsigned char);
 

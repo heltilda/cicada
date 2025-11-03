@@ -45,7 +45,7 @@
 #define code_marker 4           /*  delineates coding blocks  */
 #define function_return 5       /*  return from the function  */
 #define user_function 6         /*  (()) call the code of the current variable  */
-#define built_in_function 7     /*  call a built-in function (besides the ones listed here)  */
+#define C_function 7     /*  call a built-in function (besides the ones listed here)  */
 
 #define define_equate 8         /*  set the code (variable & member)  */
 #define forced_equate 9         /*  (=!) copy data; only restriction is that data sizes must be the same  */
