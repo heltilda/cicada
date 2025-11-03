@@ -1,8 +1,8 @@
-Cicada is a minimal scripting language that talks to C.  For details, see the website:
+Cicada is a lightweight scripting language that runs on top of C code.  For details, see the website:
 
-http://heltilda.github.io/cicada
+http://heltilda.github.io/cicada<br><br>
 
-Install Cicada from the command prompt in the usual way, using the commands:
+<ins>Installation</ins>: From the command prompt go into the Cicada download directory, and type:
 
 `> ./configure`
 
