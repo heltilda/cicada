@@ -10,7 +10,7 @@ http://heltilda.github.io/cicada<br><br>
 
 `> make install`
 
-To link against the Cicada library, include the header file in your C code:
+To link against the Cicada library, include its header file in your C code:
 
 `#include <cicada.h>`
 
