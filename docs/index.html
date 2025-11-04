@@ -4,7 +4,7 @@
 <title>Cicada Scripting Language</title>
 <center>
 <h1>Cicada Scripting Language</h1>
-<h4>A minimal interpreted language that talks to C</h4>
+<h4>A lightweight scripting language for C programs</h4>
 </center>
 
 </SCRIPT>
@@ -88,23 +88,18 @@
 &emsp;<code>print(f4(2)), print(f4(2; mult = 3))</code><br>
 &emsp;<code>remove f4.params, f4#0()&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;| rerun f4's 'constructor'</code><br>
 
-<p><b>Run C from Cicada</b><br>
-&emsp;<code>userFunction UserFunctions[] = { ..., { "myF", &C_fn } };&emsp;&emsp;&emsp;// in userfn.c</code><br>
-<br>
-&emsp;<code>int C_fn(int argc, char **argv)  {</code><br>
-&emsp;&emsp;<code>int n1, n2, n3;</code><br>
-&emsp;&emsp;<code>getArgs(argc, argv, &n1, &n2, &n3);</code><br>
-&emsp;&emsp;<code>...</code><br>
+<p><b>Run from C</b><br>
+&emsp;<code>#include &lt;cicada.h&gt;</code><br>
+&emsp;<br>
+&emsp;<code>ccInt myF(argsType args) { ... }</code><br>
+&emsp;<code>const Cfunction callbackFs[] = { { "myF", &myF } };</code><br>
+&emsp;<br>
+&emsp;<code>int main(int argc, char **argv)</code><br>
+&emsp;<code>{</code><br>
+&emsp;&emsp;<code>runCicada(callbackFs, "$myF(1, 2, 3)", false);&emsp;&emsp;// run a script</code><br>
+&emsp;&emsp;<code>runCicada(callbackFs, NULL, true);&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;// run interactively</code><br>
+&emsp;&emsp;<code>return 0;</code><br>
 &emsp;<code>}</code><br>
-<br>
-&emsp;<code>rtrn := $myF(5, 7, 2)&emsp;&emsp;&emsp;| in Cicada</code><br>
-
-<p><b>Run Cicada from C</b><br>
-&emsp;<code>#include "ccmain.h"</code><br>
-&emsp;<code>...</code><br>
-&emsp;<code>const char *fName = "myscript"</code><br>
-&emsp;<code>runCicada(0, NULL);&emsp;&emsp;&emsp;&emsp;&emsp;| run start.cicada (interactive prompt)</code><br>
-&emsp;<code>runCicada(1, &fName);&emsp;&emsp;&emsp;| run myscript.cicada</code><br>
 
 
 
@@ -112,6 +107,6 @@
 <br><br>
 <P>Cicada is free to use and distribute, under the terms of the MIT License.
 
-<br><P>Last update:  September 28, 2025
+<br><P>Last update:  November 3, 2025
 
 </BODY>
