@@ -279,6 +279,7 @@ ccInt cc_transform(argsType args)
     pcCodePtr = startCodePtr;
     PCCodeRef.anchor = NULL;
     PCCodeRef.code_ptr = startCodePtr;
+    PCCodeRef.PLL_index = 0;
     
     checkBytecode();
     
@@ -447,12 +448,15 @@ ccInt cc_trap(argsType args)
                 else if (errCode != passed)  {  errIndexToPrint = errIndex;  errScriptToPrint = &errScript;  }
                 else  {  errIndexToPrint = warningIndex;  errScriptToPrint = &warningScript;  }
                 
-                errorBaseScript = storedCode(errScriptToPrint->PLL_index);
-                if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
-                                   errIndexToPrint + (ccInt) (errScriptToPrint->code_ptr - errorBaseScript->bytecode) - 1] - 1;
-                
-                printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, false, errorBaseScript->compilerID, errIndexToPrint==1);
-            }
+                if (errScriptToPrint->PLL_index == 0)  printError(NULL, 0, NULL, 0, false, 1, true);
+                else  {
+                    errorBaseScript = storedCode(errScriptToPrint->PLL_index);
+                    if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
+                                       errIndexToPrint + (ccInt) (errScriptToPrint->code_ptr - errorBaseScript->bytecode) - 1] - 1;
+                    
+                    printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode,
+                                errCharNum, false, errorBaseScript->compilerID, errIndexToPrint==1);
+            }   }
             
             if ((codeNo == 3) || (errScriptToPassBack != NULL))  {
                 bool doErr = (errCode != passed);
@@ -510,7 +514,7 @@ ccInt cc_throw(argsType args)
     holdPC = pcCodePtr;
     pcCodePtr = targetCodeRef->code_ptr;
     runSkipMode(0);
-    maxIndex = (ccInt) (pcCodePtr - targetCodeRef->code_ptr);
+    maxIndex = (ccInt) (pcCodePtr - targetCodeRef->code_ptr) + 1;
     pcCodePtr = holdPC;
     if ((eIndex < 1) || (eIndex > maxIndex))  return index_argument_err;
     

@@ -1360,13 +1360,13 @@ ccInt relinkBestToken(compiler_type *compiler, linkedlist *OoOblock, ccInt first
     }   }
     
     
-        // in rare cases we may have a type-X no-argument adapter whose type needs setting (if possible)
+        // In rare cases we may have a type-X no-argument adapter whose type needs setting (if possible)
         // (it might be either this operator or else an enclosed operator)
         // 
         // 2 possibilities:  either we know what type we are expecting, in which case we 'fix' the adapter
         // type (or throw an error if we don't have an adapter of the appropriate type);
         // or else we don't know because it is an enclosed argument, so we feed the token # that needs fixing
-        // back to the enclosing operator
+        // back to the enclosing operator.
     
     tokenToFix = scriptToken(bestToken)->adapterTokenToFix;
     if (tokenToFix != 0)  {
@@ -1380,11 +1380,11 @@ ccInt relinkBestToken(compiler_type *compiler, linkedlist *OoOblock, ccInt first
     }   }
     
     
-        // check to see if the best token is not of a type that we expected;
-        // if possible, add an adapter to the argument
+        // Check to see if the best token is not of a type that we expected;
+        // if possible, add an adapter to the argument.
         //
-        // Note:  the adapters are all added at the END of the bytecode
-        // so as not to disrupt the positions of earlier tokens which may already be linked
+        // Note:  the adapters are all added at the END of the unreordered bytecode
+        // so as not to disrupt the positions of earlier tokens which may already be linked.
     
     if (expectedType < (ccInt) (*typeXarg - *type0arg))  {
     if (!((*rtrnTypes)[expectedType]))  {

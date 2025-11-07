@@ -504,12 +504,13 @@ void _def_general()
         
             // figure out what type of object is being copied, and the array indices spanned over it
         
-        sourceDataType = sourceType = GL_Object.type;
-        isVoid = (sourceType == no_type);
+        sourceType = GL_Object.type;
+        isVoid = (sourceDataType == no_type);
         
         useVarCode = true;
         if ((updateMembers) || (newTarget))  {
-        if ((sourceType == no_type) || ((sourceType == var_type) && (sourceView.windowPtr == NULL)))  {
+        if ((sourceType == var_type) && (sourceView.windowPtr == NULL))  {
+//        if ((sourceType == no_type) || ((sourceType == var_type) && (sourceView.windowPtr == NULL)))  {
         if (sourceMember != NULL)  {
             useVarCode = false;
             GL_Object.codeList = &(sourceMember->codeList);
@@ -585,7 +586,7 @@ void _def_general()
             
             rtrn = checkType(&(GL_Path.stemMember->codeList), &(GL_Path.stemMember->type), &(GL_Path.stemMember->eventualType),
                         &(GL_Path.stemMember->arrayDepth), sourceDataType, arrayDepth, &(GL_Path.stemView), true, updateMembers);
-            if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
+            if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
             
             if ((!doRelink) && (GL_Path.stemMember->memberWindow != NULL))  {
                 
@@ -594,7 +595,7 @@ void _def_general()
                                  &(GL_Path.stemMember->memberWindow->variable_ptr->eventualType),
                                  &(GL_Path.stemMember->memberWindow->variable_ptr->arrayDepth),
                                  sourceDataType, arrayDepth, &searchView, false, newTarget);
-                if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
+                if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
         }   }
         
         
@@ -1298,6 +1299,8 @@ void sidStep(bool allowAddMember)
     callSearchPathFunction();
     if (errCode != passed)  return;
     
+    if (searchView.windowPtr->variable_ptr->type == string_type)  {  setError(not_composite_err, theIDPtr);  return;  }
+    
     
         // look for the member in this variable
     
@@ -1542,7 +1545,7 @@ void do_insert_indices(bool allowAddMember)  {  masterInsert(true, allowAddMembe
 
 void masterInsert(bool multipleIndices, bool allowAddMember)
 {
-    ccInt firstIndex, secondIndex, rtrn;
+    ccInt firstIndex, secondIndex, *firstIndexCodePtr, rtrn;
     
     
         // get the first steps on the search path
@@ -1555,6 +1558,7 @@ void masterInsert(bool multipleIndices, bool allowAddMember)
     
     firstIndex = callIndexFunction();
     if (errCode != passed)  return;
+    firstIndexCodePtr = pcCodePtr-1;
     
     
         // now read in the second index (there are two for this operator)
@@ -1583,7 +1587,7 @@ void masterInsert(bool multipleIndices, bool allowAddMember)
                                         &oneMember, &lastMemberNumber, &lastMemberOffset, false);
         if (rtrn != passed)  {
             if (firstIndex == numMemberIndices(&searchView)+1)  lastMemberNumber = memberLL->elementNum+1;
-            else  {  setError(rtrn, pcCodePtr-1);  return;  }       }
+            else  {  setError(rtrn, firstIndexCodePtr);  return;  }       }
         
         rtrn = addMember(searchView.windowPtr->variable_ptr, lastMemberNumber, 1, &oneMember, false, secondIndex-firstIndex+1, false);
         if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
@@ -1600,7 +1604,7 @@ void masterInsert(bool multipleIndices, bool allowAddMember)
     
     rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, firstIndex, &(GL_Path.stemMember),
                                                         &(GL_Path.stemMemberNumber), &(GL_Path.offset), false);
-    if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+    if (rtrn != passed)  setError(rtrn, firstIndexCodePtr);
     
     
         // 2nd condition on next line:  a([+top(a)+1]) is legal
@@ -1616,7 +1620,7 @@ void masterInsert(bool multipleIndices, bool allowAddMember)
         else  {
             rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, firstIndex-1, &(GL_Path.stemMember),
                                                                         &(GL_Path.stemMemberNumber), &(GL_Path.offset), false);
-            if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+            if (rtrn != passed)  {  setError(rtrn, firstIndexCodePtr);  return;  }
             GL_Path.offset++;       // by default, append to the index just below
     }   }
     
@@ -1635,7 +1639,7 @@ void masterInsert(bool multipleIndices, bool allowAddMember)
 
 void callSearchPathFunction()
 {
-    ccInt *commandPtr = pcCodePtr;
+    ccInt *commandPtr = pcCodePtr-1;
     
     callBytecodeFunction();
     
@@ -1699,9 +1703,9 @@ void navigate(void (*stepFunction)(bool), bool defineMode, bool takeStep, bool a
         // set our object info before returning
     
     GL_Object.type = var_type;
-    if ((allowStepToVoid) && (errCode == void_member_err))  {
+    if ((allowStepToVoid) && (errCode == void_member_err))  errCode = passed;  /*{
         errCode = passed;
-        GL_Object.type = no_type;       }
+        GL_Object.type = no_type;       }*/
     
     if (searchView.windowPtr != NULL)  GL_Object.codeList = &(searchView.windowPtr->variable_ptr->codeList);
     codeNumber = 1;

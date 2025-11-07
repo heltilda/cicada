@@ -154,7 +154,7 @@ typedef struct {
 typedef struct {
     ccInt PLL_index;        // element_number in code PLL
     ccInt *references;      // repeated here for speed; # of times used by a variable
-    ccInt *code_ptr;        // the first code word of this script (which may be in the middle of a compiled code block)
+    ccInt *code_ptr;        // the first code word of this script (which may be in the middle of a bytecode block)
     searchPath *anchor;     // the first step on the search path from this code
 } code_ref;
 
