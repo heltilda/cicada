@@ -219,9 +219,10 @@ void doCopyCompare(view *sourceView, view *destView,
 {
     variable *sourceVar = sourceView->windowPtr->variable_ptr, *destVar = destView->windowPtr->variable_ptr;
     member *loopSourceMember, *loopDestMember;
-    ccInt sourceType = sourceVar->type, destType = destVar->type;
+    ccInt sourceType = *sourceVar->types, destType = *destVar->types;
     ccInt sourceMemberNumber, destMemberNumber, indexCounter;
     ccInt sourceOffset, destOffset, sourceWidth, destWidth;
+    bool sourceIsString = isVarString(sourceVar), destIsString = isVarString(destVar);
     
     
         // explore composite variables by individually stepping into their members
@@ -245,7 +246,7 @@ void doCopyCompare(view *sourceView, view *destView,
             if (destMemberNumber > destVar->mem.members.elementNum)  setError(type_mismatch_err, pcCodePtr-1);
             if (errCode != passed)  return;
             
-            if ((sourceType == destType) && (sourceVar->eventualType == destVar->eventualType))  {
+            if ((sourceType == destType) && (sourceVar->types[sourceVar->arrayDepth] == destVar->types[destVar->arrayDepth]))  {
                 sourceWidth = loopSourceMember->indices;
                 destWidth = loopDestMember->indices;        }
             else  {
@@ -294,7 +295,7 @@ void doCopyCompare(view *sourceView, view *destView,
     
             // the easiest option is to copy/compare the entire array (if it is one) at once, using linked list routines
         
-        if ((sourceType == destType) && (sourceType != string_type))    {
+        if ((sourceType == destType) && (!sourceIsString) && (sourceType != list_type))    {
             
             ccData(&(sourceVar->mem.data), sourceView->offset + 1, &(destVar->mem.data), destView->offset + 1, sourceView->width);   }
         
@@ -304,8 +305,8 @@ void doCopyCompare(view *sourceView, view *destView,
         
                 // strings are special and we have to copy/compare each one individually
             
-            if (sourceType == string_type)  {
-                if (destType != string_type)  setError(type_mismatch_err, pcCodePtr-1);
+            if ((sourceIsString) || (sourceType == list_type))  {
+                if (destType != sourceType)  setError(type_mismatch_err, pcCodePtr-1);
                 else for (indexCounter = 1; indexCounter <= sourceView->width; indexCounter++)  {
                     ccString(LL_member(sourceVar, sourceView->offset + indexCounter)->memberWindow,
                             LL_member(destVar, destView->offset + indexCounter));
@@ -316,9 +317,9 @@ void doCopyCompare(view *sourceView, view *destView,
                 // then we have to step through them member by member
             
             else   {
-                if (destType == string_type)  setError(type_mismatch_err, pcCodePtr-1);
+                if ((destIsString) || (destType == list_type))  setError(type_mismatch_err, pcCodePtr-1);
                 else {
-                    void(*ccFunction)(void *, void *) = ccJumpTable[5*sourceVar->type + destVar->type];
+                    void(*ccFunction)(void *, void *) = ccJumpTable[5*(*sourceVar->types) + (*destVar->types)];
                     linkedlist *sourceLL = &(sourceVar->mem.data), *destLL = &(destVar->mem.data);
                     sublistHeader *sourceLLsublist = sourceLL->memory, *destLLsublist = destLL->memory;
                     ccInt sourceSublistLocalIndex = 0, destSublistLocalIndex = 0;
@@ -336,6 +337,15 @@ void doCopyCompare(view *sourceView, view *destView,
 }
 
 
+bool isVarString(variable *theVar)
+{
+    ccInt *types = theVar->types;
+    if (types[0] == string_type)  return true;
+    if (types[0] == list_type)  return (types[1] == char_type);
+    return false;
+}
+
+
 // Returns the next non-hidden, non-empty member of a given variable
 
 void findNextVisibleMember(variable *theVariable, member **theMember, ccInt *memberCounter)
@@ -348,14 +358,17 @@ void findNextVisibleMember(variable *theVariable, member **theMember, ccInt *mem
 }
 
 
-// copyCompareListToVar() copies or compares a single num/string/bool to an entire list of numbers/strings/bools
+// copyCompareVarToList() copies or compares a single num/string/bool to an entire list of numbers/strings/bools
 
-void copyCompareListToVar(void *sourceData, ccInt sourceDataType, view *destView, void(**copyCompareJumpTable)(void *, void *))
+void copyCompareVarToList(void *sourceData, ccInt sourceDataType, view *destView, void(**copyCompareJumpTable)(void *, void *))
 {
-    void(*ccFunction)(void *, void *) = copyCompareJumpTable[5*sourceDataType + destView->windowPtr->variable_ptr->type];
+    void(*ccFunction)(void *, void *);
     linkedlist *destLL = &(destView->windowPtr->variable_ptr->mem.data);
     sublistHeader *destLLsublist = destLL->memory;
-    ccInt loopVar, LLsublistLocalIndex = 0;
+    ccInt loopVar, LLsublistLocalIndex = 0, destType = *destView->windowPtr->variable_ptr->types;
+    
+    if (isVarString(destView->windowPtr->variable_ptr))  destType = 4;
+    ccFunction = copyCompareJumpTable[5*sourceDataType + destType];
     
     if (destView->width >= 1)  {
         ccFunction(sourceData, skipElements(destLL, &destLLsublist, &LLsublistLocalIndex, destView->offset));
@@ -535,8 +548,27 @@ void countDataLists(view *theView, void *windowCount, void *stringCount)
 void countDataView(view *theView, void *windowCount, void *dummy)
 {  (*(ccInt *) windowCount)++;  }
 
-void countStringView(view *theView, ccInt stringIndex, void *windowCount, void *stringCount)
-{  (*(ccInt *) stringCount)++;  }
+void countStringView(view *theView, ccInt stringDummyIndex, void *windowCount, void *stringCount)
+{
+/*    ccInt stringIndex, windowCounter;       // catch any window overlaps before we allocate memory, to avoid crashes
+    
+    for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
+        
+        window *theStringWindow = LL_member(theView->windowPtr->variable_ptr, stringIndex)->memberWindow;
+        
+            // make sure the string doesn't have more than one window -- that way the user can modify its size and we can still fix the member
+        
+        for (windowCounter = 1; windowCounter <= theStringWindow->variable_ptr->windows.data.elementNum; windowCounter++)  {
+            window *loopWindow = (window *) element(&(theStringWindow->variable_ptr->windows.data), windowCounter);
+            if ((loopWindow != theStringWindow) && (*(loopWindow->references) > 0))  {
+                if (loopWindow->jamStatus == cannot_jam)  loopWindow->jamStatus = unjammed;
+                else  {
+                    setError(overlapping_window_err, pcCodePtr-1);
+                    return;
+    }   }   }   }*/
+    
+    (*(ccInt *) stringCount)++;
+}
 
 
 // Next 3 routines:  invoked by C_function()
@@ -557,7 +589,7 @@ void passDataView(view *theView, void *argsPtr, void *dummy)
     if (theView->offset == theVar->mem.data.elementNum)  
         *(oneArg->p) = (void *) (((char *) theVar->mem.data.memory) + sublistHeaderSize);
     else  *(oneArg->p) = element(&(theVar->mem.data), theView->offset+1);
-    *(oneArg->type) = theVar->type;
+    *(oneArg->type) = *theVar->types;
     *(oneArg->indices) = theView->width;
     
     incrementArg(oneArg);
@@ -566,7 +598,7 @@ void passDataView(view *theView, void *argsPtr, void *dummy)
 void passString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dummy)
 {
     argsType *oneArg = (argsType *) argsPtr;
-    ccInt windowCounter, stringIndex, rtrn;
+    ccInt stringIndex, rtrn;
     
     linkedlist *stringListCopy = (linkedlist *) malloc((size_t) (theView->width*sizeof(linkedlist)));
     if (stringListCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
@@ -577,10 +609,13 @@ void passString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dumm
         linkedlist *theStringLL = &(theStringWindow->variable_ptr->mem.data);
         
         rtrn = defragmentLinkedList(theStringLL);
-        if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+        if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+        
+        if (theStringLL->elementNum != theStringWindow->width)  {  setError(incomplete_variable_err, pcCodePtr-1);  return;  }
         
             // make sure the string doesn't have more than one window -- that way the user can modify its size and we can still fix the member
-        
+            // This doesn't work -- doesn't check for overlap based on offset/indices, only whether two windows use the same variable
+        /*
         for (windowCounter = 1; windowCounter <= theStringWindow->variable_ptr->windows.data.elementNum; windowCounter++)  {
             window *loopWindow = (window *) element(&(theStringWindow->variable_ptr->windows.data), windowCounter);
             if ((loopWindow != theStringWindow) && (*(loopWindow->references) > 0))  {
@@ -588,12 +623,16 @@ void passString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dumm
                 else  {
                     setError(overlapping_window_err, pcCodePtr-1);
                     return;
-        }   }   }
+        }   }   }*/
         
+            // What was this trying to do?  Does not work
+        
+        /*
         rtrn = addMemory(theStringWindow, 0, -theStringWindow->offset);
         if (rtrn == passed)
             rtrn = addMemory(theStringWindow, theStringWindow->width, theStringWindow->width-theStringWindow->variable_ptr->instances);
         if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+        */
         
         stringListCopy[stringIndex-theView->offset-1] = *theStringLL;
     }
@@ -664,11 +703,20 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIn
     view nextView;
     member *loopMember;
     variable *theVar = theView->windowPtr->variable_ptr;
-    ccInt memberCounter, indexCounter;
+    ccInt memberCounter, indexCounter, firstMember, lastMember;
+//    bool encompassesLists = false;
     
-    if (theVar->type >= composite_type)   {
+/*    if (theVar->arrayDepth > 0)  {
+    if (theVar->types[1] == list_type)  {
+        encompassesLists = true;
+    }}*/
+    
+    if (*theVar->types >= composite_type)   {
         
-        for (memberCounter = 1; memberCounter <= theVar->mem.members.elementNum; memberCounter++)  {
+        if (*theVar->types != list_type)  {  firstMember = 1;  lastMember = theVar->mem.members.elementNum;  }
+        else  {  firstMember = theView->offset+1; lastMember = theView->offset+theView->width;  }
+        
+        for (memberCounter = firstMember; memberCounter <= lastMember; memberCounter++)  {
             loopMember = LL_member(theVar, memberCounter);
             
             if (isBusy(loopMember, busy_SRW_flag))  {
@@ -693,6 +741,7 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIn
                     
                     else  {
                         nextView = *theView;
+                        if (*theVar->types == list_type)  {  nextView.offset = 0;  nextView.width = 1;  }
                         stepView(&nextView, loopMember, 0, loopMember->indices);
                         if (errCode == passed)  srwComposite(&nextView, globalPtr, secondaryPtr);
                         else  errCode = passed;
@@ -703,7 +752,7 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIn
     }   }   }
     
     else  {        // it's a primitive variable
-        if (theVar->type == string_type)  {
+        if (*theVar->types == string_type)  {
             ccInt viewTop = theView->width;
             if (bundleStrings)  viewTop = 1;  
             
@@ -794,7 +843,7 @@ ccInt findMemberID(variable *theObject, ccInt soughtMemberID, member **soughtMem
     ccInt counter, rtrn;
     linkedlist *membersList;
     
-    if (theObject->type < composite_type)  return member_not_found_err;
+    if (*theObject->types < composite_type)  return member_not_found_err;
     membersList = &(theObject->mem.members);
     
     for (counter = 1; counter <= membersList->elementNum; counter++)   {
@@ -810,7 +859,7 @@ ccInt findMemberID(variable *theObject, ccInt soughtMemberID, member **soughtMem
     
     else  {
         *soughtMemberNumber = theObject->mem.members.elementNum + 1;
-        rtrn = addMember(theObject, *soughtMemberNumber, 1, soughtMember, ifHiddenMember, 1, true);
+        rtrn = addMembers(theObject, *soughtMemberNumber, 1, soughtMember, ifHiddenMember, 1, true);
         if (rtrn == passed)  (*soughtMember)->memberID = soughtMemberID;        }
     
     return rtrn;
@@ -831,7 +880,7 @@ ccInt findMemberIndex(variable *theVariable, ccInt currentOffset, ccInt soughtMe
     
         // if it's a composite variable, return the Nth member
     
-    if (theVariable->type == composite_type)  {
+    if (*theVariable->types == composite_type)  {
         *entryOffset = 0;
         indexCounter = 0;
         for (*memberNumber = 1; *memberNumber <= theVariable->mem.members.elementNum; (*memberNumber)++)  {
@@ -847,7 +896,7 @@ ccInt findMemberIndex(variable *theVariable, ccInt currentOffset, ccInt soughtMe
         
         else  {
             *memberNumber = theVariable->mem.members.elementNum + 1;
-            rtrn = addMember(theVariable, *memberNumber, 1, soughtMember, false, 1, true);
+            rtrn = addMembers(theVariable, *memberNumber, 1, soughtMember, false, 1, true);
             if (rtrn == passed)  (*soughtMember)->memberID = 0;
             return rtrn;
     }   }
@@ -855,8 +904,7 @@ ccInt findMemberIndex(variable *theVariable, ccInt currentOffset, ccInt soughtMe
     
         // if it's an array or string variable, return the Nth index of the first member
     
-    if (theVariable->type == string_type)
-        *memberNumber = currentOffset+1;
+    if ((*theVariable->types == string_type) || (*theVariable->types == list_type))  *memberNumber = currentOffset+1;
     else  *memberNumber = 1;
     *soughtMember = LL_member(theVariable, *memberNumber);
     
@@ -875,14 +923,14 @@ ccInt numMemberIndices(view *theView)
     ccInt memberCounter, topIndex;
     variable *theVariable = theView->windowPtr->variable_ptr;
     
-    if (theVariable->type == composite_type)  {
+    if (*theVariable->types == composite_type)  {
         topIndex = 0;
         for (memberCounter = 1; memberCounter <= theVariable->mem.members.elementNum; memberCounter++)  {
         if (!(LL_member(theVariable, memberCounter)->ifHidden))  {
             topIndex ++;
     }   }}
     
-    else if (theVariable->type == array_type)  topIndex = (LL_member(theVariable, 1))->indices;
+    else if (*theVariable->types == array_type)  topIndex = (LL_member(theVariable, 1))->indices;
     
     else  topIndex = (LL_member(theVariable, theView->offset+1))->indices;
     
@@ -895,8 +943,10 @@ ccInt numMemberIndices(view *theView)
 void stepView(view *viewToStep, member *startingMember, ccInt entryOffset, ccInt indexWidth)
 {
     window *memberWindow = startingMember->memberWindow;
-    ccInt startingOffset = viewToStep->offset;
-    if (viewToStep->windowPtr->variable_ptr->type == string_type)  startingOffset = 0;
+    ccInt startingOffset = viewToStep->offset, startingWidth = viewToStep->width;
+    if (*viewToStep->windowPtr->variable_ptr->types == string_type)  startingOffset = 0;
+    
+    if (*viewToStep->windowPtr->variable_ptr->types == list_type)  {  startingOffset = 0;  startingWidth = 1;  }
     
     if (memberWindow == NULL)  {  viewToStep->windowPtr = NULL;  setError(void_member_err, pcCodePtr-1);  return;  };
     
@@ -907,7 +957,7 @@ void stepView(view *viewToStep, member *startingMember, ccInt entryOffset, ccInt
         return;         }
     
     viewToStep->offset = startingOffset*startingMember->indices + viewToStep->windowPtr->offset + entryOffset;
-    viewToStep->width *= indexWidth;
+    viewToStep->width = startingWidth * indexWidth;
 }
 
 
@@ -955,7 +1005,7 @@ void setErrIndex(ccInt *errPtr, ccInt theError, code_ref *theScript, ccInt *errC
 // Business is set to zero.  Assumes zero initial instances of the variable.
 // The new variable must be referenced by a window immediately or it will likely be overwritten.
 
-ccInt addVariable(variable **theNewVar, ccInt variableType, ccInt eventualVariableType, ccInt arrayDepth, bool makeSpareRoom)
+ccInt addVariable(variable **theNewVar, const ccInt *types, ccInt arrayDepth, bool makeSpareRoom)
 {
     ccInt newVarIndex, rtrn;
     ccFloat freeSpace;
@@ -977,11 +1027,13 @@ ccInt addVariable(variable **theNewVar, ccInt variableType, ccInt eventualVariab
     
     if (makeSpareRoom)  freeSpace = LLFreeSpace;
     else  freeSpace = 0.;
-    rtrn = newLinkedList(&((*theNewVar)->mem.data), 0, typeSizes[variableType], freeSpace, false);
+    rtrn = newLinkedList(&((*theNewVar)->mem.data), 0, typeSizes[*types], freeSpace, false);
     if (rtrn != passed)  return out_of_memory_err;
     
-    (*theNewVar)->type = variableType;
-    (*theNewVar)->eventualType = eventualVariableType;
+    (*theNewVar)->types = malloc((arrayDepth+1)*sizeof(ccInt));
+    if ((*theNewVar)->types == NULL)  return out_of_memory_err;
+    memcpy((*theNewVar)->types, types, (arrayDepth+1)*sizeof(ccInt));
+    
     (*theNewVar)->arrayDepth = arrayDepth;
     (*theNewVar)->instances = 0;
     (*theNewVar)->business = 0;
@@ -1010,7 +1062,7 @@ void derefVariable(variable *theVariable)
     derefPLLPtr(&VariableList, theVariable->PLL_index, theVariable->references);
     if (*(theVariable->references) != 0)  return;
     
-    if (theVariable->type >= string_type)  {
+    if (*theVariable->types >= string_type)  {
     for (counter = 1; counter <= theVariable->mem.members.elementNum; counter++)   {
         loopMember = LL_member(theVariable, counter);
         for (codeCounter = 1; codeCounter <= loopMember->codeList.elementNum; codeCounter++)   {
@@ -1023,6 +1075,8 @@ void derefVariable(variable *theVariable)
     
     for (counter = 1; counter <= theVariable->codeList.elementNum; counter++)
         derefCodeRef((code_ref *) element(&(theVariable->codeList), counter));
+    
+    free(theVariable->types);
     
     return;
 }
@@ -1124,7 +1178,7 @@ void combVariables()
                 derefCodeRef((code_ref *) element(&(loopVariable->codeList), codeCounter));   }
             deleteElements(&(loopVariable->codeList), 1, codeTop);
             
-            if (loopVariable->type >= composite_type)  {      // composite?  then remove its members' code lists and window *s
+            if (*loopVariable->types >= composite_type)  {      // composite?  then remove its members' code lists and window *s
                 membersTop = loopVariable->mem.members.elementNum;      // have it stored separately for deleteElements()
                 for (memberCounter = 1; memberCounter <= membersTop; memberCounter++)  {
                     loopMember = LL_member(loopVariable, memberCounter);
@@ -1172,7 +1226,7 @@ void combBranch(variable *oneVariable, bool doSetFlag)
         if (!isBusy(oneVariable, busy_comb_flag))  return;
         clearBusy(oneVariable, busy_comb_flag);       }
     
-    if (oneVariable->type >= composite_type)  {
+    if (*oneVariable->types >= composite_type)  {
         for (counter = 1; counter <= oneVariable->mem.members.elementNum; counter++)  {
             loopMember = LL_member(oneVariable, counter);
             if ((!isBusy(loopMember, busy_comb_flag)) && (loopMember->memberWindow != NULL))  {
@@ -1224,16 +1278,16 @@ void unlinkWindow(variable *stemVariable, window **unlinkedWindow, ccInt stemMem
 }
 
 
-// addMember()  creates a new member for a variable, at position newMemberNumber in the member linked-list and having newIndices.
+// addMembers()  creates a new member for a variable, at position newMemberNumber in the member linked-list and having newIndices.
 // The memberID, type and constant flag are set separately, since it's awkward to pass the appropriate variables.
 // A window in the target variable is created automatically if destWindow == NULL --> new space is being created (i.e. done with a :=).
 // Or, new space is created if destIndex > DestVariable->instances.
 
-ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices, member **newMember, bool ifHidden,
-        const ccInt membersToAdd, const bool doWrite)
+ccInt addMembers(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices, member **newMember, bool ifHidden,
+        ccInt membersToAdd, const bool doWrite)
 {
     linkedlist *memberLL = &(hostVariable->mem.members);
-    ccInt rtrn;
+    ccInt cm, rtrn;
     
     
         // add the new member and write its fields
@@ -1241,9 +1295,11 @@ ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices,
     if (membersToAdd > 0)  {
         rtrn = insertElements(memberLL, newMemberNumber, membersToAdd, false);
         if (rtrn != passed)  return out_of_memory_err;      }
+    else  membersToAdd = 1;
     
     if (doWrite)  {
-        *newMember = (member *) element(memberLL, newMemberNumber);
+    for (cm = 0; cm < membersToAdd; cm++)  {
+        *newMember = (member *) element(memberLL, newMemberNumber+cm);
         (*newMember)->indices = newIndices;
         (*newMember)->memberWindow = NULL;
         (*newMember)->type = no_type;
@@ -1253,7 +1309,8 @@ ccInt addMember(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices,
         (*newMember)->business = 0;
         
         rtrn = newLinkedList(&((*newMember)->codeList), 0, sizeof(code_ref), 0., false);
-        if (rtrn != passed)  return out_of_memory_err;          }
+        if (rtrn != passed)  return out_of_memory_err;
+    }}
     
     return passed;
 }
@@ -1470,7 +1527,7 @@ ccInt checkMemberOverlap(window *theWindow, ccInt newOffset, ccInt newWidth, ccI
     pinned_LL *windowsPLL;
     window *loopWindow;
     
-    if (theWindow->variable_ptr->type >= composite_type)  {
+    if (*theWindow->variable_ptr->types >= composite_type)  {
         if (isBusy(theWindow, busy_overlap_flag))  return passed;
         setBusy(theWindow, busy_overlap_flag);
         
@@ -1566,14 +1623,14 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
     
         // recursively call addMemory() for each member, if it is a composite or array variable
     
-    if (theVariable->type >= composite_type)  {
+    if ((*theVariable->types >= composite_type) && (*theVariable->types != list_type))  {
         if (isBusy(theVariable, busy_add_flag))  return passed;
         setBusy(theVariable, busy_add_flag);
         
         for (counter = 1; counter <= theVariable->mem.members.elementNum; counter++)  {
             loopMember = LL_member(theVariable, counter);
             if ((loopMember->memberWindow != NULL) && (loopMember->memberWindow->jamStatus != unjammed))  {
-                if (((ccFloat) newIndices)*loopMember->indices > ccIntMax)  return index_argument_err;
+                if (((ccFloat) newIndices)*loopMember->indices > (ccFloat) ccIntMax)  return index_argument_err;
                 rtrn = addMemory(loopMember->memberWindow,
                         insertionOffset*(loopMember->indices)+loopMember->memberWindow->offset, newIndices*loopMember->indices);
                 if (rtrn != passed)  return rtrn;
@@ -1587,17 +1644,17 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
     }   }}
     
     
-            // if a primitive variable, add the memory directly to the linked lists
+            // if a primitive or list variable, add the memory directly to the linked lists
     
     else  {
         if (newIndices > 0)  {
             
-            if (theVariable->type != string_type)  {
+            if ((*theVariable->types != string_type) && (*theVariable->types != list_type))  {
                 rtrn = insertElements(&(theVariable->mem.data), fullInsertionOffset+1, newIndices, true);
                 if (rtrn != passed)  return rtrn;       }
             
             else  {         // allocate one big sublist in case the members LL isn't set up with spare room
-                rtrn = addMember(theVariable, fullInsertionOffset+1, 0, NULL, false, newIndices, false);
+                rtrn = addMembers(theVariable, fullInsertionOffset+1, 0, NULL, false, newIndices, false);
                 if (rtrn != passed)  return rtrn;
                 
                 for (counter = fullInsertionOffset+1; counter <= fullInsertionOffset+newIndices; counter++)  {
@@ -1605,17 +1662,19 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
                     variable *oneStringVar;
                     window *oneStringWindow = NULL;
                     member *oneStringMember = NULL;
+                    const static ccInt charType = char_type;
                     
-                    rtrn = addVariable(&oneStringVar, char_type, char_type, 0, false);
+                    if (*theVariable->types == string_type)  rtrn = addVariable(&oneStringVar, &charType, 0, false);
+                    else  rtrn = addVariable(&oneStringVar, theVariable->types + 1, theVariable->arrayDepth-1, false);
                     if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneStringWindow, true);
-                    if (rtrn == passed)  rtrn = addMember(theVariable, counter, 0, &oneStringMember, false, 0, true);
+                    if (rtrn == passed)  rtrn = addMembers(theVariable, counter, 0, &oneStringMember, false, 0, true);
                     if (rtrn != passed)  return rtrn;
                     
                     oneStringMember->memberWindow = oneStringWindow;
                     refWindow(oneStringWindow);
         }   }   }
         else  {
-            if (theVariable->type == string_type)  {
+            if ((*theVariable->types == string_type) || (*theVariable->types == list_type))  {
             for (counter = fullInsertionOffset+(-newIndices); counter >= fullInsertionOffset+1; counter--)  {
                 removeMember(theVariable, counter);
             }}
@@ -1658,7 +1717,7 @@ void unflagVariables(variable *theVariable, unsigned char theFlag)
     if (!isBusy(theVariable, theFlag))  return;
     clearBusy(theVariable, theFlag);
     
-    if (theVariable->type >= composite_type)  {
+    if (*theVariable->types >= composite_type)  {
         for (counter = 1; counter <= theVariable->mem.members.elementNum; counter++)  {
             loopMember = LL_member(theVariable, counter);
             if (loopMember->memberWindow != NULL)  unflagVariables(loopMember->memberWindow->variable_ptr, theFlag);  }}
@@ -1678,7 +1737,7 @@ void unflagWindow(window *theWindow, unsigned char theFlag)
     if (!isBusy(theWindow, theFlag))  return;
     clearBusy(theWindow, theFlag);
     
-    if (theVariable->type >= composite_type)  {
+    if (*theVariable->types >= composite_type)  {
     for (counter = 1; counter <= theVariable->mem.members.elementNum; counter++)  {
         
         member *loopMember = LL_member(theVariable, counter);
@@ -1705,4 +1764,4 @@ ccInt align(ccInt the_int)
 
 
 const ccInt typeSizes[] = { sizeof(bool), sizeof(char), sizeof(ccInt), sizeof(ccFloat),
-            sizeof(member), sizeof(member), sizeof(member)  };
+            sizeof(member), sizeof(member), sizeof(member), sizeof(member)  };

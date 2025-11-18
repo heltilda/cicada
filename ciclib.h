@@ -91,6 +91,8 @@ extern ccInt cc_floor(argsType);
 extern ccFloat doFloor(ccFloat);
 extern ccInt cc_ceil(argsType);
 extern ccFloat doCeil(ccFloat);
+extern ccInt cc_round(argsType);
+extern ccFloat doRound(ccFloat);
 extern ccInt cc_exp(argsType);
 extern ccFloat doExp(ccFloat);
 extern ccInt cc_log(argsType);

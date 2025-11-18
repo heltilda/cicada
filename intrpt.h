@@ -79,8 +79,7 @@ typedef struct {
     pinned_LL windows;      // one path list for each instance of this variable
     pinned_LL pathList;
     
-    ccInt type;             // for primitive types
-    ccInt eventualType;     // if type is array_type, the type of the object that the array ranges over
+    ccInt *types;           // the type of this variable and all following ones (if it's an array or list)
     ccInt arrayDepth;       // array dimension spanned by this member (not the whole array) 
     linkedlist codeList;    // of type code_ref
     
@@ -113,12 +112,13 @@ typedef struct {
     ccInt memberID;         // the name; 0 if cannot be found by step_to_member_ID (i.e. no name in Cicada code)
     ccInt indices;          // 1 unless it's an array member
     
+    ccInt *types;           // the type of the variable to target and all following ones (if it's an array or list)
     ccInt type;             // the requirements for this member, which may be met and exceeded in the variable
     ccInt eventualType;     // if type is array_type, the type of the object that the array ranges over
     ccInt arrayDepth;       // array dimension spanned by this member (not the whole array) 
     linkedlist codeList;    // parallels the codeList in the targeted variable, but may be less restrictive
     
-    bool ifHidden;        // hidden members don't have indices associated with them
+    bool ifHidden;          // hidden members don't have indices associated with them
     int business;           // to use when checking to see if a window is part of an 'island'
 } member;
 
@@ -233,8 +233,9 @@ extern void doCopyCompare(view *, view *,
     void(*)(linkedlist *, ccInt, linkedlist *, ccInt, ccInt),
     void(*)(window *, member *),
     void(**)(void *, void *));
+extern bool isVarString(variable *);
 extern void findNextVisibleMember(variable *, member **, ccInt *);
-extern void copyCompareListToVar(void *, ccInt, view *, void(**)(void *, void *));
+extern void copyCompareVarToList(void *, ccInt, view *, void(**)(void *, void *));
 
 extern void sizeView(view *, void *, void *);
 extern void sizeData(view *, void *, void *);
@@ -284,7 +285,7 @@ extern void setError(ccInt, ccInt *);
 extern void setWarning(ccInt, ccInt *);
 extern void setErrIndex(ccInt *, ccInt, code_ref *, ccInt *, ccInt *, code_ref *);
 
-extern ccInt addVariable(variable **, ccInt, ccInt, ccInt, bool);
+extern ccInt addVariable(variable **, const ccInt *, ccInt, bool);
 extern void refVariable(variable *);
 extern void derefVariable(variable *);
 extern ccInt addWindow(variable *, ccInt, ccInt, window **, bool);
@@ -293,7 +294,7 @@ extern void derefWindow(window **);
 extern void combVariables(void);
 extern void combBranch(variable *, bool);
 extern void unlinkWindow(variable *, window **, ccInt);
-extern ccInt addMember(variable *, ccInt, ccInt, member **, bool, const ccInt, const bool);
+extern ccInt addMembers(variable *, ccInt, ccInt, member **, bool, ccInt, const bool);
 extern void removeMember(variable *, ccInt);
 extern void refPath(searchPath *);
 extern void derefPath(searchPath **);

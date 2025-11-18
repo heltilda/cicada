@@ -130,7 +130,6 @@ commandTokenType cicadaLanguage[] = {
     { type3arg "[ +" type5arg "]", stepVarLevel, "134567", inbytecode bc(insert_index) bcArg(1) bcArg(2) },
     { type3arg "[ + <" type5arg "," type5arg "> ]", stepVarLevel, "134567", inbytecode bc(insert_indices) bcArg(1) bcArg(2) bcArg(3) },
     
-//    { "top (" type1arg ")", stepVarLevel, "567", "$top(" arg1 ")" },
     { "top (" type1arg ")", stepVarLevel, "567", inbytecode bc(C_function) bc(-7) bc_define(defxxFlags) bc(search_member) anonymousmember
                     bc(code_block) bcArg(1) bc(end_of_script) },
     
@@ -194,6 +193,7 @@ commandTokenType cicadaLanguage[] = {
     { "[" type5arg "]" type7arg, arrayLevel, "7", inbytecode bc(type_array) bcArg(1) bcArg(2) },
     { "[ * ]" type7arg, arrayLevel, "7", inbytecode bc(type_array) bc_constant_int(0) bcArg(1) },
     { "[ ]" type7arg, arrayLevel, "7", inbytecode bc(type_array) bc_constant_int(0) bcArg(1) },
+    { "[[ ]]" type7arg, arrayLevel, "7", inbytecode bc(type_lists) bcArg(1) },
     
     { "bool", 0, "7", inbytecode bc(type_bool) },
     { "char", 0, "7", inbytecode bc(type_char) },

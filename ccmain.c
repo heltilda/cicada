@@ -56,7 +56,7 @@ const char *errorStrings[] = {
         "no member leads to variable", "member is void", "cannot step to multiple members", "incomplete member", "incomplete variable",
     "invalid index", "multiple indices not allowed", "invalid index", "variable has no parent", "not a variable",
         "not a function", "not composite", "string expected", "illegal target", "target was deleted",
-    "unequal data sizes", "not a number", "overlapping alias", "thrown here", "can't find C function",
+    "unequal data sizes", "not a number", "overlapping alias", "thrown here", "nonexistent C function",
         "wrong number of arguments", "error in argument", "self reference", "recursion depth too high", "I/O error"  };
 
 const char *defsScript =
@@ -260,6 +260,7 @@ ccInt initCicada()
 {
     variable *varZero;
     ccInt rtrn;
+    const static ccInt compositeType = composite_type;
     
     baseView.windowPtr = searchView.windowPtr = topView.windowPtr = NULL;   // these can confuse addMemory if not initialized to NULL first
     
@@ -270,7 +271,7 @@ ccInt initCicada()
     rtrn = newStack(&PCStack, sizeof(view), 100, LLFreeSpace);
     if (rtrn != passed)  return rtrn;
     
-    rtrn = addVariable(&varZero, composite_type, composite_type, 0, true);
+    rtrn = addVariable(&varZero, &compositeType, 0, true);
     if (rtrn != passed)  return rtrn;
     rtrn = addWindow(varZero, 0, 1, &Zero, true);
     if (rtrn != passed)  return rtrn;

@@ -93,23 +93,21 @@
 #define no_variable 45          /*  returns nothing -- no variable, type, or data  */
 
 #define type_array 46           /*  as in myvar :: [dim] vartype  */
-#define type_bool 47            /*  bool type  */
-#define type_char 48            /*  char type  */
-#define type_int 49             /*  int type  */
-#define type_float 50           /*  double type  */
-#define type_string 51          /*  string type  */
+#define type_lists 47           /*  as in myvar :: [dim] vartype  */
+#define type_string 48          /*  string type  */
+#define type_bool 49            /*  bool type  */
+#define type_char 50            /*  char type  */
+#define type_int 51             /*  int type  */
+#define type_float 52           /*  double type  */
 
-#define constant_bool 52        /*  a constant integer entered in the code */
-#define constant_char 53        /*  a constant integer entered in the code */
-#define constant_int 54         /*  a constant integer entered in the code */
-#define constant_double 55      /*  a const. float entered in the code */
-#define constant_string 56      /*  contained between double quotes */
-#define code_block 57           /*  a {} */
+#define constant_bool 53        /*  a constant integer entered in the code */
+#define constant_char 54        /*  a constant integer entered in the code */
+#define constant_int 55         /*  a constant integer entered in the code */
+#define constant_double 56      /*  a const. float entered in the code */
+#define constant_string 57      /*  contained between double quotes */
+#define code_block 58           /*  a {} */
 
-#define commands_num 58
-#define written_commands_num 60
-#define control_commands_num 15
-#define OoOLevels 17
+#define commands_num 59
 
 
 
@@ -158,8 +156,8 @@ extern ccInt cicadaNumPrecedenceLevels;
 #define bc_full(arg) #arg
 #define bc(arg) " " bc_full(arg) " "
 #define bc_define(arg) " 8 " bc_full(arg) " "
-#define bc_constant_bool(arg) " 52 " #arg " "
-#define bc_constant_int(arg) " 54 " #arg " "
+#define bc_constant_bool(arg) " 53 " #arg " "
+#define bc_constant_int(arg) " 55 " #arg " "
 #define bc_jump_always(arg) " 1 j" #arg " "
 #define bc_jump_if_true(arg) " 2 j" #arg " "
 #define bc_jump_if_false(arg) " 3 j" #arg " "

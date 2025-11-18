@@ -51,8 +51,8 @@ const Cfunction inbuiltCfunctions[] = {
     { "transform:dwwddd", &cc_transform }, { "trap:a", &cc_trap }, { "throw:ddwdd", &cc_throw },
     { "top:wd", &cc_top }, { "size:wdd", &cc_size }, { "type:wdd", &cc_type }, { "member_ID:wdd", &cc_member_ID }, { "bytecode:wdd", &cc_bytecode },
     { "load", &cc_load }, { "save", &cc_save }, { "input", &cc_input }, { "print", &cc_print },
-    { "read_string", &cc_read_string}, { "print_string", &cc_print_string }, { "find", &cc_find },
-    { "random", &cc_random }, { "abs", &cc_abs }, { "floor", &cc_floor }, { "ceil", &cc_ceil }, { "exp", &cc_exp }, { "log", &cc_log },
+    { "read_string", &cc_read_string}, { "print_string", &cc_print_string }, { "find", &cc_find }, { "random", &cc_random },
+    { "abs", &cc_abs }, { "floor", &cc_floor }, { "ceil", &cc_ceil }, { "round", &cc_round }, { "exp", &cc_exp }, { "log", &cc_log },
     { "cos", &cc_cos }, { "sin", &cc_sin }, { "tan", &cc_tan }, { "acos", &cc_acos }, { "asin", &cc_asin }, { "atan", &cc_atan },
     { "add", &cc_add }, { "subtract", &cc_subtract }, { "multiply", &cc_multiply }, { "divide", &cc_divide }, { "pow", &cc_pow },
     { "minmax", &cc_minmax }, { "sum", &cc_sum }, { "makeLinkList", &cc_makeLinkList }, { "sort", &cc_sort },
@@ -365,8 +365,9 @@ ccInt cc_transform(argsType args)
 
 ccInt cc_trap(argsType args)
 {
-    code_ref argCodeRef;
+    code_ref argCodeRef, errScriptToPrint;
     view *allArgs;
+    window *errScriptWindow = NULL;
     ccInt loopCode, codeNo, *codeMarkers, *scoutAhead;
     bool ifErrorWasTrapped = false, holdDoPrintError = doPrintError, doClearError = true;
     
@@ -377,7 +378,7 @@ ccInt cc_trap(argsType args)
     
     for (loopCode = 1; loopCode <= allArgs->windowPtr->variable_ptr->codeList.elementNum; loopCode++)  {
         
-        code_ref *errScriptToPrint = NULL;
+        errScriptToPrint.code_ptr = NULL;
         
             // get a handle on the code
         
@@ -397,13 +398,13 @@ ccInt cc_trap(argsType args)
                 
                 beginExecution(&argCodeRef, true, allArgs->offset, allArgs->width, 0);
                 
-                if (allArgs->windowPtr->variable_ptr->type == composite_type)  {
+                if (*allArgs->windowPtr->variable_ptr->types == composite_type)  {
                 if (allArgs->windowPtr->variable_ptr->mem.members.elementNum > 0)  {
-                    window *errScriptWindow = getViewMember(1);
+                    errScriptWindow = getViewMember(1);
                     if (errScriptWindow != NULL)  {
-                    if (errScriptWindow->variable_ptr->type == composite_type)  {
-                        errScriptToPrint = (code_ref *) element(&(errScriptWindow->variable_ptr->codeList), 1);
-                        refCodeRef(errScriptToPrint);
+                    if (*errScriptWindow->variable_ptr->types == composite_type)  {
+                        errScriptToPrint = *(code_ref *) element(&(errScriptWindow->variable_ptr->codeList), 1);
+                        refCodeRef(&errScriptToPrint);
                 }}  }}
             }
             pcCodePtr = holdPC;
@@ -425,9 +426,9 @@ ccInt cc_trap(argsType args)
         beginExecution(&argCodeRef, true, allArgs->offset, allArgs->width, codeNo);
         if (errCode == return_flag)  errCode = passed;
         
-        if (errScriptToPrint != NULL)  {
-            derefCodeRef(errScriptToPrint);
-            if (errScriptToPrint->references == 0)  errScriptToPrint = NULL;    }
+        if (errScriptToPrint.code_ptr != NULL)  {
+            derefCodeRef(&errScriptToPrint);
+            if (errScriptToPrint.references == 0)  errScriptToPrint.code_ptr = NULL;    }
         
         
             // print errors/warnings if we are instructed to do so
@@ -436,33 +437,35 @@ ccInt cc_trap(argsType args)
             
             code_ref *errScriptToPassBack = NULL;
             
-            if ((!doClearError) && (errScriptToPrint != NULL))  {
-                errScriptToPassBack = errScriptToPrint;
-                errScriptToPrint = NULL;     }
+            if ((!doClearError) && (errScriptToPrint.code_ptr != NULL))  {
+                errScriptToPassBack = (code_ref *) element(&(errScriptWindow->variable_ptr->codeList), 1);
+                errScriptToPrint.code_ptr = NULL;     }
             
             if (doPrintError)  {
                 
                 storedCodeType *errorBaseScript;
                 ccInt errIndexToPrint, errCharNum = 0;
-                if (errScriptToPrint != NULL)  errIndexToPrint = 1;
-                else if (errCode != passed)  {  errIndexToPrint = errIndex;  errScriptToPrint = &errScript;  }
-                else  {  errIndexToPrint = warningIndex;  errScriptToPrint = &warningScript;  }
+                if (errScriptToPrint.code_ptr != NULL)  errIndexToPrint = 1;
+                else if (errCode != passed)  {  errIndexToPrint = errIndex;  errScriptToPrint = errScript;  }
+                else  {  errIndexToPrint = warningIndex;  errScriptToPrint = warningScript;  }
                 
-                if (errScriptToPrint->PLL_index == 0)  printError(NULL, 0, NULL, 0, false, 1, true);
+                if (errScriptToPrint.PLL_index == 0)  printError(NULL, 0, NULL, 0, false, 1, true);
                 else  {
-                    errorBaseScript = storedCode(errScriptToPrint->PLL_index);
+                    errorBaseScript = storedCode(errScriptToPrint.PLL_index);
                     if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
-                                       errIndexToPrint + (ccInt) (errScriptToPrint->code_ptr - errorBaseScript->bytecode) - 1] - 1;
+                                       errIndexToPrint + (ccInt) (errScriptToPrint.code_ptr - errorBaseScript->bytecode) - 1] - 1;
                     
                     printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode,
                                 errCharNum, false, errorBaseScript->compilerID, errIndexToPrint==1);
             }   }
             
-            if ((codeNo == 3) || (errScriptToPassBack != NULL))  {
+            if ((codeNo >= 2) || (errScriptToPassBack != NULL))  {
                 bool doErr = (errCode != passed);
                 if (errScriptToPassBack == NULL)  {
-                    if (doErr)  errCode = thrown_to_err;
-                    else  warningCode = thrown_to_err;      }
+                    if (codeNo == 3)  {
+                        if (doErr)  errCode = thrown_to_err;
+                        else  warningCode = thrown_to_err;
+                }   }
                 else  {
                     setErrIndex(errScriptToPassBack->code_ptr, codeNo==3? thrown_to_err : errCode, errScriptToPassBack,
                                 doErr? &errCode : &warningCode, doErr? &errIndex : &warningIndex, doErr? &errScript : &warningScript);
@@ -553,7 +556,7 @@ ccInt cc_top(argsType args)
     getArgs(args, &(viewToTop.windowPtr));
     
     if (viewToTop.windowPtr == NULL)  {  setError(void_member_err, pcCodePtr-1);  return 0;  }
-    if (viewToTop.windowPtr->variable_ptr->type < string_type)  {  setError(not_composite_err, pcCodePtr-1);  return 0;  }
+    if (*viewToTop.windowPtr->variable_ptr->types < string_type)  {  setError(not_composite_err, pcCodePtr-1);  return 0;  }
     viewToTop.offset = viewToTop.windowPtr->offset;
     
     return numMemberIndices(&viewToTop);
@@ -604,9 +607,9 @@ ccInt cc_type(argsType args)
     returnOnErr(checkArgs(args, fromArg(1), scalar(int_type), scalar(int_type)))
     getArgs(args, &hostWindow, byValue(&whichMember), &theType);
     
-    if (whichMember <= 0)  *theType = hostWindow->variable_ptr->type;
+    if (whichMember <= 0)  *theType = *hostWindow->variable_ptr->types;
     
-    else if (hostWindow->variable_ptr->type == composite_type)  {
+    else if (*hostWindow->variable_ptr->types == composite_type)  {
         if (whichMember > hostWindow->variable_ptr->mem.members.elementNum)  return invalid_index_err;
         *theType = LL_member(hostWindow->variable_ptr, whichMember)->type;  }
     
@@ -1284,6 +1287,9 @@ ccFloat doFloor(ccFloat argument)  {  return floor(argument);  }
 
 ccInt cc_ceil(argsType args)  {  return mathUnaryOp(args, &doCeil);  }
 ccFloat doCeil(ccFloat argument)  {  return ceil(argument);  }
+
+ccInt cc_round(argsType args)  {  return mathUnaryOp(args, &doRound);  }
+ccFloat doRound(ccFloat argument)  {  return floor(argument + 0.5);  }
 
 ccInt cc_exp(argsType args)  {  return mathUnaryOp(args, &doExp);  }
 ccFloat doExp(ccFloat argument)  {  return exp(argument);  }

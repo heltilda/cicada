@@ -55,6 +55,16 @@ typedef struct {
 } step_params;
 
 
+typedef struct {
+    bool doEquate;
+    bool updateMembers;
+    bool addNewMembers;
+    bool newTarget;
+    bool doRelink;
+    bool runConstructor;
+    bool hiddenMember;
+    bool isUnjammable;
+} deFlags;
 
 // *** Famous & global variables ***
 
@@ -103,7 +113,7 @@ typedef struct {
     searchPath *_pcSearchPath;
     
     
-        // A series of lesser Cicada memory addresses, holding args, that, the return variable, etc.  BIF = built-in-function.
+        // A series of lesser Cicada memory addresses, holding args, that, the return variable, etc.
     
     view _argsView, _returnView, _thatView, _topView;
     
@@ -190,6 +200,7 @@ extern void incrementArg(argsType *);
 extern window *getViewMember(ccInt);
 
 extern void _def_general(void);
+extern ccInt buildOneVarLayer(const ccInt *, const ccInt, const ccInt, ccInt *, view *, view *, const deFlags *, const bool);
 extern void copyCompareMultiView(void(*)(view *, view *), view *, view *);
 extern void encompassMultiView(view *, window *, window *, variable *, bool);
 extern ccInt relinkGLStemMember(view *, bool, bool, bool);
@@ -240,6 +251,7 @@ extern void resizeIndices(member *, ccInt, ccInt, ccInt);
 extern void _delete_indices(void);
 
 extern void _if_eq(void);
+extern void stepInIfString(const bool, const ccInt, bool *, ccInt *, view *, window **);
 extern void _if_ne(void);
 extern void copyCompareReadArg(void(*)(void), ccInt *, bool *);
 extern void _if_eq_at(void);
@@ -295,6 +307,8 @@ extern void _top_var(void);
 extern void _no_var(void);
 
 extern void _array_cmd(void);
+extern void _list_cmd(void);
+extern void addToDimList(const ccInt);
 
 extern void _bool_cmd(void);
 extern void _char_cmd(void);
@@ -379,8 +393,6 @@ extern void(*numericJumpTable[commands_num])(void);
 extern void(*codeJumpTable[commands_num])(void);
 extern void(*bytecodeJumpTable[commands_num])(void);
 extern void(*defineJumpTable[commands_num])(void);
-
-extern ccInt BIF_Types[];
 
 extern void(*loadIntRegJumpTable[])(void *);
 extern void(*saveIntRegJumpTable[])(void *);

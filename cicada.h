@@ -69,7 +69,8 @@ extern ccInt checkArgs(argsType, ...);
 #define string_type 4
 #define composite_type 5
 #define array_type 6
-#define no_type 7
+#define list_type 7
+#define no_type 8
 
 #define numeric_type 10
 
