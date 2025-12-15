@@ -60,7 +60,7 @@ void TestCicada()
     ccInt counter;
     
     start_seed = (ccInt) time(0);
-//    start_seed = 1467425017;
+    start_seed = 1763000382;  printf("CUSTOM SEED\n");
     printf("Random seed: %i\n\n", (int) start_seed);
         
     for (counter = 1; counter <= 100; counter++)  {

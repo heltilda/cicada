@@ -1,0 +1,2444 @@
+from doCopyCompare():
+        else if (destType >= composite_type)  setError(type_mismatch_err, pcCodePtr-1);
+        
+        else   {
+        
+                // strings are special and we have to copy/compare each one individually
+            
+            if ((sourceIsString) || (sourceType == list_type))  {
+                if (destType != sourceType)  setError(type_mismatch_err, pcCodePtr-1);
+                else for (indexCounter = 1; indexCounter <= sourceView->width; indexCounter++)  {
+                    ccString(LL_member(sourceVar, sourceView->offset + indexCounter)->memberWindow,
+                            LL_member(destVar, destView->offset + indexCounter));
+            }   }
+            
+            
+                // finally, if we have mismatched but compatible types (think composite variables having ints versus doubles),
+                // then we have to step through them member by member
+            
+            else   {
+
+void sizeString(view *theView, ccInt stringIndex, void *dataSize, void *sizeofStrings)
+{
+    member *stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
+    
+    if (*(ccInt *) sizeofStrings == 0)  *(ccInt *) sizeofStrings = 0;
+    *(ccInt *) sizeofStrings += stringMember->indices;
+}
+
+void storageSize_String(view *theView, ccInt stringIndex, void *dataSize, void *dummy)
+{
+    member *stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
+    view charView;
+    
+    charView.windowPtr = theView->windowPtr;
+    charView.offset = 0;
+    charView.width = 1;
+    
+    stepView(&charView, stringMember, 0, stringMember->indices);
+    if (errCode == passed)  storageSizeView(&charView, dataSize, dummy);
+}
+
+void writeString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeofStrings)
+{
+    member *stringMember;
+    view stringView;
+    
+    stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
+    stringView.windowPtr = stringMember->memberWindow;
+    resizeMember(stringMember, 1, *(ccInt *) sizeofStrings);
+    if (errCode != passed)  return;
+    
+    if (*(ccInt *) sizeofStrings == 0)  return;
+    
+    setElements(&(stringMember->memberWindow->variable_ptr->mem.data), stringMember->memberWindow->offset+1,
+            stringMember->memberWindow->offset+stringMember->memberWindow->width, *(void **) bufferPtr);
+    *(char **) bufferPtr += *(ccInt *) sizeofStrings;
+    *(ccInt *) sizeofStrings = 0;
+}
+
+void readString(view *theView, ccInt stringIndex, void *bufferPtr, void *dummy)
+{
+    window *stringWindow = LL_member(theView->windowPtr->variable_ptr, stringIndex)->memberWindow;
+    linkedlist *stringLL = &(stringWindow->variable_ptr->mem.data);
+    
+    getElements(stringLL, stringWindow->offset+1, stringWindow->offset+stringWindow->width, *(void **) bufferPtr);
+    *(char **) bufferPtr += stringWindow->width;
+}
+
+void readStringFromString(view *theView, ccInt stringIndex, void *sourcePtr, void *warningMarker)
+{
+    member *stringMember;
+    view stringView;
+    linkedlist *stringLL;
+    ccInt newStringSize = 0, charType = lettertype(*(char **) sourcePtr);
+    
+    stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
+    stringView.windowPtr = stringMember->memberWindow;
+    stringLL = &(stringMember->memberWindow->variable_ptr->mem.data);
+
+
+        // the leading spaces are skipped even for a string-to-string copy
+        
+    while ((charType == a_space) || (charType == a_eol) || (charType == unprintable))
+        {  (*(char **) sourcePtr)++;  charType = lettertype(*(char **) sourcePtr);  }
+    while ((charType == a_letter) || (charType == a_number) || (charType == a_symbol))
+        {  newStringSize++;  charType = lettertype(((*(char **) sourcePtr)+newStringSize));  }
+    
+    resizeMember(stringMember, 1, newStringSize);
+    if (errCode != passed)  return;
+    
+    setElements(stringLL, stringMember->memberWindow->offset+1,
+            stringMember->memberWindow->offset+stringLL->elementNum, *(void **) sourcePtr);
+    *(char **) sourcePtr += newStringSize;
+    if (newStringSize == 0)  {
+        if (warningCode == passed)  ((char **) warningMarker)[1] = *(char **) sourcePtr;
+        setWarning(string_read_err, pcCodePtr-1);       }
+    
+    if ((**(char **) sourcePtr == 0) && (*(char **) sourcePtr < *(char **) warningMarker))  (*(char **) sourcePtr) += 1;
+}
+
+void countStringView(view *theView, ccInt stringDummyIndex, void *windowCount, void *stringCount)
+{
+/*    ccInt stringIndex, windowCounter;       // catch any window overlaps before we allocate memory, to avoid crashes
+    
+    for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
+        
+        window *theStringWindow = LL_member(theView->windowPtr->variable_ptr, stringIndex)->memberWindow;
+        
+            // make sure the string doesn't have more than one window -- that way the user can modify its size and we can still fix the member
+        
+        for (windowCounter = 1; windowCounter <= theStringWindow->variable_ptr->windows.data.elementNum; windowCounter++)  {
+            window *loopWindow = (window *) element(&(theStringWindow->variable_ptr->windows.data), windowCounter);
+            if ((loopWindow != theStringWindow) && (*(loopWindow->references) > 0))  {
+                if (loopWindow->jamStatus == cannot_jam)  loopWindow->jamStatus = unjammed;
+                else  {
+                    setError(overlapping_window_err, pcCodePtr-1);
+                    return;
+    }   }   }   }*/
+    
+    (*(ccInt *) stringCount)++;
+}
+
+void passString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dummy)
+{
+    argsType *oneArg = (argsType *) argsPtr;
+    ccInt stringIndex, rtrn;
+    
+    linkedlist *stringListCopy = (linkedlist *) malloc((size_t) (theView->width*sizeof(linkedlist)));
+    if (stringListCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    
+    for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
+        
+        window *theStringWindow = LL_member(theView->windowPtr->variable_ptr, stringIndex)->memberWindow;
+        linkedlist *theStringLL = &(theStringWindow->variable_ptr->mem.data);
+        
+        rtrn = defragmentLinkedList(theStringLL);
+        if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+        
+        if (theStringLL->elementNum != theStringWindow->width)  {  setError(incomplete_variable_err, pcCodePtr-1);  return;  }
+        
+            // make sure the string doesn't have more than one window -- that way the user can modify its size and we can still fix the member
+            // This doesn't work -- doesn't check for overlap based on offset/indices, only whether two windows use the same variable
+        /*
+        for (windowCounter = 1; windowCounter <= theStringWindow->variable_ptr->windows.data.elementNum; windowCounter++)  {
+            window *loopWindow = (window *) element(&(theStringWindow->variable_ptr->windows.data), windowCounter);
+            if ((loopWindow != theStringWindow) && (*(loopWindow->references) > 0))  {
+                if (loopWindow->jamStatus == cannot_jam)  loopWindow->jamStatus = unjammed;
+                else  {
+                    setError(overlapping_window_err, pcCodePtr-1);
+                    return;
+        }   }   }*/
+        
+            // What was this trying to do?  Does not work
+        
+        /*
+        rtrn = addMemory(theStringWindow, 0, -theStringWindow->offset);
+        if (rtrn == passed)
+            rtrn = addMemory(theStringWindow, theStringWindow->width, theStringWindow->width-theStringWindow->variable_ptr->instances);
+        if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+        */
+        
+        stringListCopy[stringIndex-theView->offset-1] = *theStringLL;
+    }
+    
+    *(oneArg->p) = (void *) stringListCopy;
+    (*(oneArg->type))[0] = string_type;
+    *(oneArg->indices) = theView->width;
+    
+    incrementArg(oneArg);
+}
+
+// Next 3 routines:  again, used by C_function()
+// This adjusts the size of our string member windows to match the size of the character arrays (in case the user changed those).
+
+void argvFixStrings(view *theView, void *argsPtr, member *dummy)
+{  doReadWrite(theView, argsPtr, dummy, false, false, true, &argvFixStrings, &fixNothing/*, &fixString*/);  }
+
+void fixNothing(view *theView, void *argsPtr, member *dummy)
+{
+    argsType *oneArg = (argsType *) argsPtr;
+    (oneArg->p)++;
+}
+
+void fixString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dummy)
+{
+    ccInt stringIndex;
+    argsType *oneArg = (argsType *) argsPtr;
+    
+    linkedlist *stringListCopy = (linkedlist *) *(oneArg->p);
+    
+    for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
+        
+        member *theStringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
+        linkedlist *theStringLL = &(theStringMember->memberWindow->variable_ptr->mem.data);
+        
+        *theStringLL = stringListCopy[stringIndex-theView->offset-1];
+        
+        theStringMember->indices = theStringLL->elementNum;
+        theStringMember->memberWindow->width = theStringLL->elementNum;
+        theStringMember->memberWindow->variable_ptr->instances = theStringLL->elementNum;
+    }
+    
+    free((void *) stringListCopy);
+    
+    (oneArg->p)++;
+}
+
+void printString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeofStrings)
+{
+    view charView;
+    member *charMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
+    
+    charView.windowPtr = charMember->memberWindow;
+    charView.offset = charView.windowPtr->offset;
+    charView.width = charMember->indices;
+    
+    printData(&charView, bufferPtr, sizeofStrings);
+}
+
+from _C_function():
+    if (errCode == passed)
+        intRegister = (ccInt) theF(fArgs);
+    
+    
+        // fix the string windows (in case the string linked lists were resized) and clean up
+    
+    holdErrCode = errCode;
+    errCode = passed;                   // otherwise this could trip up argvFixStrings()
+    oneAF = fArgsFormat;
+    if (CargType(oneAF) != 'A')  {
+        oneArg = fArgs;
+        for (argCounter = 1; argCounter <= numArgs; argCounter++)  {
+            const char argChar = CargType(oneAF);
+            argView.windowPtr = getViewMember(argCounter);
+            if (argChar == 'a')  incrementArg(&oneArg);
+            else if (argView.windowPtr != NULL)  {
+                argView.offset = argView.windowPtr->offset;
+                argView.width = argView.windowPtr->width;
+                argvFixStrings(&argView, (void *) &oneArg, NULL);
+            }
+            if ((oneAF[0] != 0) && (oneAF[1] != 0))  oneAF++;
+    }   }
+    if ((errCode == passed) && (holdErrCode != passed))  errCode = holdErrCode;
+
+void doReadWrite(view *theView, void *globalPtr, member *memberToVar, bool doInIndexOrder, bool skipBusyMembers, bool bundleStrings,
+        void(*srwComposite)(view *, void *, member *),
+        void(*srwData)(view *, void *, member *),
+        void(*srwString)(view *, ccInt, void *, void *))
+...
+    else  {        // it's a primitive variable
+        if (*theVar->types == string_type)  {
+            ccInt viewTop = theView->width;
+            if (bundleStrings)  viewTop = 1;  
+            
+            for (indexCounter = 1; indexCounter <= viewTop; indexCounter++)  {
+                srwString(theView, theView->offset+indexCounter, globalPtr, NULL);
+                if (errCode != passed)  break;
+        }   }
+        else  srwData(theView, globalPtr, memberToVar);            }
+
+
+void readDataString(view *theView, void *theArg, member *listMember)
+{
+    readStringInfo *info = (readStringInfo *) theArg;
+    variable *theVar = theView->windowPtr->variable_ptr;
+    ccInt idx, varType = theVar->types[0];
+    
+    
+        // white space in the source string is skipped over
+        // (lettertype[], a_space, etc. are defined in cmpile.c(pp)/h)
+    
+    
+        // numeric types in the destination window are parsed using readNum() (defined in cmpile.c(pp))
+    
+    for (idx = 0; idx < theView->width; idx++)  {
+        
+        ccInt charType = lettertype(info->sourceString);
+        if ((idx == 0) || (varType != char_type))  {
+        while ((charType == a_space) || (charType == a_eol) || (charType == unprintable))  {
+            info->sourceString++;
+            charType = lettertype(info->sourceString);
+        }}
+        
+        if (info->sourceString >= info->stringEnd)  {
+            info->warningMarker = info->sourceString;
+            setWarning(overflow_err, pcCodePtr-1);
+            return;         }
+        
+        if ((varType == int_type) || (varType == double_type))  {
+            int rtrn = readNum(&(info->sourceString), &doubleRegister, NULL);          // deal with overflow
+            if (rtrn != passed)  {  info->warningMarker = info->sourceString;  setError(rtrn, pcCodePtr-1);  return;  }
+            saveDoubleRegister(theVar, theView->offset+idx);       }
+        else if (varType == char_type)  {
+            *LL_Char(&(theVar->mem.data), theView->offset+idx+1) = *info->sourceString;
+            info->sourceString++;        }
+        else if (varType == bool_type)  {
+            if (charsCmp(info->sourceString, "true"))  {
+                *(bool *) element(&(theVar->mem.data), theView->offset+idx+1) = true;
+                info->sourceString+=4;      }
+            else if (charsCmp(info->sourceString, "false"))  {
+                *(bool *) element(&(theVar->mem.data), theView->offset+idx+1) = false;
+                info->sourceString+=5;      }
+            else  info->warningMarker = info->sourceString;
+    }   }
+/*            else if (varType == string_type)  {
+                linkedlist *destStr = (linkedlist *) args.p[a];
+                const char *strStart = c;
+                while (isWordChar(c))  c++;
+                returnOnErr(resizeLinkedList(destStr, (ccInt) (c-strStart), false))
+                setElements(destStr, 1, destStr->elementNum, (void *) strStart);*/
+        /*rtrn = readNum(&(info->sourceString), &doubleRegister, NULL);
+        if (rtrn != passed)  {
+            if ((rtrn != underflow_err) && (rtrn != overflow_err))  rtrn = read_number_err;
+            if (warningCode == passed)  info->warningMarker = info->sourceString;
+            setWarning(rtrn, pcCodePtr-1);
+            if (rtrn == read_number_err)  return;       }*/
+        /*
+        oneLetterType = lettertype(info->sourceString);
+        while ((oneLetterType != a_symbol) && (oneLetterType != a_number) && (oneLetterType != a_letter) &&
+                                                    (info->sourceString < info->stringEnd))
+            {  (info->sourceString)++; oneLetterType = lettertype(info->sourceString);  }
+        saveDoubleRegister(theView->windowPtr->variable_ptr, theView->offset+idx);      }*/
+
+
+ccInt cc_read_string(argsType args)
+{
+    ccInt a;
+    view windowView;
+    readStringInfo RSinfo;
+    char *theString; //holdString;
+    const char *c, *warningChar = NULL;
+    
+    if (args.num < 1)  return wrong_argument_count_err;
+    returnOnErr(getArgs(args, arrayRef(char_type, &theString), endArgs))
+    
+    /*returnOnErr(defragmentLinkedList(theString))
+    
+    c = holdString = (char *) malloc(theString->elementNum+1);
+    if (holdString == NULL)  return out_of_memory_err;
+    getElements(theString, 1, theString->elementNum, (void *) holdString);
+    holdString[theString->elementNum] = 0;*/
+    
+    
+        // Read the string into the subsequent argument variables.  String variables are read up through the next space.
+    
+    RSinfo.sourceString = theString;
+    RSinfo.stringEnd = theString + args.indices[0];
+    RSinfo.warningMarker = NULL;
+    for (a = 1; a < args.num; a++)   {
+        arg *oneArg = args.p[a];
+        windowView.windowPtr = (window *) oneArg;
+        if (oneArg != NULL)  {
+            windowView.offset = windowView.windowPtr->offset;
+            windowView.width = windowView.windowPtr->width;
+            readViewString(&windowView, &RSinfo, NULL);
+        }
+/*        for (idx = 0; idx < args.indices[a]; idx++)  {
+            
+            while ((!isWordChar(c)) && (lettertype(c) != a_null))  c++;
+            if (lettertype(c) == a_null)  {  if (warningChar == NULL)  warningChar = c;  break;  }
+            
+            if ((args.type[a][0] == int_type) || (args.type[a][0] == double_type))  {
+                returnOnErr(readNum(&c, &oneNum, NULL));          // deal with overflow
+                if (args.type[a][0] == int_type)  ((ccInt *) oneArg)[idx] = (ccInt) oneNum;
+                else  ((ccFloat *) oneArg)[idx] = oneNum;       }
+            else if (args.type[a][0] == char_type)  {
+                ((char *) oneArg)[idx] = *c;
+                c++;        }
+            else if (args.type[a] == bool_type)  {
+                if (strcmp(c, "true") == 0)  {  ((bool *) oneArg)[idx] = true;  c+=4;  }
+                else if (strcmp(c, "false") == 0)  {  ((bool *) oneArg)[idx] = false;  c+=5;  }
+                else  warningChar = c;          }
+            else if (args.type[a][0] == string_type)  {
+                linkedlist *destStr = (linkedlist *) args.p[a];
+                const char *strStart = c;
+                while (isWordChar(c))  c++;
+                returnOnErr(resizeLinkedList(destStr, (ccInt) (c-strStart), false))
+                setElements(destStr, 1, destStr->elementNum, (void *) strStart);
+    }   }*/   }
+...
+
+ccInt cc_print_string(argsType args)
+{
+...    
+    PSinfo.stringPtr = NULL;
+    for (c2 = 0; c2 < 2; c2++)  {
+        PSinfo.numChars = 0;
+        for (a = 2; a < args.num; a++)  {
+            windowView.windowPtr = (window *) args.p[a];
+            if (windowView.windowPtr != NULL)  {
+                windowView.offset = windowView.windowPtr->offset;
+                windowView.width = windowView.windowPtr->width;
+                printViewString(&windowView, &PSinfo, NULL);
+        }   }
+/*            if (args.type[a] == bool_type)  {
+                bool *p = (bool *) args.p[a];
+                for (idx = 0; idx < args.indices[a]; idx++)  {
+                    if (c2 == 1)  toWritePtr = strPtr+n;
+                    if (!p[idx])  n += copyStr("false", toWritePtr);
+                    else  n += copyStr("true", toWritePtr);
+            }   }
+            
+            else if (args.type[a][0] == char_type)  {
+                if (c2 == 1)  memcpy(strPtr+n, args.p[a], args.indices[a]);
+                n += args.indices[a];        }
+            
+            else if (args.type[a][0] == string_type)  {
+                linkedlist *strs = (linkedlist *) args.p[a];
+                for (idx = 0; idx < args.indices[a]; idx++)  {
+                    if (c2 == 1)  getElements(strs+idx, 1, strs[idx].elementNum, strPtr+n);
+                    n += strs[idx].elementNum;
+            }   }
+            
+            else  {
+                void *p = args.p[a];
+                for (idx = 0; idx < args.indices[a]; idx++)  {
+                    if (c2 == 1)  toWritePtr = strPtr+n;
+                    if (args.type[a][0] == int_type)  oneNum = ((ccInt *) p)[idx];
+                    else  oneNum = ((ccFloat *) p)[idx];
+                    printNumber(toWritePtr, oneNum, &numChars, args.type[a][0], PSinfo.maxFloatingDigits);
+                    n += numChars;
+        }   }   }*/
+        
+        if (c2 == 0)  {
+            if (PSinfo.numChars == 0)  return passed;
+            returnOnErr(setStringSize(theString, 1, PSinfo.numChars, &(PSinfo.stringPtr))) //&strPtr))
+/*            returnOnErr(resizeLinkedList(theString, n, false))
+            returnOnErr(defragmentLinkedList(theString))
+            strPtr = (char *) element(theString, 1);*/
+    }   }
+
+
+
+char *LL2Cstr(linkedlist *LL)
+{
+    char *Cstring = (char *) malloc(LL->elementNum+1);
+    if (Cstring == NULL)  return NULL;
+    
+    getElements(LL, 1, LL->elementNum, (void *) Cstring);
+    Cstring[LL->elementNum] = 0;
+    
+    return Cstring;
+}
+
+
+// Next 2 routines:  invoked by print_string()
+// They calculate the size in bytes of a string that will be the 'printout' of a window
+// (i.e. with numbers written out in ASCII).
+
+void sizeViewString(view *theView, void *dataSize, void *sizeofStrings)
+{  doReadWrite(theView, dataSize, sizeofStrings, false, false, false, &sizeViewString, &sizeDataString, &sizeString);  }
+
+void sizeDataString(view *theView, void *dataSize, void *dummy)
+{
+    ccInt counter, numChars;
+    
+    if (theView->windowPtr->variable_ptr->type == bool_type)  {
+    for (counter = 1; counter <= theView->width; counter++)  {
+        loadBoolRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
+        if (boolRegister)  numChars = 4;
+        else  numChars = 5;
+        if (numChars < fieldWidth)  numChars = fieldWidth;
+        *(ccInt *) dataSize += numChars;
+    }}
+    
+    else if (theView->windowPtr->variable_ptr->type == char_type)  {
+        *(ccInt *) dataSize += theView->width;        }
+    
+    else  {
+    for (counter = 1; counter <= theView->width; counter++)  {
+        loadDoubleRegister(theView->windowPtr->variable_ptr, theView->offset+counter-1);
+        printNumber(NULL, doubleRegister, &numChars, theView->windowPtr->variable_ptr->type, maxDigits);
+        if (numChars < fieldWidth)  numChars = fieldWidth;
+        *(ccInt *) dataSize += numChars;
+    }}
+}
+
+
+ccInt checkArgs(argsType args, ...)
+{
+    ccInt a, argType, expectedType, rtrn = passed;
+    bool expectScalar, expectAnother;
+    va_list theArgs;
+    
+    va_start(theArgs, args);
+    for (a = 0; a < args.num; a++)  {
+        ccInt *varTypes = NULL;
+        bool ignoreType = false;
+        
+        expectedType = (ccInt) va_arg(theArgs, int);
+        expectScalar = (expectedType == 200);
+        if (expectScalar)  expectedType = (ccInt) va_arg(theArgs, int);
+        
+        if (expectedType != 0)  {
+            do {
+    //            bool expectList = (expectedType > 100);
+                expectAnother = (expectedType == 100);
+                
+                if (expectAnother)  {
+                    expectedType = (ccInt) va_arg(theArgs, int);
+                    if ((varTypes == NULL) && (!ignoreType))  {
+                        window *argWindow = (window *) args.p[a];
+                        if (argWindow == NULL)  ignoreType = true;
+                        else  varTypes = argWindow->variable_ptr->types;
+                }   }
+    /*            if (expectList)  {
+                    expectScalar = (expectedType < 200);
+                    if (expectScalar)  expectedNextType = expectedType-101;
+                    else  expectedNextType = expectedType-201;
+                    expectedType = list_type;       }
+                else*/
+                
+                if (!ignoreType)  {
+                    if (varTypes == NULL)  expectedType--;
+                    
+                    if (varTypes == NULL)  argType = args.type[a][0];
+                    else  {
+                        argType = *varTypes;
+                        varTypes++;
+                    }
+                    if (expectedType == numeric_type)  {
+                        if ((argType != int_type) && (argType != double_type))  brk(type_mismatch_err)        }
+                    else if (expectedType != argType)  brk(type_mismatch_err)
+        /*            if (expectList)  {
+                        window *listWindow = (window *) args.p[a];
+                        window *listMemberWindow = LL_member(listWindow->variable_ptr, listWindow->offset+1)->memberWindow;
+                        if (listMemberWindow == NULL)  brk(void_member_err)
+                        if (*listMemberWindow->variable_ptr->types != expectedNextType)  brk(type_mismatch_err)
+                    }*/
+                    if ((expectScalar) && (args.indices[a] != 1))  brk(multiple_indices_not_allowed_err)
+                }
+                if (expectAnother)  expectedType = (ccInt) va_arg(theArgs, int);
+            }  while (expectAnother);
+            if (rtrn != passed)  break;
+        }
+        else  {
+            expectedType = va_arg(theArgs, int);         // get past the NULL
+            a = ((ccInt) va_arg(theArgs, int)) - 1;
+            if (a < -1)  break;
+    }   }
+    va_end(theArgs);
+    
+    return rtrn;
+}
+
+
+
+| new(var) creates a new object using var as a template;
+| used for creating new return objects for functions
+
+new :: {
+    rtrn :: *
+    copy_err :: int
+    
+    code
+    
+    rtrn =@ *
+    if top(args) > 2  then (
+        printl("usage:  new_object = new(template [, data variable] [; code to modify new variable])")
+        return      )
+    
+    rtrn @:: args[1]
+    
+    if type(rtrn) >= 5  then (rtrn<<args)()
+    
+    if top(args) == 1  then &
+        copy_err = trap( rtrn = args[1] )
+    else if trap(type(args[2])) == passed  then &
+        copy_err = trap( rtrn = args[2] )
+    else  copy_err = passed
+    
+    if copy_err /= passed  then &
+        printl("new():  could not copy template data (error ", copy_err, ")")
+    
+    return rtrn
+}
+
+
+
+
+// These last three are generic support routines.
+
+
+// numBIF_args() returns the number of non-hidden members of theVariable.
+
+ccInt numBIF_args()
+{
+    variable *BIFargsVariable = BIF_argsView.windowPtr->variable_ptr;
+    ccInt counter, visibleMemberCounter = 0;
+    
+    for (counter = 1; counter <= BIFargsVariable->mem.members.elementNum; counter++)   {
+    if (!(LL_member(BIFargsVariable, counter)->ifHidden))   {
+        visibleMemberCounter++;
+    }}
+    
+    return visibleMemberCounter;
+}
+
+
+// getBIFmember() returns the Nth non-hidden member of BIF_argsView (N being denoted by 'soughtMemberIndex').
+// BIF = built-in-function.
+
+window *getBIFmember(ccInt soughtMemberIndex)
+{
+    variable *BIFargsVariable = BIF_argsView.windowPtr->variable_ptr;
+    ccInt counter, memberCounter = 0;
+    member *loopMember;
+    
+    for (counter = 1; counter <= BIFargsVariable->mem.members.elementNum; counter++)   {
+        loopMember = LL_member(BIFargsVariable, counter);
+        if (!loopMember->ifHidden)  {
+            memberCounter++;
+            if (memberCounter == soughtMemberIndex)  {
+                if (loopMember->memberWindow == NULL)  return NULL;
+                else if (loopMember->memberWindow->jamStatus == unjammed)  return NULL;
+                else  return loopMember->memberWindow;
+    }   }   }
+    
+    return NULL;    // should never happen
+}
+
+
+ccFloat getBIFnumArg(ccInt argNum, ccFloat argMin, ccFloat argMax)
+{
+    window *argWindow = getBIFmember(argNum);
+    
+    if (argWindow == NULL)  setError(void_member_err, pcCodePtr-1);
+    else if ((argWindow->variable_ptr->type == bool_type) || (argWindow->variable_ptr->type > double_type))
+        setError(not_a_number_err, pcCodePtr-1);
+    else if (argWindow->width != 1)  setError(multiple_indices_not_allowed_err, pcCodePtr-1);
+    
+    else  {
+        loadDoubleRegister(argWindow->variable_ptr, argWindow->offset);
+        if (!((doubleRegister >= argMin) && (doubleRegister <= argMax)))  setError(out_of_range_err, pcCodePtr-1);     }
+    
+    return doubleRegister;
+}
+
+
+bool getBIFboolArg(ccInt argNum)
+{
+    window *argWindow = getBIFmember(argNum);
+    
+    if (argWindow == NULL)  setError(void_member_err, pcCodePtr-1);
+    else if (argWindow->variable_ptr->type != bool_type)  setError(type_mismatch_err, pcCodePtr-1);
+    else if (argWindow->width != 1)  setError(multiple_indices_not_allowed_err, pcCodePtr-1);
+    
+    else  loadBoolRegister(argWindow->variable_ptr, argWindow->offset);
+    
+    return boolRegister;
+}
+
+
+void writeBIFintArg(ccInt argNum, ccInt theNum)
+{
+    window *argWindow = getBIFmember(argNum);
+    
+    if (argWindow == NULL)  return;
+    else if (argWindow->variable_ptr->type > double_type)  setError(type_mismatch_err, pcCodePtr-1);
+    else if (argWindow->width != 1)  setError(multiple_indices_not_allowed_err, pcCodePtr-1);
+    
+    else  {
+        doubleRegister = (ccFloat) theNum;
+        saveDoubleRegister(argWindow->variable_ptr, argWindow->offset);   }
+}
+
+
+window *getBIFstringArg(ccInt argNum)
+{
+    window *argWindow = getBIFmember(argNum);
+    variable *argVar;
+    
+    if (argWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return NULL;  }
+    argVar = argWindow->variable_ptr;
+    
+    if (argVar->type == string_type)  {
+        if (argWindow->width != 1)  setError(multiple_indices_not_allowed_err, pcCodePtr-1);
+        else  return LL_member(argVar, argWindow->offset+1)->memberWindow;     }
+    
+    else if ((argVar->type == array_type) && (argVar->arrayDepth == 1) && (argVar->eventualType == char_type))  {
+        return LL_member(argVar, 1)->memberWindow;     }
+    
+    else if (argVar->type == char_type)  {
+        return argWindow;     }
+    
+    else  setError(string_expected_err, pcCodePtr-1);
+    
+    return NULL;   
+}
+
+
+
+void _built_in_function()
+{
+    view holdBIFArgsView;
+    void(*theBuiltInFunction)(void);
+    ccInt fList = -1, functionID;
+    
+    const Cfunction *functionLists[2] = { inbuiltCfunctions, userCfunctions };
+    const int functionsNum[2] = { inbuiltCfunctionsNum, userCfunctionsNum };
+    const char **functionArgs[2] = { inbuiltCfunctionArgs, userCfunctionArgs };
+    
+    
+        // read in the function ID
+    
+    functionID = *pcCodePtr;
+    pcCodePtr++;
+/*    callNumericFunction(int_type);
+    if (errCode != passed)  return;*/
+    
+    if (functionID < 0)  {  fList = 0; functionID = -functionID + 1;  }
+    else if (functionID < 0)  {  fList = 1; functionID--;  }
+    if ((fList < 0) || (functionID >= functionsNum[fList]))
+        {  setError(nonexistent_C_function_err, pcCodePtr);  return;  }
+    
+//    theBuiltInFunction = BuiltInFunctionJumpTable[functionID];
+    
+    
+        // get the argument variable
+    
+    callBytecodeFunction();
+    if (errCode != passed)  return;
+    
+    holdBIFArgsView = BIF_argsView;
+    BIF_argsView = searchView;
+    
+    
+        // run the function and set the return variable
+    
+    returnView.windowPtr = NULL;
+    theBuiltInFunction();
+    
+    GL_Object.type = BIF_Types[functionID];
+    GL_Path.stemMember = NULL;
+    
+    
+        // restore the old args variable
+    
+    BIF_argsView = holdBIFArgsView;
+}
+
+
+
+// Jump tables for the built-in functions and variables.
+
+void(*BuiltInFunctionJumpTable[])(void) =
+         {  NULL, NULL, NULL, NULL, NULL,
+                NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL,
+                NULL, NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL,
+                NULL, NULL, NULL, NULL, NULL  };
+
+ccInt bi_commands_num = sizeof(BuiltInFunctionJumpTable)/sizeof(void *);
+
+
+
+
+// The built-in Cicada library functions follow.
+
+// cclib_call():  runs a user-defined function in, or referenced in, userfn.c(pp)
+
+void cclib_call()
+{
+    window *functionNameWindow;
+    view argView;
+    argsType fArgs, oneArg;
+    ccInt functionID = 0, charCounter, argCounter, numArgs, numDataWindows, numStrings, theType, fList = 0;
+    bool match;
+    const char *thisArgs;
+    
+    const Cfunction *functionLists[2] = { inbuiltCfunctions, userCfunctions };
+    const int functionsNum[2] = { inbuiltCfunctionsNum, userCfunctionsNum };
+    const char **functionArgs[2] = { inbuiltCfunctionArgs, userCfunctionArgs };
+    
+    numArgs = numBIF_args();
+    if (numArgs < 1)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // get first argument:  the function name/ID number
+    
+    functionNameWindow = getBIFmember(1);
+    if (functionNameWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    if (functionNameWindow->width != 1)  {  setError(multiple_indices_not_allowed_err, pcCodePtr-1);  return;  }
+    
+    
+        // if the user passed a name, then find its position in one of the C functions lists
+    
+    theType = functionNameWindow->variable_ptr->type;
+    if (theType == string_type)    {
+        
+        window *functionNameCharWindow = LL_member(functionNameWindow->variable_ptr, functionNameWindow->offset+1)->memberWindow; 
+        linkedlist *functionNameString = &(functionNameCharWindow->variable_ptr->mem.data); 
+        if (errCode != passed)  return;   
+        
+        match = false;
+        for (fList = 0; fList < 2; fList++)  {
+            for (functionID = 0; functionID < functionsNum[fList]; functionID++)   {
+                const char *fName = functionLists[fList][functionID].functionName;
+                match = true;
+                for (charCounter = functionNameCharWindow->offset; 
+                                charCounter < functionNameCharWindow->offset+functionNameCharWindow->width; charCounter++)   {
+                    if ((*(char *) element(functionNameString, charCounter+1) != fName[charCounter]) ||
+                                        (functionLists[fList][functionID].functionName[charCounter] == 0))   {
+                        {  match = false;  break;  }    // 2nd condition to prevent crash if 0 is in the functionID string
+                }   }
+                if ((fName[charCounter] != 0) && (fName[charCounter] != ':'))  match = false;
+                if (match)  break;
+            }
+            if (match)  break;
+        }
+        
+        if (!match)  {  setError(nonexistent_C_function_err, pcCodePtr-1);  return;  }    }
+    
+    
+        // if the user passed the position directly, we have less work to do
+    
+    else if ((theType >= int_type) && (theType <= double_type))  {
+        
+        functionID = (ccInt) getBIFnumArg(1, (ccFloat) -functionsNum[0], (ccFloat) functionsNum[1]);
+        if (errCode == out_of_range_err)  errCode = nonexistent_C_function_err;
+        
+        if (functionID < 0)  {  fList = 0;  functionID *= -1;  }
+        else if (functionID > 0)  fList = 1;
+        else  errCode = out_of_range_err;
+        
+        
+        if (errCode != passed)  return;
+        functionID--;
+    }
+    
+    else  {  setError(string_expected_err, pcCodePtr-1);  return;  }
+    
+    thisArgs = functionArgs[fList][functionID];
+    
+    
+        // Count the number of primitive arrays to pass to the function (note that variables count as arrays of 1)
+    
+    extCallMode = true;
+    
+    if (CargType(thisArgs, 0) == 'a')  {
+        numDataWindows = 1;
+        numStrings = 0;     }
+    else  {
+        numDataWindows = numStrings = 0;
+        for (argCounter = 2; argCounter <= numArgs; argCounter++)  {
+            const char argChar = CargType(thisArgs, argCounter-2);
+            if (argChar == 'w')  numDataWindows++;
+            else  {
+                argView.windowPtr = getBIFmember(argCounter);
+                if (argView.windowPtr != NULL)   {
+                    argView.offset = argView.windowPtr->offset;
+                    argView.width = argView.windowPtr->width;
+                    countDataLists(&argView, (void *) &numDataWindows, (void *) &numStrings);
+                    if (errCode != passed)  break;
+    }   }   }   }
+    if (errCode != passed)  {  extCallMode = false;  return;  }
+    
+    
+        // Allocate space both for our argument pointers and for the info list that Cicada provides.
+    
+    fArgs.num = numDataWindows+numStrings;
+    fArgs.p = (void **) malloc(fArgs.num*sizeof(char *));
+    fArgs.type = (ccInt *) malloc(fArgs.num*sizeof(ccInt));
+    fArgs.indices = (ccInt *) malloc(fArgs.num*sizeof(ccInt));
+    if ((fArgs.p == NULL) || (fArgs.type == NULL) || (fArgs.indices == NULL))
+        {  setError(out_of_memory_err, pcCodePtr-1);  extCallMode = false;  return;  }
+    
+    
+        // Now fill the argument pointer/info lists.
+    
+    if (CargType(thisArgs, 0) == 'a')  {
+        *(fArgs.p) = (void *) &BIF_argsView;
+        *(fArgs.type) = composite_type;
+        *(fArgs.indices) = 1;           }
+    else  {
+        oneArg = fArgs;
+        for (argCounter = 2; argCounter <= numArgs; argCounter++)  {
+            const char argChar = CargType(thisArgs, argCounter-2);
+            window *argWindow = getBIFmember(argCounter);
+            if (argChar == 'w')  {
+                *(oneArg.p) = (void *) getBIFmember(argCounter);
+                if (argWindow == NULL)  {
+                    *(oneArg.type) = no_type;
+                    *(oneArg.indices) = 0;      }
+                else  {
+                    *(oneArg.type) = argWindow->variable_ptr->type;
+                    *(oneArg.indices) = argWindow->width;       }
+                incrementArg(&oneArg);
+            }
+            else  {
+                argView.windowPtr = argWindow;
+                if (argView.windowPtr != NULL)  {
+                    argView.offset = argView.windowPtr->offset;
+                    argView.width = argView.windowPtr->width;
+                    argvFillHandles(&argView, (void *) &oneArg, NULL);
+                    if (errCode != passed)  break;
+    }   }   }   }
+    
+    
+        // store the return value of the function in intRegister
+    
+    if (errCode == passed)
+        intRegister = (ccInt) functionLists[fList][functionID].functionPtr(fArgs);
+    
+    
+        // fix the string windows (in case the string linked lists were resized) and clean up
+    
+    if (CargType(thisArgs, 0) != 'a')  {
+        oneArg = fArgs;
+        for (argCounter = 2; argCounter <= numArgs; argCounter++)  {
+            const char argChar = CargType(thisArgs, argCounter-2);
+            argView.windowPtr = getBIFmember(argCounter);
+            if (argChar == 'w')  incrementArg(&oneArg);
+            else if (argView.windowPtr != NULL)  {
+                argView.offset = argView.windowPtr->offset;
+                argView.width = argView.windowPtr->width;
+                argvFixStrings(&argView, (void *) &oneArg, NULL);
+    }   }   }
+    
+    free((void *) fArgs.p);
+    free((void *) fArgs.type);
+    free((void *) fArgs.indices);
+    
+    extCallMode = false;
+    
+    if (functionLists[fList][functionID].functionPtr != &cc_top)  {
+        if ((fList == 0) && (intRegister != 0))  setError(intRegister, pcCodePtr-1);        }
+}
+
+
+/*const char CargType(const char *argString, ccInt argNum)
+{
+    if (argString == NULL)  return 'd';
+    return argString[argNum];
+}
+
+
+void incrementArg(argsType *oneArg)
+{
+    (oneArg->p)++;
+    (oneArg->type)++;
+    (oneArg->indices)++;
+}*/
+
+
+
+// cclib_trap() catches runtime errors in its constructor, and allows execution to resume after the trap.
+// Uses the registers to return error/warning codes/indices/offsets.
+
+void cclib_trap()
+{
+    code_ref argCodeRef;
+    ccInt counter, codeNo;
+    bool ifErrorWasTrapped = false, holdDoPrintError = doPrintError, doClearError = true;
+    
+    
+        // run each code in our args constructor
+    
+    for (counter = 1; counter <= BIF_argsView.windowPtr->variable_ptr->codeList.elementNum; counter++)  {
+        
+        
+            // get a handle on the code
+        
+        argCodeRef = *(code_ref *) element(&(BIF_argsView.windowPtr->variable_ptr->codeList), counter);
+        argCodeRef.anchor = pcSearchPath;
+        refCodeRef(&argCodeRef);   // in case bE() changes something
+        
+        doPrintError = (argCodeRef.code_ptr[0] == code_marker);
+        if (doPrintError)  {
+            doClearError = (argCodeRef.code_ptr[1] != code_marker);
+            if (doClearError)  codeNo = 1;
+            else  codeNo = 2;       }
+        else  codeNo = 0;
+        
+        
+            // run the code
+        
+        warningCode = passed;
+        beginExecution(&argCodeRef, true, BIF_argsView.offset, BIF_argsView.width, codeNo);
+        derefCodeRef(&argCodeRef);
+        if (errCode == return_flag)  errCode = passed;
+        
+        
+            // print errors/warnings if we are instructed to do so
+        
+        if ((errCode != passed) || (warningCode != passed))  {
+            
+            if (doPrintError)  {
+                
+                storedCodeType *errorBaseScript;
+                ccInt errIndexToPrint, errCharNum = 0;
+                code_ref *errScriptToPrint;
+                
+                if (errCode != passed)  {  errIndexToPrint = errIndex;  errScriptToPrint = &errScript;  }
+                else  {  errIndexToPrint = warningIndex;  errScriptToPrint = &warningScript;  }
+                
+                errorBaseScript = storedCode(errScriptToPrint->PLL_index);
+                if (errorBaseScript->opCharNum != NULL)  errCharNum = errorBaseScript->opCharNum[
+                                   errIndexToPrint + (ccInt) (errScriptToPrint->code_ptr - errorBaseScript->bytecode) - 1] - 1;
+                
+                printError(errorBaseScript->fileName, -1, errorBaseScript->sourceCode, errCharNum, false, errorBaseScript->compilerID);
+            }
+            
+            if (errCode != passed)  {  intRegister = errCode;  if (doClearError)  errCode = passed;  }
+            else  intRegister = -warningCode;
+            if (doClearError)  warningCode = passed;
+            
+            ifErrorWasTrapped = true;
+            if (intRegister > passed)  break;       // break if it was an error that stops execution
+    }   }
+    
+    
+        // clear intRegister if no error and no warning
+    
+    if (!ifErrorWasTrapped)  intRegister = passed;
+    
+    doPrintError = holdDoPrintError;
+}
+
+
+
+// throw() generates an error.  throw(errCode[, errScript[, errIndex[, ifWarning]]])
+
+void cclib_throw()
+{
+    window *paramWindows[] = { NULL, NULL, NULL, NULL, NULL };
+    code_ref *targetCodeRef = &PCCodeRef;
+    ccInt numArgs, cA, *holdPC;
+    ccInt theArgs[] = { 0, 0, 1, (ccInt) (pcCodePtr-1 - PCCodeRef.code_ptr + 1), false };
+    ccInt argsMin[] = { ccIntMin, 0, 1, 1, 0 };
+    ccInt argsMax[] = { ccIntMax, 0, 1, 1, 1 };
+    code_ref *errorScript = &errScript;
+    
+    numArgs = numBIF_args();
+    if ((numArgs < 1) || (numArgs > 5))  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // read in the error code, throwing real errors if something's wrong with the argument
+    
+    for (cA = 0; cA < numArgs; cA++)    {
+        paramWindows[cA] = getBIFmember(cA+1);
+        if (paramWindows[cA] != NULL)  {
+            
+            if (cA == 3)  {
+                holdPC = pcCodePtr;
+                pcCodePtr = targetCodeRef->code_ptr;
+                runSkipMode(0);
+                argsMax[3] = (ccInt) (pcCodePtr - targetCodeRef->code_ptr);
+                pcCodePtr = holdPC;
+                if (errCode != passed)  return;     }
+            
+            if (cA != 1)    {
+                if (cA < 4)  theArgs[cA] = (ccInt) getBIFnumArg(cA+1, argsMin[cA], argsMax[cA]);
+                else  theArgs[cA] = (ccInt) getBIFboolArg(cA+1);
+                if (errCode != passed)  return;     }
+            else    {
+                argsMax[2] = paramWindows[cA]->variable_ptr->codeList.elementNum;
+                theArgs[3] = 1;       }
+            
+            if (((cA == 1) || (cA == 2)) && (paramWindows[1] != NULL))  {
+                targetCodeRef = (code_ref *) element(&(paramWindows[1]->variable_ptr->codeList), theArgs[2]);
+    }   }   }
+    
+    
+        // throw the error/warning
+    
+    if (theArgs[4] == 0)  {
+        errCode = theArgs[0];
+        errIndex = theArgs[3];
+        errorScript = &errScript;       }
+    
+    else  {
+        warningCode = theArgs[0];
+        warningIndex = theArgs[3];
+        errorScript = &warningScript;       }
+    
+    if (errorScript->code_ptr != NULL)  derefCodeRef(errorScript);
+    *errorScript = *targetCodeRef;
+    errorScript->anchor = NULL;
+    refCodeRef(errorScript);
+}
+
+
+// cclib_transform() takes bytecode and stores it in Cicada's code registry.
+// Checks the code first to make sure it won't crash the interpreter.
+
+void cclib_transform()
+{
+    linkedlist *inputStringLL, *tempString;
+    member *loopMember;
+    window *compiledCodeWindow = NULL, *pathWindow = NULL, *inputStringWindow, *drawPathTo;
+    variable *pathVariable = NULL;
+    searchPath *newCodePath, *newCodePathStem = pcSearchPath;
+    ccInt pathVarMemberCounter, firstPathVarMember = 0, counter, loopArg, loopCodeWord, rtrn;
+    ccInt codeIndex, numArgs, dummy, memberOffset, fileNameLength = 0, sourceCodeLength = 0, opCharNumLength = 0;
+    ccInt *holdPCCodePtr, *codeEntryPtr, *holdStartCodePtr, *holdEndCodePtr, *opCharNum = NULL, theOpChar;
+    char *fileName = NULL, *sourceCode = NULL;
+    char **lastArgs[3] = { &fileName, &sourceCode, (char **) &opCharNum };
+    ccInt *lastArgLengths[3] = { &fileNameLength, &sourceCodeLength, &opCharNumLength };
+    code_ref holdPCCodeRef;
+    
+    numArgs = numBIF_args();
+    if ((numArgs < 1) || (numArgs > 6))  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // check & defragment the bytecode string
+    
+    inputStringWindow = getBIFstringArg(1);
+    if (errCode != passed)  return;
+    if (inputStringWindow->width == 0)  {  intRegister = passed;  return;  }
+    
+    inputStringLL = &(inputStringWindow->variable_ptr->mem.data);
+    rtrn = defragmentLinkedList(inputStringLL);
+    if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    if (inputStringWindow->width % sizeof(ccInt) != 0)  {  setError(library_argument_err, pcCodePtr-1);  return;  }
+    
+    
+        // get the destination function (argument 2)
+    
+    if (numArgs >= 2)  {
+        compiledCodeWindow = getBIFmember(2);
+        if (compiledCodeWindow != NULL)  {
+            if (compiledCodeWindow->variable_ptr->type != composite_type)  {  setError(not_a_function_err, pcCodePtr-1);  return;  }
+            if (compiledCodeWindow->width != 1)  {  setError(multiple_indices_not_allowed_err, pcCodePtr-1);  return;  }
+    }   }
+    
+    
+        // if a code path was provided, read that too
+    
+    if (numArgs >= 3)  {
+        pathWindow = getBIFmember(3);
+        if (pathWindow != NULL)    {
+            pathVariable = pathWindow->variable_ptr;
+            
+            if (pathWindow->variable_ptr->type < composite_type)  {  setError(not_composite_err, pcCodePtr-1);  return;  }
+            if (pathWindow->width != 1)  {  setError(multiple_indices_not_allowed_err, pcCodePtr-1);  return;  }
+            
+            newCodePathStem = NULL;
+            pathVarMemberCounter = 0;
+            while (1 == 1)  {
+                pathVarMemberCounter++;
+                rtrn = findMemberIndex(pathVariable, 0, pathVarMemberCounter, &loopMember, &dummy, &memberOffset, false);
+                if (rtrn == invalid_index_err)  break;
+                if (!loopMember->ifHidden)  {
+                    if (loopMember->memberWindow != NULL)  {
+                        firstPathVarMember = pathVarMemberCounter;
+                        break;
+    }   }   }   }   }
+    
+    
+        // the last three optional arguments help to flag transform/runtime errors in the code
+    
+    for (loopArg = 4; loopArg <= numArgs; loopArg++)  {
+    if (getBIFmember(loopArg) != NULL)  {
+        window *tempStringWindow = getBIFstringArg(loopArg);
+        if (errCode != passed)  return;
+        
+        tempString = &(tempStringWindow->variable_ptr->mem.data);
+        rtrn = defragmentLinkedList(tempString);
+        if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+        
+        *lastArgLengths[loopArg-4] = tempStringWindow->width;
+        if (tempStringWindow->width == 0)  {
+            *lastArgs[loopArg-4] = (char *) element(tempString, 0);     }
+        else  {
+            *lastArgs[loopArg-4] = (char *) element(tempString, tempStringWindow->offset+1);
+    }}  }
+    
+    if (opCharNum != NULL)  {
+        if (sourceCode == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+        if (inputStringWindow->width != opCharNumLength)  {  setError(out_of_range_err, pcCodePtr-1);  return;  }
+        for (loopCodeWord = 0; loopCodeWord < opCharNumLength/sizeof(ccInt); loopCodeWord++)  {
+        if ((opCharNum[loopCodeWord] < 1) || (opCharNum[loopCodeWord] > sourceCodeLength))  {
+        if (sourceCodeLength > 0)  {            // even a blank script has an end-of-file token --> char #1 
+            setError(out_of_range_err, pcCodePtr-1);
+            return;
+    }   }}}
+    
+    else if (sourceCode != NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    
+    
+        // store some important variables since we need to overwrite these temporarily while checking the bytecode
+    
+    holdPCCodePtr = pcCodePtr;
+    holdStartCodePtr = startCodePtr;
+    holdEndCodePtr = endCodePtr;
+    holdPCCodeRef = PCCodeRef;
+    
+    
+        // set the PC at the beginning of the bytecode, and run it in 'check' mode
+    
+    startCodePtr = LL_int(inputStringLL, inputStringWindow->offset+1);
+    endCodePtr = startCodePtr + (ccInt) ceil(1.*inputStringWindow->width/sizeof(ccInt));
+    pcCodePtr = startCodePtr;
+    PCCodeRef.anchor = NULL;
+    PCCodeRef.code_ptr = startCodePtr;
+    
+    checkBytecode();
+    
+    if ((errCode != passed) && (doPrintError))  {
+        if (opCharNum == NULL)  theOpChar = 0;
+        else  theOpChar = opCharNum[errIndex-1]-1;
+        printError(fileName, fileNameLength, sourceCode, theOpChar, false, 1);
+        
+        doPrintError = false;        }
+    
+    
+        // restore the important variables
+    
+    PCCodeRef = holdPCCodeRef;
+    pcCodePtr = holdPCCodePtr;
+    startCodePtr = holdStartCodePtr;
+    endCodePtr = holdEndCodePtr;
+    
+    if (errCode != passed)  return;
+    
+    
+        // OK, it worked.  Make a new anchor for the code.
+    
+    if (newCodePathStem != NULL)  refPath(newCodePathStem);       // temporarily over-reference each new path as we create it
+    if (firstPathVarMember != 0)    {
+        
+        pathVarMemberCounter = firstPathVarMember-1;
+        while (1 == 1)  {
+            pathVarMemberCounter++;
+            rtrn = findMemberIndex(pathVariable, 0, pathVarMemberCounter, &loopMember, &dummy, &memberOffset, false);
+            if (rtrn == invalid_index_err)  break;
+            if ((!loopMember->ifHidden) && (loopMember->memberWindow != NULL))  {
+                rtrn = drawPath(&newCodePath, loopMember->memberWindow, newCodePathStem, 1, PCCodeRef.PLL_index);
+                if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+                refPath(newCodePath);                               // so it doesn't get deleted by a later path in the same window
+                derefPath(&newCodePathStem);
+                newCodePathStem = newCodePath;
+    }   }   }
+    
+    if (compiledCodeWindow != NULL)  drawPathTo = compiledCodeWindow;
+    else  drawPathTo = PCCodeRef.anchor->jamb;
+    
+    rtrn = drawPath(&newCodePath, drawPathTo, newCodePathStem, 1, PCCodeRef.PLL_index);
+    if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+    refPath(newCodePath);
+    derefPath(&newCodePathStem);
+    
+    
+        // wipe up any existing codes in our function
+    
+    if (compiledCodeWindow != NULL)  {
+        for (counter = 1; counter <= compiledCodeWindow->variable_ptr->codeList.elementNum; counter++)
+            derefCodeRef((code_ref *) element(&(compiledCodeWindow->variable_ptr->codeList), counter));
+        deleteElements(&(compiledCodeWindow->variable_ptr->codeList), 1, compiledCodeWindow->variable_ptr->codeList.elementNum);    }
+    
+    
+        // add our new code to the Registry..
+    
+    rtrn = addCode(LL_int(inputStringLL, inputStringWindow->offset+1), &codeEntryPtr, &codeIndex,
+            (ccInt) ceil(1.*inputStringWindow->width/sizeof(ccInt)), fileName, fileNameLength, sourceCode, opCharNum, sourceCodeLength, 1);
+    if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+    
+    
+        // and to the code list of the function
+    
+    if (compiledCodeWindow != NULL)  {
+        rtrn = addCodeRef(&(compiledCodeWindow->variable_ptr->codeList), newCodePath, codeEntryPtr, codeIndex);
+        if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }        }
+    
+    derefCodeList(&codeRegister);
+    
+    resizeLinkedList(&codeRegister, 0, false);
+    rtrn = addCodeRef(&codeRegister, newCodePath, codeEntryPtr, codeIndex);
+    if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+
+    derefPath(&newCodePath);
+    
+    GL_Object.codeList = &codeRegister;
+    codeNumber = 1;
+}
+
+
+
+// springCleaning() removes inaccessible memory (with 0 arguments), or alternatively prunes hidden members from a variable (1 arg).
+
+void springCleaning()
+{
+    if (numBIF_args() == 0)  combVariables();
+    
+    else if (numBIF_args() == 1)  {
+        window *theWindow = getBIFmember(1);
+        ccInt loopMember;
+        
+        if (theWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+        if (theWindow->variable_ptr->type != composite_type)  {  setError(not_composite_err, pcCodePtr-1);  return;  }
+        
+        for (loopMember = theWindow->variable_ptr->mem.members.elementNum; loopMember >= 1; loopMember--)  {
+        if (LL_member(theWindow->variable_ptr, loopMember)->ifHidden)  {
+            removeMember(theWindow->variable_ptr, loopMember);
+            if (errCode != passed)  return;
+    }   }}
+    
+    else  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+}
+
+
+
+// type() returns the type of a given variable, or of one of the members of that variable (member index is argument 2)
+
+void cclib_type()
+{
+    window *hostWindow;
+    ccInt numArgs = numBIF_args();
+
+
+        // get the variable (arg 1)
+    
+    if ((numArgs < 1) || (numArgs > 2))  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    hostWindow = getBIFmember(1);
+    if (hostWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    
+    
+        // return the requested piece of information
+    
+    if (numArgs == 1)  intRegister = hostWindow->variable_ptr->type;
+    
+    else if (hostWindow->variable_ptr->type == composite_type)  {
+        ccInt memberIndex = getBIFnumArg(2, 1., (ccFloat) hostWindow->variable_ptr->mem.members.elementNum);
+        if (errCode == passed)  {
+            intRegister = LL_member(hostWindow->variable_ptr, memberIndex)->type;
+    }   }
+    
+    else  setError(not_composite_err, pcCodePtr-1);
+}
+
+
+
+// member_ID() returns the ID number of a given member
+// (corresponding to the respective entry in the allNames string returned by the compiler)
+
+void cclib_member_ID()
+{
+    window *hostWindow;
+    ccInt memberIndex, memberNumber, entryOffset, rtrn;
+    member *soughtMember;
+    
+    if (numBIF_args() != 2)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // get the variable containing the member (arg 1)
+    
+    hostWindow = getBIFmember(1);
+    if (hostWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    if (hostWindow->variable_ptr->type < composite_type)  {  setError(type_mismatch_err, pcCodePtr-1);  return;  }
+    
+    
+        // get the member index -- arg 2
+    
+    memberIndex = (ccInt) getBIFnumArg(2, 1., (ccFloat) hostWindow->variable_ptr->mem.members.elementNum);
+    if (errCode != passed)  return;
+    rtrn = findMemberIndex(hostWindow->variable_ptr, 0, memberIndex, &soughtMember, &memberNumber, &entryOffset, false);
+    if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+    
+    
+        // return the ID number
+    
+    intRegister = soughtMember->memberID;
+}
+
+
+
+// cclib_bytecode() extracts variable or member codes and returns them in stringRegister
+
+void cclib_bytecode()
+{
+    window *hostWindow;
+    linkedlist *codeRefsList = NULL;
+    ccInt memberNumber, loopCode, *holdPC, numArgs = numBIF_args(), rtrn;
+    
+    if ((numArgs < 1) || (numArgs > 2))
+        {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // load the variable containing the member or variable code (arg 1)
+    
+    hostWindow = getBIFmember(1);
+    if (hostWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    if (hostWindow->variable_ptr->type != composite_type)  {  setError(not_composite_err, pcCodePtr-1);  return;  }
+    
+    
+        // if it's something about a member we want to know, then we have to provide the member number (arg 2)
+    
+    if (numArgs == 1)
+        codeRefsList = (linkedlist *) &(hostWindow->variable_ptr->codeList);
+    
+    else  {
+        memberNumber = (ccInt) getBIFnumArg(2, 1., (ccFloat) hostWindow->variable_ptr->mem.members.elementNum);
+        if (errCode == passed)  {
+            codeRefsList = (linkedlist *) &(LL_member(hostWindow->variable_ptr, memberNumber)->codeList);
+    }   }
+    
+    if (errCode != passed)  return;
+    
+    
+        // get each code sequentially into the string (if there is more than one then they will be separated by 0s)
+    
+    rtrn = resizeLinkedList(&stringRegister, 0, false);
+    if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+    
+    for (loopCode = 1; loopCode <= codeRefsList->elementNum; loopCode++)  {
+        
+        code_ref *soughtCodeRef = (code_ref *) element(codeRefsList, loopCode);
+        ccInt oldTop = stringRegister.elementNum;
+        
+        
+            // copy the bytecode into a string (this includes the final 0)
+        
+        holdPC = pcCodePtr;
+        pcCodePtr = soughtCodeRef->code_ptr;
+        runSkipMode(0);    // should always work (code's already been checked); just in case, check errCode (index would be off, though)
+        if (errCode != passed)  {  pcCodePtr = holdPC;  return;  }
+        pcCodePtr++;
+        
+        rtrn = addElements(&stringRegister, (ccInt) (pcCodePtr-soughtCodeRef->code_ptr)*sizeof(ccInt), false);
+        pcCodePtr = holdPC;
+        if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+        
+        setElements(&stringRegister, oldTop+1, oldTop+stringRegister.elementNum, (void *) soughtCodeRef->code_ptr);
+    }
+}
+
+
+
+
+// cclib_top() returns the number of indices (things that can be rereferenced by [..]) contained in the given variable.
+// This is not the same as the number of members!  Arrays have only one width-N member; strings only one per searchView.offset. 
+
+void cclib_top()
+{
+    view viewToTop;
+    
+    if (numBIF_args() != 1)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // get the argument variable
+    
+    viewToTop.windowPtr = getBIFmember(1);
+    if (viewToTop.windowPtr == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    if (viewToTop.windowPtr->variable_ptr->type < string_type)  {  setError(not_composite_err, pcCodePtr-1);  return;  }
+    viewToTop.offset = viewToTop.windowPtr->offset;
+    
+    intRegister = numMemberIndices(&viewToTop);
+}
+
+
+// cclib_size() returns the total number of bytes contained in its argument.  bytes_num = size(window_to_size)
+
+void cclib_size()
+{
+    view viewToSize;
+    ccInt dataSize = 0, sizeofStrings = 0, ssMode, numArgs = numBIF_args();
+    bool trueSize = false;
+    
+    
+        // read in the arguments
+        // optional arg 2:  whether or not to double-count overlapping memory
+    
+    if ((numArgs != 1) && (numArgs != 2))  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    viewToSize.windowPtr = getBIFmember(1);
+    
+    if (numArgs == 2)  {
+        trueSize = getBIFboolArg(2);
+        if (errCode != passed)  return;     }
+
+
+        // calculate the size
+    
+    if (viewToSize.windowPtr != NULL)  {
+        viewToSize.offset = viewToSize.windowPtr->offset;
+        viewToSize.width = viewToSize.windowPtr->width;
+        
+        if (!trueSize)  sizeView(&viewToSize, &dataSize, &sizeofStrings);
+        else  {
+        for (ssMode = 1; ssMode <= 3; ssMode++)  {
+            storageSizeView(&viewToSize, (void *) &dataSize, (void *) &ssMode);
+        }}
+        
+        intRegister = dataSize+sizeofStrings;       }
+    
+    else  intRegister = 0;
+}
+
+
+
+// The following mathematical functions all invoke doMath(),
+// and each is paired with a second function that does the actual computation.
+// All math is done in floating point.
+
+void cclib_abs()  {  doMath(&doAbs);  }
+ccFloat doAbs(ccFloat argument)  {  return (ccFloat) fabs((double) argument);  }
+
+void cclib_floor()  {  doMath(&doFloor);  }
+ccFloat doFloor(ccFloat argument)  {  return floor(argument);  }
+
+void cclib_ceil()  {  doMath(&doCeil);  }
+ccFloat doCeil(ccFloat argument)  {  return ceil(argument);  }
+
+void cclib_log()  {  doMath(&doLog);  }
+ccFloat doLog(ccFloat argument)  {  return log(argument);  }
+
+void cclib_cos()  {  doMath(&doCos);  }
+ccFloat doCos(ccFloat argument)  {  return cos(argument);  }
+
+void cclib_sin()  {  doMath(&doSin);  }
+ccFloat doSin(ccFloat argument)  {  return sin(argument);  }
+
+void cclib_tan()  {  doMath(&doTan);  }
+ccFloat doTan(ccFloat argument)  {  return tan(argument);  }
+
+void cclib_acos()  {  doMath(&doArccos);  }
+ccFloat doArccos(ccFloat argument)  {  return acos(argument);  }
+
+void cclib_asin()  {  doMath(&doArcsin);  }
+ccFloat doArcsin(ccFloat argument)  {  return asin(argument);  }
+
+void cclib_atan()  {  doMath(&doArctan);  }
+ccFloat doArctan(ccFloat argument)  {  return atan(argument);  }
+
+void doMath(ccFloat(MathFunction)(ccFloat argument))
+{
+    if (numBIF_args() != 1)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    doubleRegister = getBIFnumArg(1, -DBL_MAX, DBL_MAX);
+    if (errCode != passed)  return;
+    
+    doubleRegister = MathFunction(doubleRegister);
+}
+
+
+// cclib_random() generates a random number and returns it in doubleRegister
+
+void cclib_random()
+{
+    if (numBIF_args() != 0)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+
+    doubleRegister = ((ccFloat) rand())/RAND_MAX + ((ccFloat) rand())/RAND_MAX/RAND_MAX;
+}
+
+
+
+// cclib_load() reads the contents of a file
+
+void cclib_load()
+{
+    window *fileNameWindow;
+    linkedlist *fileNameLL;
+    ccInt rtrn;
+    char *fileString;
+    
+    
+        // get the name of the file (arg 1)
+    
+    if (numBIF_args() > 1)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    if (numBIF_args() == 0)  {
+        size_t defsSize = strlen(defsScript);
+        ccInt rtrn = resizeLinkedList(&stringRegister, (ccInt) defsSize, false);
+        if (rtrn == passed)  rtrn = defragmentLinkedList(&stringRegister);
+        if (rtrn == passed)  memcpy(element(&stringRegister, 1), defsScript, defsSize);
+    }
+    
+    else  {
+        fileNameWindow = getBIFstringArg(1);
+        if (errCode != passed)  return;
+        fileNameLL = &(fileNameWindow->variable_ptr->mem.data);
+        
+        
+            // copy the file name, plus a null terminator, into a separate buffer
+        
+        fileString = (char *) malloc(fileNameWindow->width+1);
+        if (fileString == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+        getElements(fileNameLL, fileNameWindow->offset+1, fileNameWindow->width, fileString);
+        fileString[fileNameWindow->width] = 0;
+        
+        
+            // try to open the file; throw an error if unsuccessful
+        
+        rtrn = loadFile(fileString, &stringRegister, false);
+        if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+        
+        free((void *) fileString);      // clean up
+    }
+}
+
+
+// loadFile():  a routine to load a text file into a linked list
+
+ccInt loadFile(const char *fileString, linkedlist *textString, bool addFinalNull)
+{
+    ccInt fileSize, LLsize, bytesRead, rtrn;
+    FILE *fileToRead;
+    
+    
+        // try to open the file; throw an error if unsuccessful
+    
+    fileToRead = fopen(fileString, "rb");
+    if (fileToRead == NULL)  return IO_error;
+    
+    
+        // get the size of the file
+    
+    fseek(fileToRead, 0, SEEK_END);
+    fileSize = (ccInt) ftell(fileToRead);
+    rewind(fileToRead);
+    
+    
+        // allocate memory and read the file
+    
+    LLsize = fileSize;
+    if (addFinalNull)  LLsize++;
+    rtrn = resizeLinkedList(textString, LLsize, false);
+    if (rtrn == passed)  rtrn = defragmentLinkedList(textString);
+    if (rtrn != passed)  return rtrn;
+    
+    if (fileSize > 0)    {
+        bytesRead = (ccInt) fread(element(textString, 1), 1, (size_t) fileSize, fileToRead);
+        if (bytesRead != fileSize)  {
+            fclose(fileToRead);
+            return IO_error;
+    }   }
+    
+    rtrn = fclose(fileToRead);
+    if (rtrn != 0)  rtrn = IO_error;
+    
+    if (addFinalNull)  *LL_Char(textString, LLsize) = 0;
+    
+    return rtrn;
+}
+
+
+
+// cclib_save() saves a string into a file.  Overwrites the file if it already exists.
+
+void cclib_save()
+{
+    FILE *fileToWrite;
+    window *fileNameWindow, *stringWindow;
+    linkedlist *fileNameLL, *stringLL = NULL;
+    ccInt bytesWritten, rtrn;
+    char *fileString, closeFileRetrn;
+    
+    if (numBIF_args() != 2)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // get arguments:  file name, string to write
+    
+    fileNameWindow = getBIFstringArg(1);
+    if (errCode != passed)  return;
+    stringWindow = getBIFstringArg(2);
+    if (errCode != passed)  return;   
+    
+    fileNameLL = &(fileNameWindow->variable_ptr->mem.data);
+    stringLL = &(stringWindow->variable_ptr->mem.data);
+    
+    
+        // defragment the string; copy the file name into a separate buffer
+    
+    rtrn = defragmentLinkedList(stringLL);
+    if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    
+    fileString = (char *) malloc(fileNameWindow->width+1);
+    if (fileString == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    getElements(fileNameLL, fileNameWindow->offset+1, fileNameWindow->offset+fileNameWindow->width, fileString);
+    fileString[fileNameWindow->width] = 0;
+    
+    
+        // try to open the file; throw error if unsuccessful
+    
+    fileToWrite = fopen(fileString, "wb");
+    if (fileToWrite == NULL)  {  setError(IO_error, pcCodePtr-1);  free((void *) fileString);  return;  }
+    
+    
+        // write the string to the file
+    
+    if (stringLL->elementNum > 0)  {
+        bytesWritten = (ccInt) fwrite(element(stringLL, stringWindow->offset+1), 1, stringWindow->width, fileToWrite);    }
+    else  bytesWritten = 0;
+    if (bytesWritten != stringWindow->width)  {  setError(IO_error, pcCodePtr-1);  }
+    
+    
+        // close the file
+    
+    closeFileRetrn = fclose(fileToWrite);
+    if ((errCode == passed) && (closeFileRetrn != 0))  {  setError(IO_error, pcCodePtr-1);  }
+    
+    free((void *) fileString);    // clean up
+}
+
+
+char *getCompilerString(window *stringsWindow, ccInt windowOffset, ccInt whichCommand)
+{
+    window *charsWindow = LL_member(stringsWindow->variable_ptr, windowOffset+whichCommand+1)->memberWindow;
+    linkedlist *charsLL = &(charsWindow->variable_ptr->mem.data);
+    
+    char *stringCopy = (char *) malloc(charsWindow->width+1);
+    if (stringCopy == NULL)  setError(out_of_memory_err, pcCodePtr-1);
+    else  {
+        getElements(charsLL, charsWindow->offset+1, charsWindow->offset+charsWindow->width, (void *) stringCopy);
+        stringCopy[charsWindow->width] = 0;     }
+    
+    return stringCopy;
+}
+
+
+
+
+// compile() generates bytecode from a script (a string).  Writes errors/warnings into the error/warning registers.
+
+void cclib_compile()
+{
+    window *textStringWindow, *varNamesWindow;
+    member *varNamesStringMember;
+    linkedlist *textString;
+    ccInt numArgs = numBIF_args(), nextVarName, rtrn;
+    char *scriptCopy;
+    
+    if (numArgs > 4)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // make sure the script ends with a 0 (which we will later take out) and lies in one contiguous block of memory
+    
+    textStringWindow = getBIFstringArg(1);
+    if (errCode != passed)  return;
+    textString = &(textStringWindow->variable_ptr->mem.data);
+    
+    
+        // add the trailing null character at the end of (our own copy of) the script
+    
+    scriptCopy = (char *) malloc(textStringWindow->width+1);
+    if (scriptCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    getElements(textString, textStringWindow->offset+1, textStringWindow->offset+textStringWindow->width, (void *) scriptCopy);
+    scriptCopy[textStringWindow->width] = 0;
+    
+    
+        // Run the compiler.  Store the error code/index (which may be zero -- no error).
+    
+    rtrn = compile(currentCompiler, (const char *) scriptCopy);
+    
+    if (((rtrn != passed) || (compilerWarning != passed)) && (doPrintError))  {
+        
+        char *fileString = NULL;
+        ccInt fileStringLength = -1;
+        
+        if (numArgs >= 2)  {
+        if (getBIFmember(2) != NULL)  {
+            window *fileStringWindow = getBIFstringArg(2);
+            if (errCode != passed)  {  if (numArgs > 0)  free((void *) scriptCopy);  return;  }
+            if (fileStringWindow->width > 0)  {
+                if (defragmentLinkedList(&(fileStringWindow->variable_ptr->mem.data)) != passed)  rtrn = out_of_memory_err;
+                else  {
+                    fileString = (char *) element(&(fileStringWindow->variable_ptr->mem.data), fileStringWindow->offset+1);
+                    fileStringLength = fileStringWindow->width;
+        }}  }   }
+        
+        if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+        else  setWarning(compilerWarning, pcCodePtr-1);
+        
+        printError(fileString, fileStringLength, (const char *) scriptCopy, errPosition-1, false, 1);
+        doPrintError = false;             }
+    
+    else if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+    
+    
+        // delete the null character we put in at the end of the string
+    
+    if (numArgs > 0)  free((void *) scriptCopy);
+    
+    if (errCode != passed)  return;
+    
+    
+        // store the bytecode string
+    
+    rtrn = resizeLinkedList(&stringRegister, currentCompiler->bytecode.elementNum * sizeof(ccInt), false);
+    if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    defragmentLinkedList(&stringRegister);
+    
+    if (currentCompiler->bytecode.elementNum > 0)
+        getElements(&(currentCompiler->bytecode), 1, currentCompiler->bytecode.elementNum, element(&stringRegister, 1));
+    
+    
+        // store the bytecode word -> text position mapping in the provided variable, if it was given
+    
+    if (numArgs >= 3)  {
+        window *opCharNumWindow = NULL, *arg3Window = getBIFmember(3);
+        linkedlist *opCharNumLL;
+        if (errCode != passed)  return;
+        
+        if (arg3Window != NULL)  {
+            resizeMember(LL_member(arg3Window->variable_ptr, arg3Window->offset+1), 1, currentCompiler->opCharNum.elementNum*sizeof(ccInt));
+            if (errCode == passed)  opCharNumWindow = getBIFstringArg(3);
+            if (errCode != passed)  return;
+            
+            opCharNumLL = &(opCharNumWindow->variable_ptr->mem.data);
+            rtrn = defragmentLinkedList(opCharNumLL);
+            if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+            
+            if (currentCompiler->opCharNum.elementNum > 0)  {
+                getElements(&(currentCompiler->opCharNum), 1, currentCompiler->opCharNum.elementNum,
+                        (void *) element(opCharNumLL, opCharNumWindow->offset+1));
+    }   }   }
+    
+    
+        // store the bytecode word -> text position mapping in the provided variable, if it was given
+    
+    if (numArgs >= 4)  {
+        varNamesWindow = getBIFmember(4);
+        if (errCode != passed)  return;
+        
+        if (varNamesWindow != NULL)  {
+            variable *varNamesVar = varNamesWindow->variable_ptr;
+            member *varNamesMember;
+            
+            if ((varNamesVar->eventualType != string_type) || (varNamesVar->arrayDepth != 1))
+                {  setError(library_argument_err, pcCodePtr-1);  return;  }
+            varNamesStringMember = LL_member(varNamesWindow->variable_ptr, varNamesWindow->offset+1);
+            
+            varNamesMember = LL_member(varNamesWindow->variable_ptr, 1);
+            nextVarName = varNamesMember->indices+1;
+            resizeMember(varNamesMember, 1, currentCompiler->varNames.elementNum);
+            if (errCode != passed)  return;
+            
+            if (varNamesMember->memberWindow != NULL)  {
+                variable *varNamesStringVar = varNamesMember->memberWindow->variable_ptr;
+                
+                while (currentCompiler->varNames.elementNum >= nextVarName)  {
+                    
+                    member *stringCharsMember = LL_member(varNamesStringVar, varNamesMember->memberWindow->offset+nextVarName);
+                    varNameType *oneVarName = (varNameType *) element(&(currentCompiler->varNames), nextVarName);
+                    
+                    resizeMember(stringCharsMember, 1, oneVarName->nameLength);
+                    setElements(&(stringCharsMember->memberWindow->variable_ptr->mem.data), stringCharsMember->memberWindow->offset+1,
+                                stringCharsMember->memberWindow->offset+oneVarName->nameLength, (void *) oneVarName->theName);
+                    
+                    nextVarName++;
+    }   }   }   }
+}
+
+
+
+
+// setCompiler() switches the compiler used by compile()
+ 
+/*void cclib_setCompiler()
+{
+    ccInt numArgs = numBIF_args(), rtrn;
+    
+    
+        // if we're just trying to switch compilers, allow that
+    
+    if (numArgs == 1)  {
+        whichCompiler = (ccInt) getBIFnumArg(1, 1., (ccFloat) allCompilers.elementNum);  
+        if (errCode == passed)  {
+            currentCompiler = *(compiler_type **) element(&allCompilers, whichCompiler);
+    }   }
+    
+    
+        // if we pass two arguments, that means that we're defining a new compiler
+    
+    else if (numArgs == 2)  {
+        window *argWindows[5], *arg1Window = getBIFmember(1), *arg2Window = getBIFmember(2), *arg1CompositeWindow;
+        member *argMembers[5], *oneArgMember, *arg1Member;
+        compiler_type *tempCompiler = NULL;
+        commandTokenType *cmdTokens;
+        ccInt numCommands, numOoOs, loopArg, loopCommand, *precedences, argMemberNumber, entryOffset, windowOffsets[5];
+        ccInt expectedType[5] = {  string_type, int_type, string_type, string_type, int_type  };
+        
+        if (arg1Window == NULL)  setError(void_member_err, pcCodePtr-1);
+        else if (arg2Window == NULL)  setError(void_member_err, pcCodePtr-1);
+        else if (arg1Window->variable_ptr->type != array_type)  setError(not_composite_err, pcCodePtr-1);
+        else if (arg2Window->variable_ptr->type != array_type)  setError(not_composite_err, pcCodePtr-1);
+        if (errCode != passed)  return;
+        
+        arg1Member = LL_member(arg1Window->variable_ptr, 1);
+        arg1CompositeWindow = arg1Member->memberWindow;
+
+        if (arg1CompositeWindow == NULL)  setError(void_member_err, pcCodePtr-1);
+        if (arg1CompositeWindow->variable_ptr->type != composite_type)  setError(not_composite_err, pcCodePtr-1);
+        if (errCode != passed)  return;
+        
+        for (loopArg = 0; loopArg < 5; loopArg++)  {
+            if (loopArg < 4)  {
+                findMemberIndex(arg1CompositeWindow->variable_ptr, 0, loopArg+1, &oneArgMember, &argMemberNumber, &entryOffset, false);
+                argWindows[loopArg] = oneArgMember->memberWindow;
+                windowOffsets[loopArg] = arg1Window->offset * arg1Member->indices;      }
+            else  {
+                argWindows[loopArg] = LL_member(arg2Window->variable_ptr, 1)->memberWindow;
+                windowOffsets[loopArg] = 0;         }
+            windowOffsets[loopArg] += argWindows[loopArg]->offset;
+            
+            if (errCode != passed)  return;
+            if (argWindows[loopArg] == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+            if (argWindows[loopArg]->variable_ptr->type != expectedType[loopArg])  {
+                if (expectedType[loopArg] == string_type)  setError(string_expected_err, pcCodePtr-1);
+                else  setError(not_a_number_err, pcCodePtr-1);
+                return;     }
+            
+            if (defragmentLinkedList(&(argWindows[loopArg]->variable_ptr->mem.data)) != passed)  {
+                setError(void_member_err, pcCodePtr-1);
+                return;         }
+            if (argWindows[loopArg]->width == 0)  argMembers[loopArg] = NULL;
+            else  argMembers[loopArg] = LL_member(argWindows[loopArg]->variable_ptr, windowOffsets[loopArg]+1);
+            
+            if (expectedType[loopArg] == string_type)  {
+            for (loopCommand = 0; loopCommand < argWindows[loopArg]->width; loopCommand++)  {
+                if (defragmentLinkedList(&(argMembers[loopArg][loopCommand].memberWindow->variable_ptr->mem.data)) != passed)  {
+                    setError(out_of_memory_err, pcCodePtr-1);
+                    return;
+        }   }}  }
+        
+        numCommands = arg1Member->indices;
+        numOoOs = LL_member(arg2Window->variable_ptr, 1)->indices;
+        if (numCommands == 0)  precedences = NULL;
+        else  precedences = LL_int(&(argWindows[1]->variable_ptr->mem.data), 1);
+        
+        cmdTokens = (commandTokenType *) malloc(numCommands*sizeof(commandTokenType));
+        
+        if (cmdTokens == NULL)  setError(out_of_memory_err, pcCodePtr-1);  
+        else  {
+            for (loopCommand = 0; loopCommand < numCommands; loopCommand++)  {
+                cmdTokens[loopCommand].cmdString =
+                        (const char *) getCompilerString(argWindows[0], windowOffsets[0], loopCommand);
+                cmdTokens[loopCommand].precedence = precedences[loopCommand];
+                cmdTokens[loopCommand].rtrnTypeString =
+                        (const char *) getCompilerString(argWindows[2], windowOffsets[2], loopCommand);
+                cmdTokens[loopCommand].translation =
+                        (const char *) getCompilerString(argWindows[3], windowOffsets[3], loopCommand);    }
+            
+            if (errCode == passed)  {
+                tempCompiler = newCompiler(cmdTokens, numCommands,
+                            LL_int(&(argWindows[4]->variable_ptr->mem.data), argWindows[4]->offset+1), numOoOs, &rtrn);
+                if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+                
+                else  {
+                    rtrn = addElements(&allCompilers, 1, false);
+                    if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+                    else  {
+                        currentCompiler = tempCompiler;
+                        whichCompiler = allCompilers.elementNum;
+                        *(compiler_type **) element(&allCompilers, whichCompiler) = tempCompiler;
+            }   }   }
+            
+            for (loopCommand = 0; loopCommand < numCommands; loopCommand++)  {
+                free((void *) cmdTokens[loopCommand].cmdString);
+                free((void *) cmdTokens[loopCommand].rtrnTypeString);
+                free((void *) cmdTokens[loopCommand].translation);        }
+            free((void *) cmdTokens);
+    }   }
+    
+        // zero args is allowed -- that means the user is just requesting the current compiler number
+    
+    else if (numArgs != 0)  setError(wrong_argument_count_err, pcCodePtr-1);
+    
+    intRegister = whichCompiler;
+}*/
+
+
+
+// cclib_input() copies input from the keyboard, up until the first end-of-line
+
+void cclib_input()
+{
+    ccInt counter, bytesRead, rtrn;
+    const ccInt fileReadBufferSize = 1000;
+    char charBuffer[1001], *readRetrn;
+    bool done;
+    
+//    if (numBIF_args() != 0)  {  cclib_print();  }
+    
+    rtrn = resizeLinkedList(&stringRegister, 0, false);
+    if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    
+    
+        // loop until all of the data has been read
+    
+    done = false;
+    do  {
+        
+            // load the data into the inlined buffer (on the stack)
+        
+        bytesRead = fileReadBufferSize;
+        readRetrn = fgets(charBuffer, fileReadBufferSize+1, stdin);
+        if (readRetrn == NULL)  {  setError(IO_error, pcCodePtr-1);  break;  }
+        for (counter = 0; counter < fileReadBufferSize; counter++)  {
+            if (*(charBuffer+counter) == '\n')  {
+                done = true;
+                bytesRead = counter;    // don't include the terminator
+                break;
+        }   }
+        
+        
+            // copy from the buffer into the string register
+        
+        rtrn = addElements(&stringRegister, bytesRead, false);         // will be contiguous if spareRoom = 0
+        if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+        setElements(&stringRegister, stringRegister.elementNum-bytesRead+1, stringRegister.elementNum, charBuffer);
+    }  while (!done);
+    
+    defragmentLinkedList(&stringRegister);
+}
+
+
+
+// cclib_find() searches a string for a substring, and returns its first/last appearance,
+// or the number of times it appears (without overlapping).
+
+void cclib_find()
+{
+    window *stringToSearchWindow, *soughtStringWindow;
+    linkedlist *stringToSearch, *soughtString = NULL;
+    char *strPtrToSearch, *soughtStrPtr;
+    ccInt numArgs, startingPosition, numMatches, charCounter, mode, matchStart, rtrn;
+    
+    numArgs = numBIF_args();
+    if ((numArgs < 2) || (numArgs > 4))
+        {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // load arguments:  the string to search within, then substring to look for
+    
+    stringToSearchWindow = getBIFstringArg(1);
+    if (errCode != passed)  return;
+    soughtStringWindow = getBIFstringArg(2);
+    if (errCode != passed)  return;   
+    
+    stringToSearch = &(stringToSearchWindow->variable_ptr->mem.data);
+    soughtString = &(soughtStringWindow->variable_ptr->mem.data);
+    
+    
+        // if argument 3 is present, load it -- it is the 'mode' (search forwards from beginning, backwards from end, or count)
+    
+    if (numArgs < 3)  {  mode = 1;  startingPosition = 1;  }
+    else  {
+        
+        mode = (ccInt) getBIFnumArg(3, -1., 1.);
+        
+        
+            // if argument 4 is present, load it -- that is the point in the big string to start looking/counting (defaults to beginning/end)
+        
+        if (numArgs < 4)  {
+            if (mode == -1)  startingPosition = stringToSearchWindow->width;
+            else  startingPosition = 1;         }
+        else  {
+            startingPosition = (ccInt) getBIFnumArg(4, 1., (ccFloat) (stringToSearchWindow->width-soughtStringWindow->width+1));
+    }   }
+    
+    if (errCode != passed)  return;
+    
+    
+        // prepare the return variable
+    
+    rtrn = defragmentLinkedList(stringToSearch);
+    if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    rtrn = defragmentLinkedList(soughtString);
+    if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    
+    
+        // get pointers to our two strings
+    
+    if (stringToSearchWindow->width == 0)  {  intRegister = 0;  return;  }
+    if (soughtStringWindow->width == 0)  {
+        if (mode == 0)  intRegister = 0;
+        else  intRegister = startingPosition;
+        return;     }
+    soughtStrPtr = (char *) element(soughtString, soughtStringWindow->offset+1);
+    strPtrToSearch = (char *) element(stringToSearch, stringToSearchWindow->offset+1);
+    
+    numMatches = 0;
+    
+    if (mode > -1)  {               // search forwards
+    for (matchStart = startingPosition-1; matchStart <= stringToSearchWindow->width-soughtStringWindow->width; matchStart++)  {
+        
+        for (charCounter = 0; charCounter < soughtStringWindow->width; charCounter++)  {
+        if (strPtrToSearch[matchStart+charCounter] != soughtStrPtr[charCounter])   {
+            break;
+        }}
+        
+        if (charCounter == soughtStringWindow->width)  {
+            if (mode == 1)   {  intRegister = matchStart+1;  return;   }
+            else  numMatches++;     // count
+    }}  }
+    
+    else    {                       // search backwards
+    for (matchStart = startingPosition-1; matchStart >= 0; matchStart--)  {
+        
+        for (charCounter = 0; charCounter < soughtStringWindow->width; charCounter++)  {
+        if (strPtrToSearch[matchStart+charCounter] != soughtStrPtr[charCounter])   {
+            break;
+        }}
+        
+        if (charCounter == soughtStringWindow->width)  {  intRegister = matchStart+1;  return;   }
+    }}
+    
+    if (mode == 0)  intRegister = numMatches;
+    else  intRegister = 0;     // if we were searching, rather than counting, then if we made it this far we found nothing
+}
+
+
+
+
+// cclib_read_string() copies data from a string into its subsequent argument variables
+
+/*void cclib_read_string()
+{
+    view windowView;
+    window *stringWindow;
+    linkedlist *theString;
+    ccInt counter, numArgs, oneLetterType;
+    char *stringPositionMarker, *holdString, *stringOverflow[2];
+    
+    numArgs = numBIF_args();
+    if (numArgs < 1)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // read in the source string:  argument 1
+    
+    stringWindow = getBIFstringArg(1);
+    if (errCode != passed)  return;
+    theString = &(stringWindow->variable_ptr->mem.data);   
+    
+    
+        // make a copy of the source string, just in case the copy process would overwrite the source string
+    
+    holdString = (char *) malloc(stringWindow->width+1);
+    if (holdString == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    getElements(theString, stringWindow->offset+1, stringWindow->offset+stringWindow->width, (void *) holdString);
+    holdString[stringWindow->width] = 0;
+    stringOverflow[0] = holdString+stringWindow->width;     // the end of the string
+    
+    
+        // get past any weird characters at the beginning
+    
+    stringPositionMarker = holdString;
+    oneLetterType = lettertype(stringPositionMarker);
+    while ((oneLetterType != a_symbol) && (oneLetterType != a_number) && (oneLetterType != a_letter)
+                    && (stringPositionMarker < stringOverflow[0]))  {
+        stringPositionMarker++;
+        oneLetterType = lettertype(stringPositionMarker);     }
+    
+    
+        // Read the string into the subsequent argument variables.  String variables are read up through the next space.
+    
+    for (counter = 2; counter <= numArgs; counter++)   {
+        windowView.windowPtr = getBIFmember(counter);
+        if (windowView.windowPtr != NULL)  {
+            windowView.offset = windowView.windowPtr->offset;
+            windowView.width = windowView.windowPtr->width;
+            readViewString(&windowView, (void *) &stringPositionMarker, stringOverflow);
+            if (warningCode != passed)  errIndex--;
+            if (errCode != passed)  {  free((void *) holdString);  return;  }
+    }   }
+    
+    
+        // Finally, check to see if there seem to be any left-over useful fields in the string -- if so, set a warning.
+    
+    oneLetterType = lettertype(stringPositionMarker);
+    while ((oneLetterType != a_symbol) && (oneLetterType != a_number)
+                    && (oneLetterType != a_letter) && (stringPositionMarker < stringOverflow[0]))  {
+        stringPositionMarker++;
+        oneLetterType = lettertype(stringPositionMarker);         }
+    
+    if ((stringPositionMarker != holdString+stringWindow->width) && (warningCode == passed))  {
+        stringOverflow[1] = stringPositionMarker;
+        if (stringOverflow[1] >= stringOverflow[0])  stringOverflow[1] = stringOverflow[0]-1;
+        setWarning(string_read_err, pcCodePtr-1);       }
+    
+    if ((warningCode != passed) && (doPrintError))  {
+        printError(NULL, -1, holdString, (ccInt) (stringOverflow[1]-holdString), true);
+        warningCode = passed;       }
+    
+    free((void *) holdString);      // clean up
+}*/
+
+
+
+// cclib_print_string() writes the contents of its arguments into a string.
+// Numeric data is written out in ASCII.
+
+/*void cclib_print_string()
+{
+    window *precisionWindow, *fieldWidthWindow, *stringWindow, *charWindow;
+    member *charMember;
+    view windowView;
+    char *stringPositionMarker;
+    ccInt dataSize, sizeofStrings, counter, numArgs, stringWindowPosition = 1, rtrn;
+    linkedlist tempPrintLL;
+    
+    numArgs = numBIF_args();
+    if (numArgs < 1)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+    
+    
+        // read in the (optional) field width and floating-point precision arguments; otherwise use default values
+    
+    fieldWidth = 0;
+    maxDigits = maxPrintableDigits;
+    
+    fieldWidthWindow = getBIFmember(1);
+    if (fieldWidthWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    
+    if (fieldWidthWindow->variable_ptr->type <= double_type)  {
+        stringWindowPosition++;
+        if (numArgs < 2)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+        fieldWidth = (ccInt) getBIFnumArg(1, 0., (ccFloat) 1000);//maxFieldWidth);
+        
+        precisionWindow = getBIFmember(2);
+        if (precisionWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+        
+        if (precisionWindow->variable_ptr->type <= double_type)  {
+            stringWindowPosition++;
+            if (numArgs < 3)  {  setError(wrong_argument_count_err, pcCodePtr-1);  return;  }
+            maxDigits = (ccInt) getBIFnumArg(2, 0., (ccFloat) maxPrintableDigits);
+    }   }
+    
+    stringWindow = getBIFmember(stringWindowPosition);
+    if (stringWindow == NULL)  {  setError(void_member_err, pcCodePtr-1);  return;  }
+    if (stringWindow->variable_ptr->type != string_type)  {  setError(string_expected_err, pcCodePtr-1);  return;  }
+    
+    
+        // compute the byte size of the final string without printing it yet
+    
+    dataSize = 0;  sizeofStrings = 0;
+    for (counter = stringWindowPosition+1; counter <= numArgs; counter++)  {
+        windowView.windowPtr = getBIFmember(counter);
+        if (windowView.windowPtr != NULL)  {
+            windowView.offset = windowView.windowPtr->offset;
+            windowView.width = windowView.windowPtr->width;
+            sizeViewString(&windowView, &dataSize, (void *) &sizeofStrings);
+    }   }
+    
+    
+        // allocate contiguous memory in the destination string
+    
+    rtrn = newLinkedList(&tempPrintLL, dataSize+sizeofStrings, sizeof(char), 0, false);
+    if (rtrn == passed)  rtrn = defragmentLinkedList(&tempPrintLL);
+    if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
+    
+    
+        // print the string
+    
+    if (dataSize+sizeofStrings > 0)  {
+        stringPositionMarker = (char *) element(&tempPrintLL, 1);
+        for (counter = stringWindowPosition+1; counter <= numArgs; counter++)  {
+            windowView.windowPtr = getBIFmember(counter);
+            if (windowView.windowPtr != NULL)  {
+                windowView.offset = windowView.windowPtr->offset;
+                windowView.width = windowView.windowPtr->width;
+                printViewString(&windowView, (void *) &stringPositionMarker, (void *) &sizeofStrings);
+                if (warningCode != passed)  errIndex--;
+                if (errCode != passed)  {  deleteLinkedList(&tempPrintLL);  return;  }
+    }   }   }
+    
+    
+        // rewire the output string to point to the linked list we just created
+    
+    charMember = LL_member(stringWindow->variable_ptr, stringWindow->offset+1);
+    charWindow = charMember->memberWindow;
+    resizeMember(charMember, 1, tempPrintLL.elementNum);
+    if (errCode != passed)  return;
+    
+    copyElements(&tempPrintLL, 1, &(charWindow->variable_ptr->mem.data), charWindow->offset+1, tempPrintLL.elementNum);
+    deleteLinkedList(&tempPrintLL);
+}*/
+
+
+in mprint():
+    for c1 in <1, idx1>  (
+        if theTable[c1] == @nothing  then stringsTable[c1] := "*\n"
+        else if type(theTable[c1]) <= 4  then (
+            stringsTable[c1] :: string
+            print_string(params.maxDigits, stringsTable[c1], theTable[c1], "\n")      )
+        
+        else  (
+            stringsTable[c1] :: string
+            print_string(params.maxDigits, params.fieldWidth, stringsTable[c1], theTable[c1], "\n")
+    )   )
+|*            idx2 = top(theTable[c1])
+            stringsTable[c1] :: [idx2] string
+            
+            for c2 in <1, idx2>  (
+                if theTable[c1][c2] == @nothing  then stringsTable[c1][c2] = params.voidString
+                else  print_string(params.maxDigits, stringsTable[c1][c2], theTable[c1][c2])
+                
+                if c2 < idx2  then (
+                    stringsTable[c1][c2][+<top+1, params.fieldWidth>] = ' '     )
+                else  (
+                    stringsTable[c1][c2][+top+1] = '\n'
+    )   )   )   )*|
+
+
+
+***** to try to allow array indexing of string constants, a la "abcde"[<2, 3>] *****
+* had multiple bugs, but the fatal flaw was that the [] operator causes an alias to be produced when an adaptor is needed, which is illegal in the case of a string
+
+
+void callSearchPathFunction(bool allowStrings)
+{
+    ccInt *commandPtr = pcCodePtr;
+    
+    callBytecodeFunction();
+    
+    if (errCode == passed)  {
+        if (GL_Object.type == string_type)  {
+            if (!allowStrings)  setError(not_a_variable_err, pcCodePtr-1);      }
+        else  {
+            if (GL_Object.type != var_type)  setError(not_a_variable_err, commandPtr);
+            else if (searchView.windowPtr == NULL)  setError(void_member_err, commandPtr);
+            else if (searchView.windowPtr->variable_ptr->type < string_type)  setError(not_composite_err, commandPtr);
+    }   }
+}
+
+
+void sticsStep(bool allowAddMember)
+{
+    ccInt firstIndex, lastIndex, secondMemberNumber = 0, secondOffset, holdType, rtrn;
+    
+    
+        // get the first steps in the path
+    
+    callSearchPathFunction();
+    if (errCode != passed)  return;
+    holdType = GL_Object.type;
+    
+    
+        // get the first index to step into
+    
+    firstIndex = callIndexFunction();
+    if (errCode != passed)  return;
+    
+    
+        // get the last index to step into
+    
+    lastIndex = callIndexFunction();
+    if (errCode != passed)  return;
+    
+    if (lastIndex < firstIndex-1)  {  setError(index_argument_err, pcCodePtr-1);  return;  }
+    
+    
+        // handle it if it's a string
+    
+    GL_Object.type = holdType;
+    if (holdType == string_type)  {
+        restrictStringConstant(firstIndex, lastIndex);
+        return;     }
+    
+    
+    searchView.multipleIndices = true;
+    GL_Path.indices = lastIndex - firstIndex + 1;
+    
+    
+        // special case:  allow us to step into 0 indices of a size-0 array
+    
+    if ((firstIndex == 1) && (GL_Path.indices == 0) && (searchView.windowPtr->variable_ptr->type == array_type))  {
+        GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, 1);
+        GL_Path.stemMemberNumber = 1;
+        GL_Path.offset = 0;
+        
+        return;         }
+    
+    
+        // otherwise find the first and last indices, and make sure they're in the same member
+    
+    rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, firstIndex, &(GL_Path.stemMember),
+                                                                &(GL_Path.stemMemberNumber), &(GL_Path.offset), allowAddMember);
+    if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+    
+    if (lastIndex > firstIndex)  {
+        rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, intRegister, &(GL_Path.stemMember),
+                                                    &secondMemberNumber, &secondOffset, allowAddMember);
+        if (rtrn != passed)  setError(rtrn, pcCodePtr-1);       }
+}
+
+
+
+
+void stixStep(bool allowAddMember)
+{
+    ccInt soughtIndex, holdType, rtrn;
+    
+    
+        // get the initial steps along the path
+    
+    callSearchPathFunction(true);
+    if (errCode != passed)  return;
+    holdType = GL_Object.type;
+    
+    
+        // get the index to step to
+    
+    soughtIndex = callIndexFunction();
+    if (errCode != passed)  return;
+    
+    
+        // handle it if it's a string
+    
+    GL_Object.type = holdType;
+    if (holdType == string_type)  {
+        restrictStringConstant(soughtIndex, soughtIndex);
+        return;     }
+    
+    
+        // calculate the member number that holds that index
+    
+    rtrn = findMemberIndex(searchView.windowPtr->variable_ptr, searchView.offset, soughtIndex, &(GL_Path.stemMember),
+                                            &(GL_Path.stemMemberNumber), &(GL_Path.offset), allowAddMember);
+    if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
+    
+    GL_Path.indices = 1;
+}
+
+
+
+
+// restrictStringConstant() pulls out certain indices of a stored constant string, as in "abcde"[3]
+
+void restrictStringConstant(ccInt firstIndex, ccInt lastIndex)
+{
+    if ((firstIndex < 1) || (lastIndex > stringRegister.elementNum))  {  setError(index_argument_err, pcCodePtr-1);  return;  }
+    if (lastIndex < stringRegister.elementNum)  {
+        if (deleteElements(&stringRegister, lastIndex+1, stringRegister.elementNum) != passed)  {
+            setError(index_argument_err, pcCodePtr-1);  }   }
+    if (firstIndex > 1)  {
+        if (deleteElements(&stringRegister, 1, firstIndex-1) != passed)  {
+            setError(index_argument_err, pcCodePtr-1);  }   }
+}
+
+
+
+void navigate(void (*stepFunction)(bool), bool defineMode, bool takeStep, bool allowStepToVoid)
+{
+    
+        // find the member to step into (stored in GL_Path.stemMember)
+    
+    stepFunction(defineMode && canAddMembers);
+    GL_Path.stemView = searchView;
+    
+    if ((GL_Object.type == string_type) || (errCode != passed))  return;
+    ...

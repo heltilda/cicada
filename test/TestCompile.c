@@ -667,6 +667,15 @@ void test_Compile()
     #define user_f_arg_flags ((1<<2)+(1<<3)+(1<<5)+(1<<6)+(1<<7))
 //    #define user_f_arg_flags ((1<<2)+(1<<3)+(1<<5)+(1<<6)+(1<<7)+(1<<8))
     
+//    #define for_pos_A (13-102)        /* (one plus the number assigned in the CodeCompare list -- since C starts arrays at 0)  */
+/*    #define for_pos_B (42-91)
+    #define do_pos (22-23)
+    #define endf_pos_A (103-14)
+    #define endf_pos_B (92-43)
+    #define endif_posA (156-125)
+    #define endif_posB (156-155)
+    #define endw_pos (154-145)
+    #define while_pos (144-153)*/
     #define for_pos_A (12-96)        /* (one plus the number assigned in the CodeCompare list -- since C starts arrays at 0)  */
     #define for_pos_B (40-86)
     #define do_pos (21-22)
@@ -772,10 +781,14 @@ void test_Compile()
         printf("test_Compile: Number of code words was %i; should be %i\n", (int) theCompiler->bytecode.elementNum, (int) (sizeof(CodeCompare)/sizeof(ccInt)));
     
     for (counter = 0; counter < theCompiler->bytecode.elementNum; counter++)    {
-    if (*(ccInt *) findElement(&(theCompiler->bytecode), counter+1) != CodeCompare[counter])  {
-        printf("test_Compile: Code mismatch on counter = %i:  compiled %i vs expected %i\n", 
-            (int) counter, (int) *(ccInt *) findElement(&(theCompiler->bytecode), counter+1), (int) CodeCompare[counter]);
-    }}
+        if (counter >= sizeof(CodeCompare)/sizeof(ccInt))  {
+            printf("test_Compile: Code overflow on counter = %i\n", counter);
+            break;
+        }
+        if (*(ccInt *) findElement(&(theCompiler->bytecode), counter+1) != CodeCompare[counter])  {
+            printf("test_Compile: Code mismatch on counter = %i:  compiled %i vs expected %i\n", 
+                (int) counter, (int) *(ccInt *) findElement(&(theCompiler->bytecode), counter+1), (int) CodeCompare[counter]);
+    }   }
     
     startCodePtr = LL_int(&(theCompiler->bytecode), 1);
     endCodePtr = LL_int(&(theCompiler->bytecode), theCompiler->bytecode.elementNum) + 1;

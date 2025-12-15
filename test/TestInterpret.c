@@ -45,7 +45,7 @@ window *dbg2 = NULL;
 
 
 // Tests the memory routines.
-// Directly tests:  searchMember(), StepToWindowMember(), Push/PopPCPath(), initCicada(), cleanUp(), addVariable(), Ref/derefWindow(), addWindow(), combVariables(), addMember(), ref/derefPath(), addCodeRef()
+// Directly tests:  searchMember(), StepToWindowMember(), Push/PopPCPath(), initCicada(), cleanUp(), addVariable(), Ref/derefWindow(), addWindow(), combVariables(), addMembers(), ref/derefPath(), addCodeRef()
 // Indirectly tests (routines called by the above):  StepWindow(), FindMemberID(), findMemberIndex(), setError(), addVariable(), Ref/DerefVariable(), CombBranch(), AddFibril(), Ref/Deref_CodeRef(), AddMemory(), AdjustOffsets_And_IW(), AdjustFibrilStemOffsets, UnflagVariables().
 // For now, does NOT test DeleteMember(), ModifyMembers(), SplitMember(), MoveWindow(), CheckWindowOverlap().  (Of those, only the last two are likely to survive in Cicada).
 
@@ -115,22 +115,29 @@ void test_SetUpArray(ccInt Depth, ccInt MaxDepth, ccInt *MemberIDCounter)
     window *NewWindow;
     view holdBaseView;
     member *NewMember, *SoughtMember;
-    ccInt NewIndices, dummy_member, MemberEntry, EntryOffset, rtrn;
+    ccInt NewIndices, dummy_member, MemberEntry, EntryOffset, *arrayToInt, ca, rtrn;
+    const static ccInt intTypeInt = int_type;
     
     randomize(13);
     NewIndices = rndm(7)+1;
     if (Depth == 1)  NewIndices = 1;
     
+    arrayToInt = malloc((MaxDepth-Depth+1)*sizeof(ccInt));
+    for (ca = 0; ca < MaxDepth-Depth; ca++)  arrayToInt[ca] = array_type;
+    arrayToInt[MaxDepth-Depth] = int_type;
+    
     if (Depth < MaxDepth)    {
-        rtrn = addVariable(&NewVar, array_type, int_type, MaxDepth-Depth, true);
+        rtrn = addVariable(&NewVar, arrayToInt, MaxDepth-Depth, true);
         if (rtrn != passed)  {  printf("ModMem:  AddCV returned %i  (%i)\n", (int) rtrn, (int) start_seed);  return;  }        }
     else    {
-        rtrn = addVariable(&NewVar, int_type, int_type, 0, true);
+        rtrn = addVariable(&NewVar, &intTypeInt, 0, true);
         if (rtrn != passed)  {  printf("ModMem:  AddCV returned %i  (%i)\n", (int) rtrn, (int) start_seed);  return;  }        }
     
+    free(arrayToInt);
+    
     dummy_member = baseView.windowPtr->variable_ptr->mem.members.elementNum + 1;
-    rtrn = addMember(baseView.windowPtr->variable_ptr, dummy_member, NewIndices, &NewMember, false, 1, true);
-    if (rtrn != passed)  {  printf("ModMem:  addMember returned %i  (%i)\n", (int) rtrn, (int) start_seed);  return;  }
+    rtrn = addMembers(baseView.windowPtr->variable_ptr, dummy_member, NewIndices, &NewMember, false, 1, true);
+    if (rtrn != passed)  {  printf("ModMem:  addMembers returned %i  (%i)\n", (int) rtrn, (int) start_seed);  return;  }
     rtrn = addWindow(NewVar, NewVar->instances, NewIndices*baseView.width, &NewWindow, true);
     if (rtrn != passed)  {  printf("ModMem:  addWindow returned %i  (%i)\n", (int) rtrn, (int) start_seed);  return;  }
     refWindow(NewWindow);
@@ -180,7 +187,7 @@ ccInt test_FillArray(ccInt *fill_counter)
     
     index_bottom = 0;
     
-    if (searchView.windowPtr->variable_ptr->type == int_type)    {
+    if (*searchView.windowPtr->variable_ptr->types == int_type)    {
         *LL_int(&(searchView.windowPtr->variable_ptr->mem.data), searchView.offset+1) = *fill_counter;
         (*fill_counter)++;
         return passed;        }
@@ -256,7 +263,7 @@ ccInt test_TestArray(ccInt *fill_counter, ccInt ThisMemberID, bool *passed_test)
 
     index_bottom = 0;
     
-    if (baseVar->type == int_type)    {
+    if (*baseVar->types == int_type)    {
         if (*LL_int(&(baseVar->mem.data), searchView.offset+1) != *fill_counter)    {
             *passed_test = false;
             printf("TestArray:  Comparison Failed at %i -- read %i  (%i)\n", (int) *fill_counter,
@@ -319,7 +326,7 @@ ccInt test_SwapDelMembers(ccInt InitialDepth)
         if (errCode != passed)    {  printf("SwapDelMembers:  TRB (2) bailed out (%i)\n", (int) start_seed);  return errCode;  }
         holdWindowPtr = searchView.windowPtr;
         
-        if (holdWindowPtr->variable_ptr->type == array_type)    {        // a composite variable that points, hopefully, to a proxy
+        if (*holdWindowPtr->variable_ptr->types == array_type)    {        // a composite variable that points, hopefully, to a proxy
             WindowToLink = rndm(searchView.windowPtr->variable_ptr->mem.members.elementNum)+1;
             MemberToLink = LL_member(searchView.windowPtr->variable_ptr, WindowToLink);
             HoldSearchOffset = searchView.offset;
@@ -365,7 +372,7 @@ void test_MM_CountRefs()
             test_MMCR_AddRef(&RefsList, (void *) theFibril->jamb);
         }}
         
-        if ((theVariable->type == composite_type) || (theVariable->type == array_type) || (theVariable->type == string_type))    {
+        if ((*theVariable->types == composite_type) || (*theVariable->types == list_type) || (*theVariable->types == array_type))    {
         for (c2 = 1; c2 <= theVariable->mem.members.elementNum; c2++)    {
             theMember = (member *) findElement(&(theVariable->mem.members), c2);
             test_MMCR_AddRef(&RefsList, (void *) theMember->memberWindow);
@@ -494,7 +501,7 @@ void test_RandomWindow(ccInt MaxDepth)
     stepView(&searchView, RandomMember, 0, 1);
     
     for (loopDepth = 1; loopDepth <= Depth; loopDepth++)    {            // go to a random 'depth', at least
-    if (searchView.windowPtr->variable_ptr->type == array_type)    {
+    if (*searchView.windowPtr->variable_ptr->types == array_type)    {
         IndexToStepInto = test_RandomIndex(&searchView);
         StepToIndex(IndexToStepInto, 1);
         if (errCode != passed)

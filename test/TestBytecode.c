@@ -37,8 +37,8 @@ void test_YHErrors()
                                 "a::{b::*}, (a.b::a):=@a", "a=@a.b",
         "remove a, a::{b::a}", "remove a, a::{b::*}, a.b=@a, remove a.b.b.b.b", "remove a, a::{}, ((b::*)@::{remove a})=@a",        // 30
                                                                     "a::[5][3]int", "a::a, b=@b, c::int, remove c.c.a.b",
-            "remove a, remove b, remove c, a::\"12345\", b::char", " a@::b", "remove a, (a::string)::int",      // 35
-                                                                    "remove a, remove b, b::string, a::\"t\", b:=@a, a@::\"d\"", "a.b=2",
+            "remove a, remove b, remove c, a::\"12345\", b::char", " a@::b", "remove a, (a::[[]]char)::int",      // 35
+                                                                    "remove a, remove b, b::[[]]char, a::\"t\", b:=@a, a@::\"d\"", "a[].b=2",
         "remove a, remove b, a::[5][3][8]int, a[+1], a[<1,6>][+<3,4>]", "a[+<2, 1>]", "a[+7]", "a[+<0,2>]", "a[+9]",        // 40
             "a::a, b:=a[7][5][8]", "a[+0]", "a[3][+2]", "remove a[2][1]", "remove a[<1, 7>][1]",                    // 45
         "a[7][4][1]=1", "a[7][5][1]=1", "a[1][1][1][+3]", "remove a[<1, 7>], a[+1][2]=a[1][2]", "remove a, remove b",        // 50
@@ -49,7 +49,7 @@ void test_YHErrors()
         "a[0]=a", "a=a[0]", "a[+1]::char", "remove a, remove b, remove c, remove d, a::int",    // 70
                                                 "me:=@this, {me.a::(b:=200)}={c::int}, remove this[1], remove this[1]",
             "a::int, b::[4]char, a=!b[<1,top>], b[<1,top>]=!a", "a=!b[1]",                    // 75
-                        "remove a, remove b, a::{b::int,s::string}, b::{c::{d::int}, d::char}, a=!b, b=!a",
+                        "remove a, remove b, a::{b::int,s::[[]]char}, b::{c::{d::int}, d::char}, a=!b, b=!a",
                                             "a=!b.d", "remove a, remove b.c, remove b",
         "a::5, b:=a, if (b /= a) then a::\"x\", b=2, if a==b then a::char",                    // 80
                                             "a = 1, b = 1.01, if a > b or -a < -b then a::{}, while not a<=b xor -3.5 == a do a::{}",
@@ -157,11 +157,13 @@ void test_YHErrors()
         if (errCode != ErrorCodes[counter])
             printf("test_YHErrors: errCode on counter = %i was %i / expected %i \n", (int) counter, (int) errCode, (int) ErrorCodes[counter]);
         
-        if (errCode != passed)
-        if (errScript.code_ptr[errIndex-1] != ErrorPtrInts[counter])
-            printf("test_YHErrors: bytecode[errIndex] on counter = %i was %i / expected %i \n", (int) counter,
-                    (int) errScript.code_ptr[errIndex-1], (int) ErrorPtrInts[counter]);
-    }
+        if (errCode != passed)  {
+            ccInt idx = errIndex-1;
+//            if (errScript.code_ptr[idx] < 0)  idx--;        // it's an anonymous member of an int -- look at the int instead 
+            if (errScript.code_ptr[idx] != ErrorPtrInts[counter])  {
+                printf("test_YHErrors: bytecode[errIndex] on counter = %i was %i / expected %i \n", (int) counter,
+                        (int) errScript.code_ptr[idx], (int) ErrorPtrInts[counter]);
+    }   }   }
     freeCompiler(testCompiler);
     
     for (counter = 1; counter <= tYHE_TestRuns; counter++)    {
@@ -202,7 +204,7 @@ void test_checkBytecode()
     
     const ccInt ErrPtrs[] = {
         0, 0, 2,
-        2, 2, 4,
+        2, 2, 3,
         2, 1, 1,
         1           };
     
@@ -233,11 +235,18 @@ void test_checkBytecode()
 
 void test_scripts()
 {
-    const char *testFile = "/Users/brianross/Desktop/cicada/cicada/Test/TestScript.txt";
-    linkedlist sourceCode;
+//    const char *testFile = "/Users/brianross/Desktop/cicada/cicada/Test/TestScript.txt";
+    const char *todo = 
+        "testStr::[[]]char, bytecodeWords::opPos::[[]]int, "
+        "$load(\"/Users/brianross/Desktop/cicada/cicada/Test/TestScript.txt\\00\", testStr), "
+        "testStr[+1]=';', testStr[+top+1]=0, "
+        "$compile(1, testStr, \"TestScript.txt\", bytecodeWords, opPos, *), "
+        "f::{}, $transform(bytecodeWords, f, *, \"\", \"\", [[]]int), "
+        "(this<<f)()";
+//    linkedlist sourceCode;
     
-    newLinkedList(&sourceCode, 0, sizeof(char), 0, false);
-    loadFile(testFile, &sourceCode, true);
+//    newLinkedList(&sourceCode, 0, sizeof(char), 0, false);
+//    loadFile(testFile, &sourceCode, true);
     
-    runCicada(NULL, element(&sourceCode, 1), NULL);
+    runCicada(NULL, todo, false);
 }
