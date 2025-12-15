@@ -1,0 +1,1550 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Predefined functions and variables</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_6.html">Reference</a>
+
+<H1> <CENTER> Predefined functions and variables </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Cicada comes prepackaged with a number of C-coded and scripted functions.  The C-coded functions are come from the <tt>ciclib.c</tt> source file, and they are defined in exactly the same way as user-defined C functions/wrappers.  The scripted functions come from a <tt>defs.cicada</tt> script (which is distributed in stringified form as <tt>defs.c</tt>), a number of which are just wrappers for the C-coded functions.  <tt>defs.cicada</tt> also predefines some variables and constants.  Finally, when Cicada is run interactively, the terminal itself defines a few variables in the user&rsquo;s workspace.
+
+<P> Table 4 lists the predefined C functions, scripted functions, and other scripted variables.  Their descriptions follow in alphabetical order.<P>
+
+<P>  <u>Basic constants:</u>
+<ul>
+<li> <tt>e</tt>:  the exponential constant.  Calculate exponentials by writing <tt>e^x</tt>, or use the vectorized <tt>exp()</tt> function
+<li> <tt>pi</tt>:  the famous constant pi
+<li> <tt>inf</tt>:  infinity
+<li> <tt>nan</tt>:  not-a-number (used by floating-point arithmetic)
+<li> <tt>passed</tt>:  0, denoting the error code of a function that did not cause any error
+<li> <tt>root</tt>:  an alias to the user&rsquo;s workspace
+</ul>
+
+<P>  
+
+<br><P><b><u>Predefined functions and variables</b></u></b>
+<P>
+
+<P> 
+
+<br><center><div><P><table border="1"><tr><td>
+
+<b> name</b> </td><td> <b> <i>f</b></i> </td><td> <b> <tt>$</b></tt> </td><td> <b> <tt>&gt;</b></tt> </td><td> <b> name</b> </td><td> <b> <i>f</b></i> </td><td> <b> <tt>$</b></tt> </td><td> <b> name</b> </td><td> <b> <i>f</b></i> </td><td> <b> <tt>$</b></tt></td></tr><tr><td>
+ 
+newCompiler </td><td> x </td><td> x </td><td> &nbsp;</td><td> filePaths </td><td> &nbsp;</td><td> &nbsp;</td><td> add </td><td> x </td><td> x</td></tr><tr><td>
+compile </td><td> x </td><td> x </td><td> &nbsp;</td><td> cd </td><td> x </td><td> &nbsp;</td><td> subtract </td><td> x </td><td> x</td></tr><tr><td>
+transform </td><td> x </td><td> x+ </td><td> &nbsp;</td><td> pwd </td><td> x </td><td> &nbsp;</td><td> multiply </td><td> x </td><td> x</td></tr><tr><td>
+
+disassemble </td><td> x </td><td> &nbsp;</td><td> &nbsp;</td><td> run </td><td> x </td><td> &nbsp;</td><td> divide </td><td> x </td><td> x</td></tr><tr><td>
+
+trap </td><td> x </td><td> x </td><td> &nbsp;</td><td> load/Load </td><td> x </td><td> x </td><td> pow </td><td> x </td><td> x</td></tr><tr><td>
+
+throw </td><td> x </td><td> x </td><td> &nbsp;</td><td> save/Save </td><td> x </td><td> x </td><td> min </td><td> x </td><td> x</td></tr><tr><td>
+ 
+top </td><td> x </td><td> x </td><td> &nbsp;</td><td> input </td><td> x </td><td> x </td><td> max </td><td> x </td><td> x</td></tr><tr><td>
+size </td><td> x </td><td> x </td><td> &nbsp;</td><td> print </td><td> x </td><td> x </td><td> sum </td><td> x </td><td> x</td></tr><tr><td>
+type </td><td> x </td><td> x </td><td> &nbsp;</td><td> printl </td><td> x </td><td> &nbsp;</td><td> mean </td><td> x </td><td> &nbsp;</td></tr><tr><td>
+
+bytecode </td><td> x </td><td> x </td><td> &nbsp;</td><td> sprint </td><td> x </td><td> &nbsp;</td><td> abs </td><td> x </td><td> x</td></tr><tr><td>
+member_ID </td><td> x </td><td> x </td><td> &nbsp;</td><td> mprint </td><td> x </td><td> &nbsp;</td><td> floor </td><td> x </td><td> x</td></tr><tr><td>
+
+allNames </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> read_string </td><td> x </td><td> x </td><td> ceil </td><td> x </td><td> x</td></tr><tr><td>
+
+do_in </td><td> x </td><td> &nbsp;</td><td> &nbsp;</td><td> print_string </td><td> x </td><td> x </td><td> round </td><td> x </td><td> x</td></tr><tr><td>
+
+compile_and_do_in </td><td> x </td><td> &nbsp;</td><td> &nbsp;</td><td> cat </td><td> x </td><td> &nbsp;</td><td> exp </td><td> x </td><td> x</td></tr><tr><td>
+
+go </td><td> x </td><td> &nbsp;</td><td> &nbsp;</td><td> readTable </td><td> x </td><td> &nbsp;</td><td> log </td><td> x </td><td> x</td></tr><tr><td>
+
+jump </td><td> x </td><td> &nbsp;</td><td> &nbsp;</td><td> readFile </td><td> x </td><td> &nbsp;</td><td> cos </td><td> x </td><td> x</td></tr><tr><td>
+go_path </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> readInput </td><td> x </td><td> &nbsp;</td><td> sin </td><td> x </td><td> x</td></tr><tr><td>
+where </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> writeTable </td><td> x </td><td> &nbsp;</td><td> tan </td><td> x </td><td> x</td></tr><tr><td>
+what </td><td> x </td><td> &nbsp;</td><td> &nbsp;</td><td> saveTable </td><td> x </td><td> &nbsp;</td><td> acos </td><td> x </td><td> x</td></tr><tr><td>
+ 
+calculator </td><td> x </td><td> &nbsp;</td><td> X </td><td> find </td><td> x </td><td> x </td><td> asin </td><td> x </td><td> x</td></tr><tr><td>
+
+ans </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> lowercase </td><td> x </td><td> &nbsp;</td><td> atan </td><td> x </td><td> x</td></tr><tr><td>
+ 
+springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td><td> x </td><td> &nbsp;</td><td> random </td><td> x </td><td> x</td></tr><tr><td>
+
+ &nbsp;</td><td>  &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> C_string </td><td> x </td><td> &nbsp;</td><td> sort </td><td> x </td><td> x+</td></tr><tr><td>
+ &nbsp;</td><td>  &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> x </td><td> &nbsp;</td><td> binsearch </td><td> x </td><td> &nbsp;</td></tr><tr><td>
+
+</table><div>Table 4:  Built-in functions and variables.  An &lsquo;x&rsquo; in the &lsquo;<i>f</i>&rsquo; column indicates that it&rsquo;s an executable function.  An &lsquo;x&rsquo; in the &lsquo;$&rsquo; column indicates that there is a corresponding C function.  A checkmark in the <tt>&gt;</tt> column indicates that the definition only exists when running from the terminal (all of these are on the left side of the table)</div></div></center><br>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>abs()</b></tt>, <tt>$abs()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>abs</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$abs</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the absolute value of its argument, which must be a numeric scalars or arrays.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>acos()</b></tt>, <tt>$acos()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>acos</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$acos</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the inverse cosine of its argument.  The argument must be a number on the interval [-1, 1] (a number outside this range will generate the &lsquo;not a number&rsquo; value on many machines).  The result is on the interval [0, pi].  The arguments may be numeric scalars or arrays.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>add()</b></tt>, <tt>$add()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>z</i> = <tt>add</tt>((numeric) <i>x</i>, (numeric) <i>y</i>)<P>
+ <i>C syntax: </i> <tt>$add</tt>((doubles) <i>x</i>, (doubles) <i>y</i>, (doubles) <i>z</i>)<P><P></b>
+<P>
+
+<P> Computes z = x + y, for scalar or vector numeric data.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>allNames</b></tt>:</b>
+<P>  the list of member names that have been defined so far, including those defined in <tt>terminal.cicada</tt>.  <tt>allNames</tt> is updated with every new command-line prompt, or every time the user calls <tt>compile()</tt> with <tt>allNames</tt> as the fourth argument.  This list is used by <tt>user.cidada</tt>&rsquo;s <tt>go()</tt> and <tt>what()</tt> functions.
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>ans</b></tt>:</b>
+<P>:  short for &ldquo;answer&rdquo;.  This is aliased to whatever the calculator last printed (void if the calculator hasn&rsquo;t printed anything yet).  Use <tt>ans</tt> like any other variable:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; 2+5
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 7
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; ans*2
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 14
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>asin()</b></tt>, <tt>$asin()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>asin</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$asin</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the inverse sine of its argument.  The argument must be a number on the interval [-1, 1] (a number outside this range will generate the &lsquo;not a number&rsquo; value on many platforms).  The result is on the interval [-pi/2, pi/2].  The arguments may be numeric scalars or arrays.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>atan()</b></tt>, <tt>$atan()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>atan</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$atan</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the inverse tangent of the argument, which must be numeric scalars or arrays.  The result is an angle in radians on the interval [-pi/2, pi/2].<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>binsearch()</b></tt><P><P>
+ <i>syntax: </i> <tt>binsearch</tt>((table) <i>table_to_search</i>, (numeric) <i>value_to_find</i>)<P><P></b>
+<P>
+
+<P> Searches a sorted list for a given value.  The list must be numeric (<tt>char</tt>-typed lists are OK).  If the list is not sorted then <tt>binsearch()</tt> will probably not find the element.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>bytecode()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>codeString</i> = <tt>bytecode</tt>((function) <i>myFunction</i> [, (numeric) <i>memberIndex</i>])<P>
+ <i>C syntax: </i> <tt>$bytecode</tt>((function) <i>myFunction</i>, (int) <i>memberNumber</i>, (string) <i>codeString</i>)<P><P></b>
+<P>
+
+
+<P> Returns the bytecode of a given variable or member.  If there is one argument it returns the bytecode of that variable; if there are two then it returns the bytecode of member <tt>myFunction[memberIndex]</tt>.  Member code is never run directly, but it determines the sort of variable a member can point to (because <i>code</i> and <i>type</i> are equivalent in Cicada).
+
+<P> To read the bytecode we need to move the bytecode data from the string into an array of integers using the <tt>=!</tt> operator.  The last integer is always 0, signifying the end of bytecode.  If there are multiple codes (due to the inheritance operator) then the codes are concatenated in parent-to-child order in the same string, and each separate code ends in a null integer.  <tt>bytecode()</tt> is the inverse operation to <tt>transform()</tt>.
+
+<P> The <tt>bytecode()</tt> function return the code for functions, but also many other objects that we don&rsquo;t normally think of as having code.  In fact the only restriction is that <tt>myFunction</tt> must be some composite object (defined using curly braces).  So if we define
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; pow :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params :: { x :: y :: double&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params = args
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;return new(params.x^params.y)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then <tt>bytecode(pow)</tt> returns the bytecode for everything inside <tt>pow()</tt>&rsquo;s definition (including the definition of <tt>params</tt> and the <tt>code</tt> marker), whereas <tt>bytecode(pow.params)</tt> is also legal and returns the bytecode corresponding to <tt>x :: y :: double</tt>.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>C_string()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>string bytes</i> = <tt>C_string</tt>((string) <i>my_string</i>)<P><P></b>
+<P>
+
+<P> Cicada strings are normally stored internally as linked lists.  <tt>C_string()</tt> converts a length-<i>N</i> resizable Cicada string to a <i>N</i>+1-byte C-style string containing a terminating 0 character.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>calculator</b></tt>:</b>
+<P> is a function that prints the results of incomplete expressions at the command line.  An incomplete expression is one that is not assigned to a variable, or used in any other way.  For example, if the user types
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a = 5 + 2
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then nothing will be printed, regardless of whether <tt>calculator</tt> is on or off.  However, if the user were to enter just
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; 5 + 2
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then the answer &lsquo;7&rsquo; will be printed, thanks to the calculator.
+
+<P> To be completely technical, the calculator prints the data of all hidden members created by the user.  Since these members will never be used again, the terminal removes them after each command from the user, but only after asking the calculator to print them first.  The calculator is only a printing function, not a calculator per-se.
+
+<P> By default, the calculator is aliased to <tt>defs.cicada</tt>&rsquo;s <tt>sprint()</tt> function.  We can change the output style by aliasing it to another printing function:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; calculator = @mprint
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Or, if calculator is getting annoying (e.g. printing the output of functions we don&rsquo;t care about, or that return enormous blocks of data), we can turn it off altogether:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; calculator = @nothing
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>cat()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>concatenated string</i> = <tt>cat</tt>((variables) <i>var1</i>, <i>var2</i>, ...)<P><P></b>
+<P>
+
+<P> Returns a string which is the concatenation of the arguments.  This is just a convenient implementation of the <tt>print_string()</tt> function:  <tt>s = cat(v1, v2)</tt> is equivalent to <tt>print_string(s, v1, v2)</tt>.<P><P><P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>cd()</b></tt><P><P>
+ <i>syntax: </i> <tt>cd</tt>((string) <i>filepath</i>)<P><P></b>
+<P>
+
+<P> The easiest way to change Cicada&rsquo;s file-search directory.  <tt>cd()</tt> resizes the <tt>filePaths[]</tt> array to size 1 and sets that to the string given as its argument.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>ceil()</b></tt>, <tt>$ceil()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>ceil</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$ceil</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the nearest integer that is as high as or higher than the argument, which must be numeric.  For example, <tt>ceil(5.6)</tt> returns 6, <tt>ceil(-5.6)</tt> returns -5, and <tt>ceil(2)</tt> returns 2.  Both arguments may also be arrays<P>
+
+<P> 
+
+<P>  
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>compile()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>script_bytecode</i> = <tt>compile</tt>((string) <i>script</i> [, (string) <i>char_positions</i> [, member_names]] [, <tt>code</tt>, <tt>compilerID</tt> = (int), <tt>filename</tt> = (string)])<P>
+ <i>C syntax: </i> <tt>$compile</tt>((int) <i>compilerID</i>, (string) <i>script</i>, (string) <i>filename</i>, (string) <i>script_bytecode</i>, (string) <i>char_positions</i>, (int) <i>num_member_names</i>)<P><P></b>
+<P>
+
+
+
+<P> Before Cicada can execute a script, that script must be compiled into a binary form called bytecode that is much easier to execute than the raw text.  The built-in <tt>compile()</tt> function does this job.  Given a string containing a Cicada script (<tt>script</tt>), <tt>compile()</tt> returns a second string (<tt>script_bytecode</tt>) containing Cicada bytecode.  The bytecode is <i>not</i> machine code -- it is only used by Cicada.
+
+<P> A basic <tt>compile()</tt> call looks like:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myBytecode := compile(&quot;x = 3&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This command produces bytecode from a given script.  Optionally, the compiler ID can be set to the return value from a <tt>newCompiler()</tt> call.  Each compiler keeps a record of all variable names, so if <tt>x</tt> had been defined with bytecode produced by the current compiler then this command will run just fine.  The scripted function calls <tt>$getMemberNames()</tt> to maintain the <tt>allNames</tt> list.
+
+<P> A compilation error will actually crash the script running the <tt>compile()</tt> command.  To prevent this we can enclose the <tt>compile()</tt> call inside of the <tt>trap()</tt> function.  If we want to print out the error message, we can write a semicolon or <tt>code</tt> marker at the beginning of <tt>trap()</tt>&rsquo;s arguments.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; trap(; compile(&quot;x = &quot;))
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; Error:&nbsp;right-hand argument expected
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; x =
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;^
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The optional second <tt>filename</tt> argument causes any error message to reference that file name.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; trap(; compile(&quot;x = &quot;; filename = &quot;myFile.txt&quot;))
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; Error:&nbsp;right-hand argument expected in file myFile.txt
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Often a script will compile but cause an error when it runs.  In order to properly flag runtime error messages we must collect another piece of information:  the character position in the original script of each bytecode word.  This lets the error message flag the offending line in the original script.  The character positions are stored inside of any string that is passed as an optional third argument to <tt>compile()</tt>.  Both that string and the original Cicada script will be passed to <tt>transform()</tt>, the function that actually allows compiled bytecode to be run.
+
+<P> In some cases we may want to avoid using <tt>compile()</tt>, but instead hand-code the bytecode and load it in using <tt>transform()</tt>.  After all, <tt>compile()</tt> is only a string operation:  it converts a readable script into a string containing binary bytecode.<P>
+
+<P>  
+ 
+ 
+ 
+ 
+
+<P> 
+
+<br><P><b><tt>compile_and_do_in()</b></tt><P><P>
+ <i>syntax: </i> <tt>compile_and_do_in</tt>((composite) <i>target</i> [, <i>search path</i> [, <i>code_args</i> [, <i>bytecode_mod_args</i>]]] , code, (string) <i>base script string</i> [, <tt>code</tt>, code modifying <tt>bytecode[]</tt>])<P><P></b>
+<P>
+
+<P> Compiles a script, optionally modifies it, and then executes the script in the provided directory.  This is equivalent to <tt>do_in()</tt> except that the script is stored as an uncompiled string rather than compiled code.  We write the arguments just as we did for <tt>do_in()</tt>, except with an extra pair of double-quotes around the code to compile (even though it&rsquo;s in the coding section of the arguments).  The analog of the <tt>do_in()</tt> example would be:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; compile_and_do_in(root; &quot;al := @var1&quot;; bytecodeWords[2] = that + 128)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>cos()</b></tt>, <tt>$cos()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>cos</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$cos</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the cosine of its argument.  The argument must be numeric scalars or arrays..<P>
+
+<P> 
+ 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>disassemble()</b></tt><P><P>  
+ <i>syntax: </i> [(string) <i>disassembly</i> = ] <tt>disassemble</tt>((string) <i>compiled_code</i> [ , (string array) <i>name_space</i> [ , (int) <i>start_position</i> ] ] [ , code, (bool) <tt>expandFunctions</tt>, (int) <tt>flagPosition</tt> = values ])<P><P></b>
+<P>
+
+<P> The <tt>disassemble()</tt> function returns a textual interpretation of compiled Cicada bytecode.  The first argument is a string containing the bytecode.  The optional second argument allows the user to pass a different namespace (a string array) other than <tt>allNames[]</tt>, or <tt>*</tt> to avoid printing member names.  The function will return the &lsquo;disassembly&rsquo; as a readable string.  Used by the author to satisfy the odd craving for a rush of bytecode:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; disassemble(compile(&quot;x = that + 2&quot;, *, *, allNames))
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> By passing a third argument, the disassembler can be used to skip over a bytecode expression.  In this case the disassembler will only disassemble up to the end of the expression, and if the starting word index was passed in a variable then that variable will be updated to the beginning of the next expression.  For example, we can use this feature to write a function that finds the <i>N</i>th command in a compiled expression.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; go_to_Nth_sentence :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code_string := args[1]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;N := args[2]
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code_index := 1
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;for (n :: int) in &lt;1, N-1&gt;&nbsp;&amp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;disassemble( code_string, *, code_index )
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;return new(code_index)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  When run in this &lsquo;skip&rsquo; mode, <tt>disassemble()</tt> does <i>not</i> return any bytecode string.  If you want the output string you should first find the end of the expression that <i>start_position</i> begins, then do a full disassembly on just that expression.
+
+<P> The <tt>expandFunctions</tt> option determines whether inlined code definitions (as in, objects defined within curly braces) are disassembled (<tt>true</tt> is the default), or skipped with an ellipsis if <tt>false</tt>.  If <tt>flagPosition</tt> is set to an integer value then the disassembler will flag that bytecode word, which is useful for marking errors. <P><P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>divide()</b></tt>, <tt>$divide()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>z</i> = <tt>divide</tt>((numeric) <i>x</i>, (numeric) <i>y</i>)<P>
+ <i>C syntax: </i> <tt>$divide</tt>((doubles) <i>x</i>, (doubles) <i>y</i>, (doubles) <i>z</i>)<P><P></b>
+<P>
+
+<P> Computes z = x / y, for scalar or vector numeric data.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>do_in()</b></tt><P><P>
+ <i>syntax: </i> <tt>do_in</tt>((composite) <i>target</i> [, <i>search path</i> [, <i>code_args</i> [, <i>bytecode_mod_args</i>]]] , code, base script [, <tt>code</tt>, code modifying <tt>bytecodeWords[]</tt>])<P><P></b>
+<P>
+
+<P> The <tt>do_in()</tt> tool allows one to run code in a specified location and with a specified search path, and gives the option of manually modifying the bytecode before it is run.  The idea is that it is easier to write bytecode by perturbing a compiled script than to write everything from scratch.
+
+<P> The first argument to <tt>do_in()</tt> is the variable to run the code inside.  The optional second argument gives a customizable search path, and it exactly mirrors the optional third argument to <tt>transform()</tt> (see the reference on <tt>transform()</tt> for how to specify a path).  The third and fourth arguments, if given, are passed as <tt>args[1]</tt> for the script to be run and the bytecode-modifying script respectively.
+
+<P> Following the first code marker we give the text of the script that we want to run, or the closest that the Cicada compiler can achieve.  Often this is all we need.  On occasion we may wish to modify the compiled bytecode of the baseline script before it executes, perhaps to achieve something that is unscriptable.  <tt>do_in()</tt> accommodates this need by running, in unusual fashion, the code following an optional <i>second</i> <tt>code</tt> marker/semicolon in its argument list (if that exists) after compilation but before execution.   At that time the compiled baseline script will be stored in an array entitled <tt>bytecodeWords</tt> of integers, and we may alter in any way whatsoever provided the bytecode comes out legitimate.  In the extreme case we can give no baseline script and simply alias <tt>bytecodeWords[]</tt> to an existing integer array that is already filled with bytecode.
+
+<P> Here we show how to use <tt>do_in()</tt> to create an unjammable alias to some variable <tt>var1</tt>, which cannot be done using ordinary Cicada scripting.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; do_in(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;root
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;al := @var1
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;bytecodeWords[2] = that + 128&nbsp;&nbsp;&nbsp;| add an unjammable flag
+
+<br>&nbsp;&nbsp;&nbsp; )
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>exp()</b></tt>, <tt>$exp()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>exp</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$exp</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the exponential (base <i>e</i>) of its argument.  The arguments must be numeric scalars or arrays.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>filePaths[]</b></tt>:</b>
+<P>  a string array of pathnames to folders.  <tt>Load()</tt>, <tt>Save()</tt>, and <tt>run()</tt> will search each of these paths when looking for a file.  The terminal preloads an empty path, which usually implies the Cicada directory.  We can change the search paths just by manipulating this set:  e.g. <tt>filePaths[+2] = &quot;/Desktop/&quot;</tt>.<P><P><P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>find()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>result</i> = <tt>find</tt>((strings) <i>search_in</i>, <i>search_for</i> [<tt>, code, mode</tt> = -1/0/1 [<tt>, code, startPosition</tt> = (numeric)]])<P>
+ <i>C syntax: </i> <tt>$find</tt>((string) <i>search_in</i>, (string) <i>search_for</i>, (int) <i>mode</i>, (int) <i>starting_position</i>, (int) <i>result</i>)<P><P></b>
+<P>
+
+
+<P> Finds an instance of, or counts the number of instances of, a substring (argument 2) within another string (argument 1).  If <tt>find()</tt> is used in search mode, it returns the character position (where 1 denotes the first character) where the substring was first found, and 0 if it was not found anywhere.  If <tt>find()</tt> is run in count mode, it returns the number of instances of the substring found within the larger string.
+
+<P> The optional third argument controls the mode that <tt>find()</tt> is run in:  it needs to be -1, 0 or 1.  If a mode is not specified then it defaults to mode 1, which denotes a forward search; i.e. it will return the first instance of the substring that it finds.  Mode -1 corresponds to a reverse search, which will find the last instance of the substring.  Mode 0 is the count mode.
+
+<P> By default, a forward search begins from the first character, and a reverse search begins with the last character.  A count proceeds forward from the first character.  The starting character can be changed by specifying a starting position in the fourth argument.  A mode has to be given in order for a starting position to be specified.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>floor()</b></tt>, <tt>$floor()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>floor</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$floor</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the nearest integer that is as low as or lower than the (numeric) argument.  For example, <tt>floor(2.3)</tt> returns 2, <tt>floor(-2.3)</tt> returns -3, and <tt>floor(-4)</tt> returns -4.  The arguments may be numeric scalars or arrays.<P><P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>go()</b></tt><P><P>
+ <i>syntax: </i> <tt>go</tt>([ code, ] <i>path</i>)<P><P></b>
+<P>
+
+<P> Cicada&rsquo;s <tt>go()</tt> function changes the working variable for commands entered from the prompt.  A search path is dragged along behind that leads eventually back to <tt>root</tt> (the original workspace).  To see how this works, type:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; a :: { b := 2 }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; go(a)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; b&nbsp;&nbsp;&nbsp;| we are now in 'a', so this is legal
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 2
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; a&nbsp;&nbsp;&nbsp;| search path extends back to root, so we can see 'a' as a member
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; { 2 }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> The search path exactly backtracks the given path.  If one types <tt>go(a[b].c().d</tt>, then the working variable is &lsquo;<tt>d</tt>&rsquo;, and the search path goes backwards through (in order):  the return variable of &lsquo;<tt>c</tt>&rsquo;, then &lsquo;<tt>c</tt>&rsquo; itself, then the <tt>b</tt>&rsquo;th element of &lsquo;<tt>a</tt>&rsquo;, then &lsquo;<tt>a</tt>&rsquo; itself and finally <tt>root</tt>.  Typing just <tt>go()</tt> sends one back to the root; typing <tt>go(root)</tt> is actually not quite as good because it puts <tt>root</tt> on the path list twice.  To see the path, look at the global <tt>pwd</tt> variable.
+
+<P> <tt>go()</tt> works by updating the <tt>go_paths[]</tt> array defined by the terminal.  Each command entered from the prompt is transformed and run according to the current state of <tt>go_paths</tt>, so invoking <tt>go()</tt> does not take effect until the next entry from the prompt.  Thus it was necessary in our example to separate the second and third lines:  <tt>go(a), sprint(b)</tt> would have thrown a member-not-found error.  For the same reason, while running a script (via <tt>run()</tt>), <tt>go()</tt> will do nothing until the script finishes -- use <tt>do_in()</tt> instead.
+
+<P> When the user calls <tt>go(...)</tt>, Cicada constructs the argument list before <tt>go()</tt> itself has a chance to run.  Owing to this fact, certain sorts of go-paths will cause an error that <tt>go()</tt> can do nothing about.  For example, <tt>go(this[3])</tt> will never work because &lsquo;<tt>this</tt>&rsquo; is construed as the argument variable, not the working variable.  To get around this problem, <tt>go()</tt> gives us the option of writing the path after a <tt>code</tt> marker or semicolon, as in <tt>go(code, this[3])</tt>, as those paths are not automatically evaluated.  A <tt>code</tt> marker is also useful if we need to step to a function&rsquo;s return variable but don&rsquo;t want the function to run more than once.  <tt>go(code, a.f().x)</tt> will evaluate <tt>f()</tt> just a single time in the course of go-processing, whereas for technical reasons <tt>f()</tt> would have run twice had we not included the <tt>code</tt> marker.
+
+<P> <tt>go()</tt> at present has many limitations.  Each path must begin with a member name or <tt>this</tt>, and all subsequent steps must consist of step-to-member (<tt>a.b</tt>) and step-to-index (<tt>a[b]</tt> and related) operations and function calls (<tt>a()</tt>).  No <tt>[+..]</tt> or <tt>+[..]</tt> operators are allowed.  The step-to-index operations are particularly dicey because of two nearly contradictory requirements:  the path can only step through single indices, and for practical use the path must nearly always span complete members (i.e. <i>all</i> of the indices of an arrays).  Although the latter is not a hard requirement, it is really hard to do anything meaningful within a single element of an array, because so many common operations involve creating tokens and hidden variables which can only be done for <i>all</i> elements of the array simultaneously.  Even trying to reset the path by typing <tt>go()</tt> will not work at that point, so in this sticky situation the terminal will eventually bail the user out.  The upshot of all this is that <tt>go()</tt> does not work very well inside of arrays.
+
+<P> <tt>jump()</tt> is a similar operation to <tt>go()</tt>, except that <tt>go()</tt> can shorten a path whereas successive <tt>jump</tt>s keep appending to the current search path.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>go_path[]</b></tt>:</b>
+<P>  a set of aliases to each composite object in the search path, beginning with <tt>root</tt> and ending with the current working variable.  The terminal uses <tt>go_path</tt> to form the search path for each command entered by the user.  Both <tt>go()</tt> and <tt>jump()</tt> work by modifying <tt>go_path</tt>, and the terminal will reset <tt>go_path</tt> if it detects a problem.  The user can add a small coding section to <tt>go_path</tt> which the terminal will run if it needs to reset the path; in this coding section do not define any variables or run any functions or problems will start happening.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>input()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>str</i> = <tt>input</tt>(<i>args_to_print</i>)<P>
+ <i>C syntax: </i> <tt>$input</tt>((string) <i>str</i>, <i>args_to_print</i>)<P><P></b>
+<P>
+
+
+<P> Reads in a single line from the C standard input (which is usually the keyboard).  <tt>input()</tt> causes Cicada&rsquo;s execution to halt until an end-of-line character is read (i.e. the user hits return or enter), at which point execution resumes.  The return string contains all characters before, but not including, the end-of-line.  Reading in a null character causes the error &ldquo;I/O error&rdquo; to be thrown.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>jump()</b></tt><P><P>
+ <i>syntax: </i> <tt>jump</tt>([ code, ] <i>path</i>)<P><P></b>
+<P>
+
+<P> <tt>jump()</tt> is basically identical to <tt>go()</tt> except in the way that it handles the first step in a search path.   For most details, see the explanation of <tt>go()</tt> above.  The difference between the two functions can be seen by example.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; a :: { b :: { ... } }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; go(a.b), where
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; root.a.b
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; go(a), where&nbsp;&nbsp;| starting from a.b
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; root.a
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; go(b), where
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; root.a.b
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; jump(a), where&nbsp;&nbsp;| again, starting from a.b
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; root.a.b--&gt;a
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <tt>jump()</tt> takes advantage of the fact that search paths in Cicada can twine arbitrarily through memory space; we don&rsquo;t have to restrict ourselves to paths where each variable is &lsquo;contained in&rsquo; the last.  A more useful path would be something like <tt>root.a.b--&gt;c.d</tt>:  that would allow us to work inside of &lsquo;<tt>d</tt>&rsquo; while retaining access to &lsquo;<tt>a</tt>&rsquo; and &lsquo;<tt>b</tt>&rsquo;, even if those latter lie along a different branch.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>load()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>file_string</i> = <tt>Load</tt>((string or int) <i>file_name</i>)<P>
+ <i>syntax: </i> (string) <i>file_string</i> = <tt>load</tt>((string or int) <i>file_name</i>)<P>
+ <i>C syntax: </i> <tt>$load</tt>((string or int) <i>file_name</i>, (string) <i>file_string</i>)<P><P></b>
+<P>
+ 
+
+<P> Reads a file into a string.  If there is an error in opening or reading the file (i.e. if the file was not found), then <tt>load()</tt> returns &ldquo;I/O error&rdquo;, signifying that the error comes from the operating system, not Cicada.  The counterpart to <tt>load()</tt> is <tt>save()</tt>.
+
+<P> Little-L <tt>load()</tt> only looks for files in the default directory.  Big-L <tt>Load()</tt> extends this function by searching all paths specified in the <tt>filePaths[]</tt> array.
+
+<P> The filename may be an integer (1-3) rather than a string, in order to load one of the predefined scripts.  The scripts are:  1) <tt>defs.cicada</tt>; 2) <tt>terminal.cicada</tt>; 3) the user&rsquo;s script passed to <tt>runCicada()</tt> (if given, otherwise an error is thrown).<P><P><P><P>
+
+<P>  
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>log()</b></tt>, <tt>$log()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>log</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$log</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the natural logarithm (base <i>e</i>) of its argument.  The argument must be numeric scalars or arrays.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>lowercase()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>lowercase_string</i> = <tt>lowercase</tt>((string) <i>my_string</i>)<P><P></b>
+<P>
+
+<P> Converts a mixed-case string to lowercase.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>max()</b></tt>, <tt>$minmax()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>result</i> = <tt>max</tt>((numeric list) <i>the_list</i> [, <tt>code</tt>, <tt>rtrn</tt> = { <tt>index</tt> / <tt>value</tt> / <tt>both</tt>])<P>
+ <i>C syntax: </i> <tt>$minmax</tt>((doubles) <i>the_list</i>, 1, (int) <i>index</i>, (double) <i>value</i>])<P><P></b>
+<P>
+
+<P> Returns the maximum element of a list:  its index, value (the default), or both { index, value }.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>mean()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>result</i> = <tt>mean</tt>((numeric list) <i>the_list</i>)<P><P>
+ <i>C syntax: </i> <tt>$mean</tt>((doubles) <i>the_list</i>, (double) <i>result</i>)<P><P></b>
+<P>
+
+<P> Returns the average (arithmetic mean) of the elements of a numeric list.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>member_ID()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>ID</i> = <tt>member_ID</tt>((composite variable) <i>var</i>, (numeric) <i>member_number</i>)<P>
+ <i>syntax: </i> <tt>$member_ID</tt>((composite variable) <i>var</i>, (int) <i>member_number</i>, (int) <i>ID</i>)<P><P></b>
+<P>
+
+
+<P> Returns the ID number of a given member of a composite variable.  The ID is essentially the bytecode representation of the member&rsquo;s name.  Under normal conditions user-defined names are assigned positive ID numbers, whereas hidden members are given unique negative ID numbers.  The variable enclosing the member is the first argument, and the member number is the second argument.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>min()</b></tt>, <tt>$minmax()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>result</i> = <tt>min</tt>((numeric list) <i>the_list</i> [, <tt>code</tt>, <tt>rtrn</tt> = { <tt>index</tt> / <tt>value</tt> / <tt>both</tt>])<P>
+ <i>C syntax: </i> <tt>$minmax</tt>((doubles) <i>the_list</i>, -1, (int) <i>index</i>, (double) <i>value</i>])<P><P></b>
+<P>
+
+<P> Returns the minimum element of a list:  its index, value (the default), or the combination { index, value}.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>mprint()</b></tt><P><P>
+ <i>syntax: </i> <tt>mprint</tt>([data to print] [ ; (ints) <tt>fieldWidth</tt>, <tt>maxDigits</tt>, (string) <tt>voidString</tt> = values ])<P><P></b>
+<P>
+
+<P> This &lsquo;matrix&rsquo; print function prints tables of numbers.  Each index of the argument is printed on a separate line; each index of a row prints separately with a number of spaces in between.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; mprint({ 2, { 3, nothing, 5 }, { 5/2, &quot;Hello&quot; } })
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; 2
+
+<br>&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; 2.5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Hello&nbsp;&nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <tt>mprint()</tt> has three user-adjustable optional parameters that can be changed in the argument coding section.  <tt>mprint.fieldWidth</tt> controls the number of spaces in each row; it defaults to 12.  <tt>mprint.maxDigits</tt> controls the precision of numbers that are printed out; it defaults to 6.  A <tt>maxDigits</tt> of zero means &lsquo;no limit&rsquo;.  <tt>mprint.voidString</tt> is the string used to represent void members.<P><P><P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>multiply()</b></tt>, <tt>$multiply()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>z</i> = <tt>multiply</tt>((numeric) <i>x</i>, (numeric) <i>y</i>)<P>
+ <i>C syntax: </i> <tt>$multiply</tt>((doubles) <i>x</i>, (doubles) <i>y</i>, (doubles) <i>z</i>)<P><P></b>
+<P>
+
+<P> Computes z = x * y, for scalar or vector numeric data.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>newCompiler()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>compilerID</i> = <tt>newCompiler</tt>((<tt>compiledCommandType</tt> array) operatorDefs, (int array) opLevelDirections)<P>
+ <i>C syntax: </i> <tt>$newCompiler</tt>((<tt>compiledCommandType</tt> array) operatorDefs, (int array) opLevelDirections, (int) <i>compilerID</i>)<P><P></b>
+<P>
+
+
+<P> Produces a new compiler from a language specification, and returns the new compiler&rsquo;s ID number.  (The default Cicada compiler has ID number 1).  The two arguments are:  1) an array of <tt>{ string, int, string, string }</tt>, one element for each command, containing the command definitions; and 2) an array giving the direction of evaluation for each order-of-operations level.  These mirror the <tt>cicadaLanguage[]</tt> and <tt>cicadaLanguageAssociativity[]</tt> arrays, respectively, which are defined in <tt>cclang.c</tt>.
+
+<P> The beginning of <tt>defs.cicada</tt> has lots of definitions to make a language specification simpler and more readable.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>pow()</b></tt>, <tt>$pow()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>z</i> = <tt>pow</tt>((numeric) <i>x</i>, (numeric) <i>y</i>)<P>
+ <i>C syntax: </i> <tt>$pow</tt>((doubles) <i>x</i>, (doubles) <i>y</i>, (doubles) <i>z</i>)<P><P></b>
+<P>
+
+<P> Computes the power function z = x^y, for scalar or vector numeric data.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>print()</b></tt><P><P>
+ <i>syntax: </i> <tt>print</tt>((vars) v1, v2, ...)<P>
+ <i>C syntax: </i> <tt>$print</tt>((vars) v1, v2, ...)<P><P></b>
+<P>
+ 
+
+<P> Writes data to the standard output (which is normally the command prompt window).  The arguments are printed sequentially and without spaces in between.  Numeric arguments are converted to ASCII and printed as legible integers or floating-point numbers.  String arguments are written verbatim (byte-for-byte) to the screen, except that unprintable characters are replaced by their hexadecimal equivalents &ldquo;<tt>\AA</tt>&rdquo; (which is also the format in which these characters may be written into a string).  Also, carriage returns in strings are written as end-of-line characters, so a PC-style line ending marked by &ldquo;<tt>\0D\n</tt>&rdquo; outputs as a double line-break.
+
+<P> When Cicada is run from the command prompt, <tt>defs.cicada</tt> loads three further printing functions:  <tt>printl()</tt> (print with line break), <tt>sprint()</tt> (for printing composite structures), and <tt>mprint()</tt> (printing arrays).  <tt>sprint()</tt> is the default function for printing expressions typed by the user.<P>
+
+<P>  
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>print_string()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>result</i> = <tt>print_string</tt>((vars) v1, v2, ... [<tt>, code, maxFloatingDigits</tt> = (numeric)])<P>
+ <i>syntax: </i> <tt>$print_string</tt>((string) result, (int) max_floating_digits, (vars) v1, v2, ...)<P><P></b>
+<P>
+  
+
+<P> Writes data to a text string.  <tt>print_string()</tt> is the counterpart to <tt>read_string()</tt>.  Roughly speaking, <tt>print_string()</tt> is to <tt>print()</tt> as C&rsquo;s more elaborate <tt>sprintf()</tt> is to <tt>printf()</tt>.  The string to write is followed by any number of variables whose data Cicada writes to the string (with no spaces in between).  Strings from the source variables get copied into the destination string verbatim.  Numeric variables are written as text, and here <tt>print_string</tt> differs from a forced equate.  For example: 
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; print_string(str, 5, 2.7)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  sets <tt>str</tt> to &ldquo;52.7&rdquo;, whereas
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; str =! { 5, 2.7 }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  gives something illegible (the raw bytes encoding the two numbers in binary format).
+
+<P> If the first argument is numeric, then it is taken as the minimum field width for numeric and Boolean (but not string or character) variables to be printed; otherwise the default minimum field width is zero.  If both the first and second arguments are numeric, then the second argument is the output precision for floating-point variables; otherwise the output precision is determined by the C constant <tt>DBL_DIG</tt> for <tt>double</tt>-typed variables.  When no precision is specified, <tt>print_string</tt> prints considerably more digits than does <tt>print()</tt>, whose precision is set by <tt>printFloatFormatString</tt> at the top of <tt>cmpile.c</tt>.<P>
+
+<P>   
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>printl()</b></tt><P><P>
+ <i>syntax: </i> <tt>printl</tt>([data to print])<P><P></b>
+<P>
+
+<P> This function is the same as <tt>print()</tt> except that it adds an end-of-line character at the end.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>pwd()</b></tt><P><P>
+ <i>syntax: </i> <tt>pwd</tt>()<P><P></b>
+<P>
+
+<P> Prints all file directories (all entries in the <tt>filePaths[]</tt> array) to the screen.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>random()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>random</tt>()<P>
+ <i>C syntax: </i> <tt>random</tt>((doubles) <i>y</i>)<P><P></b>
+<P>
+
+
+<P> Returns pseudo-random numbers uniformly drawn on the interval [0, 1].  To obtain the random number to double-precision, Cicada calls C&rsquo;s <tt>rand()</tt> function twice:
+
+<P> 
+
+<br><P>&nbsp;&nbsp;&nbsp;<tt>random()</tt> = <tt>rand()</tt>/<tt>RAND_MAX</tt> + <tt>rand()</tt>/(<tt>RAND_MAX</tt>)<sup>2</sup>
+
+<P>  The random number generator is initialized by Cicada to the current clock time each time the program is run, so the generated sequence should not be repeatable.  The scripted function returns a scalar; for vectorized random data run the C function.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>read_string()</b></tt><P><P>
+ <i>syntax: </i> <tt>read_string</tt>((string) to_write, (vars) v1, v2, ...)<P>
+ <i>syntax: </i> <tt>$read_string</tt>((string) to_write, (vars) v1, v2, ...)<P><P></b>
+<P>
+ 
+
+<P> Reads data from an ASCII string into variables.  The first argument is the string to read from; following arguments give the variables that will store the data.  <tt>read_string()</tt> is the humble cousin to C&rsquo;s <tt>sscanf()</tt> routine (it does not take a format string).  The various fields within the string must be separated by white space or end-of-line characters.
+
+<P> <tt>read_string()</tt> converts ASCII data in the source string into the binary format of Cicada&rsquo;s memory.  Thus numeric fields in the source string need to be written out as text, as in &ldquo;3.14&rdquo;.  Each string field must be one written word long, so &ldquo;the quick brown&rdquo; will be read into three string variables, not one.  Composite variables are decomposed into their primitive components, which are read sequentially from the source string.  Void members are skipped.
+
+<P> Here is an example of the use of <tt>read_string()</tt>
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; date :: { month :: string, day :: year :: int }
+
+<br>&nbsp;&nbsp;&nbsp; activity :: string
+
+<br>&nbsp;&nbsp;&nbsp; read_string(&quot;Jan 5 2007&nbsp;&nbsp;meeting&quot;, date, activity)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> If the string cannot be read into the given variables (i.e. there are too many or too few variables to read), then <tt>read_string()</tt> throws a type-mismatch warning.  Warnings can also be thrown if <tt>read_string()</tt> cannot read a field that should be numeric, or if there is an overflow in a numeric field.
+
+<P> <tt>read_string()</tt> is a counterpart to <tt>print_string()</tt>.  However, <tt>print_string()</tt> does not write spaces in between the fields, so unless spaces are put in explicitly its output cannot be read directly by <tt>read_string()</tt>.<P>
+
+<P>  
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>readFile()</b></tt><P><P>
+ <i>syntax: </i> <tt>readFile</tt>((table) <i>table_array</i>, (string) <i>file_name</i> [ ; (bools) <tt>ifHeader</tt>, <tt>resizeColumns</tt>, <tt>resizeRows</tt> = values])<P><P></b>
+<P>
+
+
+<P> Identical to <tt>readTable()</tt>, except reads the table string from a file.  Searches all directories in the <tt>filePaths[]</tt> array.<P><P><P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>readInput()</b></tt><P><P>
+ <i>syntax: </i> <tt>readInput</tt>((table) <i>table_array</i> [ ; (bools) <tt>ifHeader</tt>, <tt>resizeColumns</tt>, <tt>resizeRows</tt> = values])<P><P></b>
+<P>
+
+<P> Identical to <tt>readTable()</tt>, except reads the table string from the command line input.<P><P><P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>readTable()</b></tt><P><P>
+ <i>syntax: </i> <tt>readTable</tt>((table) <i>table_array</i>, (string) <i>table_text</i> [ ; (bools) <tt>ifHeader</tt>, <tt>resizeColumns</tt>, <tt>resizeRows</tt> = values])<P><P></b>
+<P>
+
+<P> The counterpart to <tt>saveTable()</tt> is <tt>readTable()</tt>, which loads data into an array.  It reads the data from a string, not a file, and tries to parse the data into the provided table.  If the <tt>IfHeader</tt> variable is set to true, then the first line of text is skipped.  Setting the <tt>Resize...Index</tt> arguments gives <tt>readTable()</tt> permission to adjust the size of the table to fit the data; in order for this to work the table must be a square array (i.e. not a list of 1-dimensional arrays that can be resized independently).  The default values of the optional arguments are <tt>false</tt> for <tt>IfHeader</tt>, and <tt>true</tt> for <tt>ResizeFirstIndex</tt> and <tt>ResizeSecondIndex</tt>.  An error results in a non-zero value for <tt>readTable.errCode</tt> and an error message printed to the screen.<P><P><P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>round()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>rounded_integer</i> = <tt>round</tt>((numeric) <i>real_number</i>)<P>
+ <i>C syntax: </i> <tt>$round</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Rounds a real number to the nearest integer.  For example, 1.499 rounds to 1, 1.5 rounds up to 2, and -1.5 rounds &lsquo;up&rsquo; to -1.  Arguments may be scalars or arrays.<P><P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>run()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>script_return_value</i> = <tt>run</tt>((string) <i>filename</i> [, (composite) <i>target</i>])<P><P></b>
+<P>
+
+<P> The essential <tt>run()</tt> function runs a script stored in a file.  <tt>run()</tt> compiles, transforms and finally runs the code in the current <tt>go{}</tt> location and search path.  Any errors in the process are flagged along with the offending text.  <tt>run()</tt> searches all directories in the <tt>filePaths[]</tt> array.  If there is a direct <tt>return</tt> from the lowest level of a script (i.e. not within a function or type definition) then the return variable will be handed back to the calling script.
+
+<P> Normally the specified script is run in the user&rsquo;s workspace.  Optionally, we can pass some other variable or function as a second argument to <tt>run()</tt>, in which case the script runs inside that object instead.
+
+<P> A given script is often run multiple times.  By default, when executing a script <tt>run()</tt> first checks to see whether it has seen that script before, and if so removes any root-level objects that the script defined when it was last run.  This is to avoid type-mismatch errors when the script tries redefining those objects.  If this is a problem then set <tt>run.CleanUp = false</tt>.  (This parameter is not set within the arguments.)  To make sure it knows when a script was rerun, make sure that the Boolean <tt>run.caseSensitive</tt> is set properly for your file system (it defaults to <tt>false</tt> meaning that Cicada assumes the file system doesn&rsquo;t discriminate filename cases).<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>save()</b></tt><P><P>
+ <i>syntax: </i> <tt>Save</tt>((string) <i>filename</i>, (string) <i>filedata</i>)<P>
+ <i>syntax: </i> <tt>save</tt>((string) <i>file_name</i>, (string) <i>filedata</i>)<P>
+ <i>C syntax: </i> <tt>$save</tt>((string) <i>filename</i>, (string) <i>filedata</i>)<P><P></b>
+<P>
+ 
+
+<P> Saves the data from the second argument into the file specified in the first argument.  There is no return value, although the error &ldquo;I/O error&rdquo; will be thrown if the save is unsuccessful.
+
+<P> <tt>Save()</tt> (capital &lsquo;S&rsquo;) extends the <tt>save()</tt> function by searching all paths in the <tt>DirectoryNames[]</tt> array.  This is useful when <tt>filename</tt> involves a path that may only be found in another directory.
+
+<P> If our data isn&rsquo;t already in string format, it&rsquo;s easy to do an on-line conversion:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; save(&quot;my_data&quot;, (temp_str :: string) =! the_data)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>saveTable()</b></tt><P><P>
+ <i>syntax: </i> <tt>saveTable</tt>((string) <i>filename</i>, (table) <i>data</i> [ ; (ints) <tt>fieldWidth</tt>, <tt>maxDigits</tt>, (string) <tt>voidString</tt> = values ])<P><P></b>
+<P>
+
+<P> The <tt>saveTable()</tt> routine exports data stored a set or array to a file.  This routine attempts all file paths when saving, just like the general-purpose <tt>Save()</tt> function.  The optional arguments are the same as those used by the function <tt>mprint()</tt>.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>sin()</b></tt>, <tt>$sin()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>sin</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$sin</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the sine of its argument, which must be a numeric scalar or array.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>size()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>var_size</i> = <tt>size</tt>((var) <i>my_var</i> [, code, <tt>storageSize</tt> = (bool)])<P>
+ <i>C syntax: </i> <tt>$size</tt>((var) <i>my_var</i>, (bool) <i>storageSize</i>, (int) <i>var_size</i>)<P><P></b>
+<P>
+
+
+<P> Returns the size, in bytes, of the first argument.  For composite variables, this is the sum of the sizes of all its members.  If two members of a composite variable point to the same data (i.e. one is an alias of the other), then that data will indeed be double-counted <i>unless</i> the optional second argument is set to <tt>true</tt> (its default value is <tt>false</tt>).
+
+<P> If a member points back to the composite variable, as in
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;self := @this
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;data :: int&nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; size(a)&nbsp;&nbsp;| will cause an error
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then the size of <tt>a</tt>, including its members and its members&rsquo; members, etc., is effectively infinite, and Cicada throws a self-reference error unless the second argument was set to <tt>true</tt>.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>sort()</b></tt><P><P>
+ <i>syntax: </i> <tt>sort</tt>((table) <i>table_to_sort</i>, { (list) <i>sort_by_list</i> or (numeric) <i>sorting_index</i> } [, <tt>code</tt>, <tt>direction</tt> = { <tt>increasing</tt> / <tt>decreasing</tt>])<P>
+ <i>C-1 syntax: </i> <tt>$makeLinkList</tt>((doubles) <i>list_to_sort</i>, (ints) <i>link_list</i>, (int) direction, (int) <i>first_index</i>, (ints or doubles) <i>sorted_list</i>)<P>
+ <i>C-2 syntax: </i> <tt>$sort</tt>((ints) <i>link_list</i>, (int) first_index, (ints or doubles) <i>lists_to_sort</i>, (ints or doubles) <i>sorted_lists</i>)<P><P></b>
+<P>
+
+
+<P> Sorts a list or table, which is passed as the first argument.  If it is a table then a second argument is required: either the column number to sort by, or a separate list to sort against.  So the following two sorts are equivalent:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myTable :: [10] { a :: b :: double }
+
+<br>&nbsp;&nbsp;&nbsp; for (c1::int) in &lt;1, 10&gt; myTable[c1] = { random(), random() }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; sort(myTable, 1)&nbsp;&nbsp;&nbsp;&nbsp;| sort by first column
+
+<br>&nbsp;&nbsp;&nbsp; sort(myTable, myTable[].a)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The sort-by list will be unaffected.
+
+<P> Whether to sort in increasing or decreasing order can be specified after the semicolon/<tt>code</tt> marker; the default is &lsquo;increasing&rsquo;.  The column to sort by, whether it is in the same table or in a separate list, must be numeric; <tt>sort()</tt> will not alphabetize strings (although it will work with character fields).
+
+<P> The Cicada <tt>sort()</tt> function first calls <tt>$makeLinkList()</tt>, then attempts <tt>$sort()</tt> using the link list from the first step.  The C-coded <tt>$sort()</tt> only works if each list to sort is numeric; if that&rsquo;s not true then <tt>$sort()</tt> uses a slower scripted sort function that works on more general data types.  <tt>$sort()</tt> can sort multiple lists per function call: i.e. it accepts 2N+2 arguments.
+<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>springCleaning()</b></tt><P><P>
+ <i>syntax: </i> <tt>springCleaning</tt>()<P>
+ <i>C syntax: </i> <tt>$springCleaning</tt>()<P><P></b>
+<P>
+
+
+<P> This function removes all unused objects from Cicada&rsquo;s memory, in order to free up memory.  An object is termed &lsquo;unused&rsquo; if it cannot be accessed by the user in any way.  For example, if we <tt>remove</tt> the only member to a function then that function&rsquo;s internal data can never be accessed unless it is currently running.
+
+<P> Cicada tries to free memory automatically, but unfortunately it is not always able to do so.  (The reason is self-referencing loops between objects in memory.)  The only way to eliminate these zombies is to comb the whole memory tree, which is what <tt>springCleaning()</tt> does.  When Cicada is run from the command prompt, it disinfects itself with a <tt>springCleaning()</tt> after every command from the user.  But we might want to scrub the memory more often if we are running a lengthy, memory-intensive script that allocates and removes memory frequently.  <tt>springCleaning()</tt> can help unjam arrays, if there is no member leading to the jamb.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>sprint()</b></tt><P><P>
+ <i>syntax: </i> <tt>sprint</tt>([data to print])<P><P></b>
+<P>
+
+
+<P> <tt>sprint()</tt> is used for printing composite objects such as variables and functions;  the &lsquo;s&rsquo; probably originally stood for &lsquo;spaced&rsquo;, &lsquo;set&rsquo;, or &lsquo;structure&rsquo;.  This is one of the most useful functions.  It prints each member of an object separated by commas, and each composite object is enclosed in braces.  Void members are represented by asterisks.  The output is in exactly the format that Cicada uses for constructing sets.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; sprint({&nbsp;a := 5, b :: { 4, 10, &quot;Hi&quot; }, nothing }, 'q')
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; { 5, { 4, 10, Hi }, * }, q
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> <tt>sprint()</tt> is the default calculator (i.e. <tt>calculator</tt> aliases <tt>sprint()</tt>).<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>subtract()</b></tt>, <tt>$subtract()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>z</i> = <tt>subtract</tt>((numeric) <i>x</i>, (numeric) <i>y</i>)<P>
+ <i>C syntax: </i> <tt>$subtract</tt>((doubles) <i>x</i>, (doubles) <i>y</i>, (doubles) <i>z</i>)<P><P></b>
+<P>
+
+
+<P> Computes z = x - y, for scalar or vector numeric data.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>sum()</b></tt>, <tt>$sum()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>result</i> = <tt>sum</tt>((numeric list) <i>the_list</i>)<P>
+ <i>C syntax: </i> (numeric) <tt>$sum</tt>((doubles) <i>the_list</i>, (double) <i>result</i>)<P><P></b>
+<P>
+
+<P> Returns the sum of elements of a numeric list.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>tan()</b></tt>, <tt>$tan()</tt><P><P>
+ <i>syntax: </i> (numeric) <i>y</i> = <tt>tan</tt>((numeric) <i>x</i>)<P>
+ <i>C syntax: </i> <tt>$tan</tt>((double) <i>x</i>, (double) <i>y</i>)<P><P></b>
+<P>
+
+<P> Returns the tangent of its numeric argument (scalar or array).<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>throw()</b></tt><P><P>
+ <i>syntax: </i> <tt>throw</tt>((numeric) error_code [, (composite) error_script, (numeric) code_number, error_index] [, code, if_warning = (bool)])<P>
+ <i>C syntax: </i> <tt>$throw</tt>((int) error_code, (bool) if_warning, (composite) error_script, (int) code_number, (int) error_index)<P><P></b>
+<P>
+
+
+<P> Causes an error to occur.  This stops execution and throws Cicada back to the last enclosing <tt>trap()</tt> function; if there is none then Cicada either prints an error (if run from the command line) or bails out completely.  The first argument is the error code to throw -- these are listed in Table 5.  The optional second, third and fourth arguments allow one to specify the function, the part of the function (should be 1 unless the inheritance operator was used) and the bytecode word in that function the error appears to come from.  If one sets the optional fifth argument to true, then the error will be thrown as a warning instead.
+
+<P> Although all real errors have error codes in the range 1-50, <tt>throw()</tt> is happy to cause an error with any integer  error code.  If the error code is zero then it will seem that <tt>throw()</tt> is not working, just because 0 is code for &lsquo;no error&rsquo;.  <tt>throw()</tt> does require that the error code be zero or positive, so it gives a number-out-of-range error if the argument is negative.  However, <tt>throw(2)</tt> also gives an out-of-range-error.. because that&rsquo;s what error code 2 represents!<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>top()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>vartop</i> = <tt>top</tt>((composite variable) <i>my_var</i>)<P><P></b>
+<P>
+
+
+<P> Returns the number of indices of the argument variable.  The argument must be a composite variable or equivalent (e.g. set, function, class, etc.).  <tt>top()</tt> does <i>not</i> count hidden members.  Therefore the value it returns corresponds to the highest index of the variable that can be accessed, so
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; my_var[top(my_var)]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  is legal (unless the top member is void) whereas
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; my_var[top(my_var) + 1]
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  is always illegal (unless we are in the process of defining it).  Notice that in both of these cases we can replace the <tt>top()</tt> function by the <tt>top</tt> <i>keyword</i>, which is always defined inside of array brackets:  e.g. <tt>my_var[top+1]</tt>.<P>
+
+<P> For technical reasons <tt>top()</tt> is defined inside of <tt>cclang.c</tt> rather than in <tt>defs.cicada</tt>.  Don&rsquo;t try to use the C-coded <tt>$top()</tt>, it just confuses the compiler.
+
+<P> 
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>transform()</b></tt><P><P>
+ <i>syntax: </i> [(composite) <i>target_function</i> =] <tt>transform</tt>((string) <i>bytecode</i> [, (function) <i>target_function</i> ] [<tt>, code, codePath</tt> = @(set of functions), <tt>errInfo.filename/sourceCode/opCharPositions</tt> = (string)])<P>
+ <i>C syntax: </i> <tt>$transform</tt>((string) <i>bytecode</i>, (function) <i>target_function</i>, (set of functions) <i>codePath</i>, (string) <i>errInfoFilename</i>, (string) <i>errInfoSourceCode</i>, (string) <i>errInfoOpCharPositions</i>)<P><P></b>
+<P>
+  
+
+<P> Copies compiled bytecode stored as a string (1st argument) into the internal code of a target function variable (return value or 2nd argument), <i>without</i> running the code&rsquo;s constructor.  The bytecode is typically generated using the <tt>compile()</tt> function:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; newFunction :: transform(compile(&quot;toAdd := 2; return args[1]+toAdd&quot;))
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  but it is also possible to write the bytecode by hand.  This probably won&rsquo;t work -- the member IDs depend on your workspace history -- but the code looks something like:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; newFunction :: {}
+
+<br>&nbsp;&nbsp;&nbsp; (newBytecode :: string) =! { 8, 47, 10, 314, 54, 2, 4, &amp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;5, 8, 237, 10, -999, 27, 12, 40, 54, 1, 10, 314, 0 }
+
+<br>&nbsp;&nbsp;&nbsp; transform(newBytecode, newFunction)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  At this point it is as if we had written
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; newFunction :: { toAdd := 2; return args[1]+toAdd }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  We can now execute the new code by running the target function.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; newFunction(3)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| will return 5
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> When we define a function as the return value of <tt>transform()</tt>, as in the previous example, the constructor runs automatically.  If we don&rsquo;t want this to happen, we should pass in a target function as the second argument of <tt>transform()</tt>.  If a function appears here, that is not void, then that function&rsquo;s existing codes are erased and replaced by the transformed code (assuming no error) without running the constructor.
+
+<P> The default search path for the transformed code is the same search path used the function that called <tt>transform()</tt>, but we can replace this default with a manually-constructed path by passing a set of variables as the optional 3rd argument.  For example
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; A :: B :: C :: { D :: {} }
+
+<br>&nbsp;&nbsp;&nbsp; transform(newBytecode, newFunction, { A, C.D, B })
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  causes <tt>newFunction()</tt>&rsquo;s search path to go from <tt>newFunction</tt> to <tt>A</tt> to <tt>C.D</tt> and finally end at <tt>B</tt>.
+
+<P> The optional fourth, fifth and sixth arguments help Cicada to give helpful error messages if the new code crashes when we try to run it.  The fourth argument is just the name of the file containing the script, if applicable (otherwise set it to the void).  The fifth argument is the original ASCII text of the script, and the sixth is the mapping between bytecode words and script characters that is an optional output of <tt>compile()</tt>.  Here is how we pass all of this information between <tt>compile()</tt> and <tt>transform()</tt>:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; fileName := &quot;scriptFile.cicada&quot;
+
+<br>&nbsp;&nbsp;&nbsp; myScript := load(fileName)
+
+<br>&nbsp;&nbsp;&nbsp; opPositions :: string
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; scriptBytecode := compile(myScript, fileName, opPositions)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; newFunction :: {}
+
+<br>&nbsp;&nbsp;&nbsp; transform(scriptBytecode, newFunction, { }, fileName, myScript, opPositions)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> It is certainly possible to pass bogus bytecode to <tt>transform()</tt> (particularly if we&rsquo;re trying to write out the binary ourselves).  <tt>transform()</tt> checks the bytecode&rsquo;s syntax, and if there is a problem then it crashes out with an error message.<P>
+
+<P>   
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>trap()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>error_code</i> = <tt>trap</tt>([;[;[;]]] code_to_run)<P><P></b>
+<P>
+ 
+
+<P> Runs the code inside the parentheses (i.e. its argument), and returns any error value.  Error codes are listed in Table 5.  No <tt>code</tt> marker is needed within a <tt>trap()</tt> call.  Upon error, the argument stops running and the error code is returned; if the argument finishes with no error then the return value is 0.  <tt>trap()</tt> thus prevents a piece of dubious code from crashing a larger script.  Note that some egregious errors are caught at compile-time and <tt>trap()</tt> will not be able to prevent those -- this includes some type-mismatch errors like <tt>trap(string = 4)</tt>.
+
+<P> A <tt>trap()</tt> call can optionally print out an error message if needed.  To do this we add a semicolon (or <tt>code</tt> marker) immediately at the beginning of its arguments.  Two opening semicolons causes <tt>trap()</tt> to re-throw the error (without printing an error message), effectively redirecting the source of the error to the <tt>trap()</tt> command.  Three opening semicolons causes it to both print any error message and re-throw the error as a thrown-to error -- so code execution will then fall back to the next enclosing <tt>trap()</tt> and print another message.  This can help to trace errors through multiple nested functions.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; trap((a::*) = 2)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| prevents a crash
+
+<br>&nbsp;&nbsp;&nbsp; errCode := trap((a::*) = 2)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| returns the type-mismatch error code
+
+<br>&nbsp;&nbsp;&nbsp; trap( ; (a::*) = 2)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| prints a type-mismatch error but doesn't crash
+
+<br>&nbsp;&nbsp;&nbsp; trap( ; ; ; (a::*) = 2)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| prints a type-mismatch error, then crashes out
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice that <tt>trap()</tt> will also print warning messages (minor errors that don&rsquo;t stop the program).  Warning codes are the same as error codes except that they are negated:  for example an out-of-range error will return error code 2, but an out of range warning will return -2.  If several warnings have been produced, <tt>trap()</tt> will only print and return the error code for the last one.
+
+<P> The <tt>trap()</tt> function is actually defined in <tt>cclang.c</tt>, and has the unique ability to run its arguments in whatever function called <tt>trap()</tt>, rather than in a private argument variable used by all other built-in and user-defined functions.  So variables which are defined within the <tt>trap()</tt> argument list will be accessible to the rest of the function.  Also <tt>this</tt> and <tt>parent</tt> have the same meaning inside a <tt>trap()</tt> command as outside of it.  The C-coded <tt>$trap()</tt> lacks this ability and has the usual run-constructor arguments flag, so just use the scripted function call.
+
+<P>  
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>type()</b></tt><P><P>
+ <i>syntax: </i> (numeric) <i>theType</i> = <tt>type</tt>((variable) <i>var</i> [, (numeric) <i>memberIndex</i>])<P>
+ <i>C syntax: </i> <tt>$type</tt>((variable) <i>var</i>, (int) <i>memberNumber</i>,  (int) <i>theType</i>)<P><P></b>
+<P>
+
+
+<P> Returns a number representing the type of the given variable (one argument) or one of its members (if there is a second argument).  The variable is the first argument, and the member index is the optional second argument.  The types IDs are listed in Table 1.  A composite-typed variable or member only returns a &lsquo;5&rsquo; even though its full type is properly determined by its code list -- use the <tt>bytecode()</tt> function to obtain the code list.<P>
+
+<P>  
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>uppercase()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>uppercase_string</i> = <tt>uppercase</tt>((string) <i>my_string</i>)<P><P></b>
+<P>
+
+<P> Converts a mixed-case string to uppercase.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>what()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>var_names</i> = <tt>what</tt>([ (composite) <i>var_to_look_in</i> ])<P><P></b>
+<P>
+
+<P> Returns the names of the variables in the current directory, which is usually <tt>root</tt> (see <tt>go()</tt> and <tt>jump()</tt>).  If an argument is provided then <tt>what()</tt> returns the names of the variables inside that argument variable.  Remember that <tt>what()</tt> <i>requires</i> the parentheses!<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>where</b></tt>:</b>
+<P>  the current search path of the user, stored as a string.<P><P>
+
+<P> 
+
+<P> 
+
+<br><P><b><tt>writeTable()</b></tt><P><P>
+ <i>syntax: </i> (string) <i>table_string</i> = <tt>writeTable</tt>((table) <i>data</i> [ ; (ints) <tt>fieldWidth</tt>, <tt>maxDigits</tt>, (string) <tt>voidString</tt> = values ])<P><P></b>
+<P>
+
+<P> <tt>writeTable()</tt> exports table data as a string.  This function takes the same three optional arguments as <tt>mprint()</tt>.<P><P>
+
+<P> <ul>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_621.html">Prev: Define operator flags</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_64.html">Next: C functions for working with whole arguments<P></a>
+</div><br><br><P>Last update: November 12, 2025

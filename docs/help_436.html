@@ -1,0 +1,135 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: This and that</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_43.html">Variables</a>
+
+<H1> <CENTER> This and that </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> The keyword &lsquo;<tt>this</tt>&rsquo; acts as a synonym for the current variable or function where code is being executed.  From the command prompt, <tt>this</tt> typically refers to the entire workspace.  But when a function is running, &lsquo;<tt>this</tt>&rsquo; refers to that function.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f :: {&nbsp;int; this = args, return this&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  and type <tt>f(5)</tt>, our function will set its internal integer variable to 5 and return itself:  <tt>{ 5 }</tt>.  In fact, <tt>this</tt> refers to the inside of <i>any</i> curly braces it appears in.  For example, here:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; myVar :: {&nbsp;a := 2, b := this[1]&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <tt>c</tt> will be set to 2.
+
+<P> The really tricky situation is inside the arguments of a function call, where <tt>this</tt> refers to the function arguments themselves.  For reasons explained elsewhere, if we write
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f(2, 5, this[2])
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then we are effectively calling <tt>f(2, 5, 5)</tt>.  This means that, for example, we cannot print the number of workspace variables by typing
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; print(top(this))&nbsp;&nbsp;&nbsp;| won't work
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  because that command will print &lsquo;<tt>1</tt>&rsquo; which is the number of arguments passed to <tt>top()</tt>.  What we really want to do is back out 2 levels, from the arguments of <tt>top()</tt> to the arguments of <tt>print()</tt> and then to the workspace, by typing
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; print(top(parent.parent))
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <tt>parent</tt> is the second predefined keyword, and refers to the object in the search path just before <tt>this</tt>.  A shorthand for <tt>parent</tt> is a backslash character, so the last example could also have been written
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; print(top(\.\))
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> A third keyword, which should appear only to the right of an assignment operator (<tt>=</tt> or <tt>&lt;-</tt>), is called &lsquo;<tt>that</tt>&rsquo;, and it refers to whatever was on the left side of the assignment operator.  It can be used to abbreviate cumbersome expressions such as
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; facts.num.N = facts.num.N * log(facts.num.N) + facts.num.N
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  with something like
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; facts.num.N = that * log(that) + that
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> The final keyword, called <tt>args</tt>, refers to a function&rsquo;s arguments, which is usually a composite variable.  Here&rsquo;s a quick example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; I :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;return { args, args[2] }
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  If we call <tt>I(1, 2, 3)</tt>, our function <tt>I</tt> sends back <tt>{ { 1, 2, 3 }, 2 }</tt>.
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_435.html">Prev: Resizing arrays/lists (and composite variables)</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_437.html">Next: Aliases</a>
+</div><br><br><P>Last update: November 12, 2025

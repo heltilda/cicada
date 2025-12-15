@@ -1,0 +1,49 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Lists</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_43.html">Variables</a>
+
+<H1> <CENTER> Lists </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Lists are very similar to one-dimensional arrays.  Define a list using double brackets:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; intList :: [[ ]] int
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  There is no option to set an initial list size -- initially <tt>top(intList)</tt> is zero.  However, if we try to copy data (<tt>intList = { 2, 3, 8 }</tt>), then the list will automatically resize as needed.  At this point we can access the list elements using the normal array operators:  <tt>intList[2]</tt>, <tt>intList[&lt;1, 2&gt;]</tt>, <tt>intList[]</tt>, etc.
+
+<P> The most important difference between lists and arrays is that an array of arrays is a multidimensional array, whereas in an array of lists each list may have a different size.  Therefore the following is legal:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; twoIntLists :: [] intList
+
+<br>&nbsp;&nbsp;&nbsp; twoIntLists[1] = { 3, 4 }
+
+<br>&nbsp;&nbsp;&nbsp; twoIntLists[2] = { 0, 1, 2 }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> In Cicada a string is defined as a list of characters.  Therefore <tt>s :: string</tt> is equivalent to <tt>s :: [[]] char</tt>.
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_433.html">Prev: Array variables</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_435.html">Next: Resizing arrays/lists (and composite variables)</a>
+</div><br><br><P>Last update: November 12, 2025

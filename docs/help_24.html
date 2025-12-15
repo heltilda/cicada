@@ -3,7 +3,7 @@
 <HEAD>
 <TITLE>Cicada Help: The Anagrambler</TITLE>
 
-<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a>
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  memory networks in Cicada</a>
 
 <H1> <CENTER> The Anagrambler </CENTER> </H1>
 </HEAD>
@@ -14,7 +14,7 @@
 
 <P> After running a few more tests we eventually convince ourselves that <tt>NN.cicada</tt> is working, so we open a new file in our Cicada directory and start thinking about how to put our networks to use.
 
-<P> The particular learning algorithm we are using is well suited to the task of pattern completion.  We will demonstrate by building a network to unscramble anagrams.  The inputs to this network will be the number of times each of the 26 letters appears in a word, encoded in the activity levels of 26 input neurons.  The outputs will be the ordering of those letters relative to alphabetical, using <i>n</i> output neurons for a maximum word length <i>n</i>.  (For example, a lowest-to-highest ranking of outputs of 3-2-4-1-5 for the input &lsquo;ortob&rsquo; would imply the ordering 3-2-4-1-5 of the characters &lsquo;b-o-o-r-t&rsquo;, which spells &lsquo;robot&rsquo;.)<P>
+<P> The particular learning algorithm we are using is well suited to the task of pattern completion.  To demonstrate, let&rsquo;s build a network to unscramble anagrams.  The inputs to this network will be the number of times each of the 26 letters appears in a word, encoded in the activity levels of 26 input neurons.  The outputs will be the ordering of those letters relative to alphabetical, using <i>n</i> output neurons for a maximum word length <i>n</i>.  (For example, a lowest-to-highest ranking of outputs of 3-2-4-1-5 for the input &lsquo;ortob&rsquo; would imply the ordering 3-2-4-1-5 of the characters &lsquo;b-o-o-r-t&rsquo;, which spells &lsquo;robot&rsquo;.)<P>
 
 <P>  <u>anagrambler.cicada</u>
 
@@ -84,13 +84,13 @@
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ltr =! alph[args[2]]
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args[1] = find(the_word, ltr, 0)&nbsp;&nbsp;&nbsp;)
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;args[1] = find(the_word, ltr; mode = 0)&nbsp;&nbsp;&nbsp;)
 
 <br>&nbsp;&nbsp;&nbsp; 
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[^size(the_word)]
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[*].letter =! the_word
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[].letter =! the_word
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;}
 
@@ -112,7 +112,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run(NN_in, params.step_size)
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;process(NN_in, params.step_size)
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
@@ -122,7 +122,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[^numOutputs]
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[*].order = activity[&lt;numInputs+2, numInputs+numOutputs+1&gt;]
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NN_out[].order = activity[&lt;numInputs+2, numInputs+numOutputs+1&gt;]
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if size(the_word) &lt; numOutputs&nbsp;then NN_out[^size(the_word)]
 
@@ -130,7 +130,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sort(NN_out, 1)
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputString =! NN_out[*].letter
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputString =! NN_out[].letter
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
@@ -168,7 +168,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for c1 in &lt;1, args[2]&gt;&nbsp;&amp;
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run(NN_in, NN_out[*].order, params.step_size, params.learning_rate)
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;process(NN_in, NN_out[].order, params.step_size, params.learning_rate)
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;}
 
@@ -210,7 +210,7 @@
 
 <P>
 
-<P> Next we specify how big of a brain we need.  Let&rsquo;s decide to work with words of 6 or fewer characters (so, 6 output neurons), and of course we expect a 26-character alphabet (lowercase only please).  So we enter the following line at the command prompt.
+<P> Next we specify how big of a brain we need.  Let&rsquo;s decide to work with words of 6 or fewer characters (so, 6 output neurons), and of course we expect a 26-character alphabet (lowercase only please).
 
 <P> 
 
@@ -260,7 +260,9 @@
 
 <P>
 
-<P> Thus concludes our Cicada demonstration.  Of course we&rsquo;ve barely probed our anagrambler&rsquo;s intelligence, but a great virtue of the interactive command prompt is that the experimental cycles are very short.  For example, the author was taught it to perfectly recall three words (<tt>hello</tt>, <tt>tomato</tt>, <tt>yazoo</tt>) within a minute of coaching.  But maybe the network can learn even faster -- is 10 rounds of training on each word too many?  Will our network learn faster if we increase higher learning rate, or will it become unstable?  It&rsquo;s simple to test.
+<P>  Voil&agrave;---it successfully reconstructed a pattern.
+
+<P> A little bit of playing around shows that our little network can actually learn a few words at a time.  Next we might rebuild it to learn longer words, or see if adding more hidden neurons increases its vocabulary -- the experimental cycles are very short with a command prompt.  There are also the training parameters -- is 10 rounds of training on each word too many?  Will our network learn faster if we increase the learning rate, or will it become unstable?  It&rsquo;s simple to test.
 
 <P> 
 
@@ -272,11 +274,33 @@
 
 <P>
 
-<P>  We might also play around with the network architecture, for example by increasing the number of output neurons to allow the anagrambler to memorize longer words.  Or we could add hidden neurons to increase the complexity of its calculations, using the third argument of <tt>init()</tt>.
+<P> One final detail: it&rsquo;s annoying to have to type &ldquo;<tt>run(&quot;NN&quot;), run(&quot;anagrambler&quot;)</tt>&rdquo; every time we start our program.  Going back to <tt>NN.c</tt>, let&rsquo;s write a script that runs those commands and have <tt>runCicada()</tt> run that script before presenting the command prompt.  <tt>NN.c</tt>&rsquo;s <tt>main()</tt> function now reads:
 
-<P> Hopefully this example shows the great advantage of marrying C code to an interpreted environment.  We&rsquo;ll conclude by explaining the general procedure for incorporating C/C++ functions into Cicada.
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; int main(int argc, char **argv)
+
+<br>&nbsp;&nbsp;&nbsp; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;const char *startupScript = &quot;run(\&quot;NN\&quot;), run(\&quot;anagrambler\&quot;)&quot;;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;return runCicada(fs, startupScript, true);
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Now our compiled application is basically a version of Cicada that has a C-coded Anagrambler engine built into the language.
+
+<P> 
+
+<P> 
 
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_23.html">Prev: Writing and debugging a Cicada wrapper</a> &nbsp;&nbsp;
-<a href="https://heltilda.github.io/cicada/help_25.html">Next: Rules for embedding C/C++ code</a>
-</div><br><br><P>Last update: May 8, 2024
+<a href="https://heltilda.github.io/cicada/help_3.html">Next: Calling Cicada from a C program</a>
+</div><br><br><P>Last update: November 12, 2025

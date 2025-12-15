@@ -1,0 +1,127 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Passing strings and other lists</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Calling Cicada from a C program</a> ---> <a href="https://heltilda.github.io/cicada/help_31.html">C function declaration</a>
+
+<H1> <CENTER> Passing strings and other lists </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> A Cicada string is a &lsquo;list&rsquo; of characters, the list being a special datatype roughly analogous to an array.  Therefore we can read a string into C the same way we read in a character array, e.g. using the <tt>arrayRef()</tt> macro, as in the examples above.  This method lets us both read and modify the characters in the string, since the characters were passed into C by reference.  However, it does not allow us to resize the string.
+
+<P> In order to pass a string (or other list) that our C function can resize, we have have to instruct Cicada to pass more information about the string than just the pointer to its first character.  This is done in the C function declaration passed to Cicada; for example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; const Cfunction fs[] = { { &quot;myFunction:dadd&quot;, &amp;myFunction } };
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The argument styles are specified after the Cicada function name:  &lsquo;<tt>d</tt>&rsquo; to pass argument data, and &lsquo;<tt>a</tt>&rsquo; to pass a resizable argument.  &lsquo;<tt>d</tt>&rsquo; is the default when argument styles are not specified.
+
+<P> Inside the C code, a resizable argument is represented by an <tt>arg</tt> pointer, and requires special functions to access.  Here is how we might modify our example to convert the string to a C-style string with a null terminator.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;arg *secondArg;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;char *secondArgChars;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccInt numChars;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;getArgs(args, byValue(&amp;firstArg), &amp;secondArg, &amp;thirdArg, &amp;fourthArg);
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;numChars = 1;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;stepArg(secondArg, 1, &amp;numChars);
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;setStringSize(secondArg, 1, numChars+1, &amp;secondArgChars);
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;secondArgChars[numChars] = 0;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  We could have also written <tt>setMemberTop()</tt> instead of <tt>setStringSize()</tt> -- same arguments, identical functions, only a little bit clearer to write one or the other depending on context.
+
+<P> The other two functions that act on <tt>args</tt>-type variables are <tt>getArgTop()</tt> for obtaining the number of indices spanned by an argument, and <tt>argData()</tt> for getting the data pointer.  For example, we could also obtain <tt>secondArgChars</tt> by writing
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; secondArgChars = argData(secondArg);
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  as long as we call this function <i>after</i> resizing <tt>secondArg</tt> (because the pointer will change).
+
+<P> When we pass a whole argument we obtain an object that may have a more complex type than one or more <tt>bool</tt>, <tt>char</tt>, <tt>int</tt>, or <tt>double</tt> variables.  In the example above the argument was a list of characters, i.e. a list variable pointing to a character variable.  We can check these more elaborate datatypes in several ways:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; bool passedCheck = false;
+
+<br>&nbsp;&nbsp;&nbsp; if (args.type[1][0] == list_type)&nbsp;passedCheck = (args.type[1][1] == char_type);
+
+<br>&nbsp;&nbsp;&nbsp; if (!passedCheck)&nbsp;return type_mismatch_err;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  or
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; errCode = getArgs(args, fromArg(1), scalarRef(listOf(char_type), &amp;secondArg), endArgs);
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  or
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; errCode = getArgs(args, fromArg(1), scalarRef(string_type, &amp;secondArg), endArgs);
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  since <tt>string_type</tt> is shorthand for a list of characters.
+
+<P> There is also a corresponding <tt>array_type</tt> and an <tt>arrayOf()</tt> macro for type-checking.  Although multidimensional arrays become effectively one-dimensional arrays when passing arguments as data, that is not true when a resizable argument is passed, so if we were to pass the fourth argument as an <tt>arg</tt> pointer its desired type would be <tt>arrayOf(arrayOf(double_type))</tt>.
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_31.html">Prev: C function declaration</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_32.html">Next: A generic wrapper</a>
+</div><br><br><P>Last update: November 12, 2025

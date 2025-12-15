@@ -1,0 +1,45 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: break</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_45.html">Loops and <tt>if</tt> blocks</a>
+
+<H1> <CENTER> <tt>break</tt> </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+ 
+
+<P> There is no <tt>break</tt> statement in Cicada.  But there is a way to jerry-rig something that does pretty much the same.  The trick is to put braces -- with no <tt>code</tt> marker or semicolon -- around the code we eventually want to escape from.  Within those braces, a <tt>return</tt> statement will simply escape from the bracketed code and continue with what follows.  For example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;for counter in &lt;1, 10&gt;&nbsp;(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(counter)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if input() == &quot;q&quot;&nbsp;then return&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; print(&quot;finished with counter = &quot;, counter)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This works because the braces define a new composite variable, and the code inside the braces is actually running inside of this variable.  Be wary of pitfalls:  if we define a member, that member will be inside of this variable, which was probably not intended.  &lsquo;<tt>this</tt>&rsquo; now refers to this newly-defined variable, while &lsquo;<tt>parent</tt>&rsquo; now refers to the location outside the braces.  Also, if this is all inside of a function definition, we can&rsquo;t return from the function until we leave the braces block.  On the upside, we have a lot of latitude in choosing where to break from and to:  it doesn&rsquo;t have to escape from a loop, and we can jump out of several nested loops at once unlike in C where we always fall back to the enclosing loop.
+
+<P> 
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_454.html">Prev: <tt>backfor</tt></a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_46.html">Next: Sets</a>
+</div><br><br><P>Last update: November 12, 2025

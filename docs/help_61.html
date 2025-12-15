@@ -1,0 +1,133 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Operators and reserved words</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_6.html">Reference</a>
+
+<H1> <CENTER> Operators and reserved words </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+   
+
+<P> 
+
+<P> 
+<ul>
+<li><tt>,</tt> or line break :  demarcate commands
+<li><tt>( ... )</tt> :  group terms in an expression
+<li><tt>X</tt>~ :  ignore output of expression <tt>X</tt>
+<li><tt>|</tt> :  single-line comment
+<li><tt>|* ... *|</tt> :  multiple-line comment
+<li><tt>&amp;</tt> :  continue command on next line<P>
+</ul>
+
+<P> 
+Numeric operators:
+<ul>
+<li><tt>x + y</tt> :  addition
+<li><tt>x - y</tt> :  subtraction
+<li><tt>x * y</tt> :  multiplication
+<li><tt>x / y</tt> :  division
+<li><tt>x ^ y</tt> :  raise to a power
+<li><tt>i mod j</tt> :  modulo (integer only)<P>
+</ul>
+
+<P> 
+Boolean operators:
+<ul>
+<li><tt>A == B</tt> :  if equal
+<li><tt>A ==@ B</tt> :  if same reference
+<li><tt>A /= B</tt> :  if not equal
+<li><tt>A /=@ B</tt> :  if different reference
+<li><tt>A &gt;= B</tt> :  if greater than or equal to
+<li><tt>A &gt; B</tt> :  if greater than
+<li><tt>A &lt;= B</tt> :  if less than or equal to
+<li><tt>A &lt; B</tt> :  if less than
+<li><tt>A and B</tt> :  if A and B (both arguments are always evaluated)
+<li><tt>A or B</tt> :  if A or B or both (both arguments are always evaluated)
+<li><tt>A xor B</tt> :  if A or B, but not both
+<li><tt>not A</tt> :  true only if A is false<P>
+</ul>
+
+<P> 
+Member/array/list operators:
+<ul>
+<li><tt>A.B</tt> :  step from A into member B
+<li><tt>[ A ]</tt> :  step into array index A
+<li><tt>[&lt; A, B &gt;]</tt> :  step into array indices A through B
+<li><tt>[^ N ]</tt> :  resize array to given size N, step into all indices 1-N
+<li><tt>[+ A ]</tt> :  insert index
+<li><tt>[+&lt; A, B &gt;]</tt> :  insert indices
+<li><tt>[]</tt> :  step to all indices; can resize before <tt>=</tt> or <tt>=!</tt>
+<li><tt>remove A</tt>  or  <tt>[-&lt; A, B &gt;]</tt> :  remove member or indices A through B<P>
+</ul>
+
+<P> 
+Define/equate operators:
+<ul>
+<li><tt>A :: B</tt> :  define A (member with a variable) with the type of the variable that B points to
+<li><tt>A = B</tt>  or  <tt>A &lt;- B</tt> :  copy data from B to A
+<li><tt>A := B</tt> :  define A to type B, copy data from B to A
+<li><tt>A =@ B</tt>  or  <tt>A &lt;- @ B</tt> :  make A an alias of B
+<li><tt>A :=@ B</tt> :  define A and make it an alias of B
+<li><tt>A @:: B</tt> :  define A to be of type B (variable type only)
+<li><tt>A *:: B</tt> :  define A to be of type B (member type only)
+<li><tt>A =! B</tt>  or  <tt>A &lt;- ! B</tt> :  copy data from B to A; even between dissimilar data types<P>
+</ul>
+
+<P> 
+Predefined variables:
+<ul>
+<li><tt>this</tt> :  the function currently executing
+<li><tt>parent</tt>  or  <tt>\</tt> :  the next function up the search path
+<li><tt>that</tt> :  variable on the left side of an equate
+<li><tt>args</tt> :  the argument variable to the function currently executing
+<li><tt>top</tt> :  within array brackets, the number of indices
+<li><tt>nothing</tt>  or  <tt>*</tt> :  the void<P>
+</ul>
+
+<P> 
+Program flow:
+<ul>
+<li><tt>if A then ..., else if B then ..., else ...</tt> :  do if A, B, etc. are true
+<li><tt>while A do ...,</tt> :  do as long as A is true
+<li><tt>loop ... until A</tt> :  do until A is true
+<li><tt>for I in &lt; A, B &gt;&nbsp;...</tt> :  do for a defined number of times
+<li><tt>backfor I in &lt; A, B &gt;&nbsp;...</tt> :  same as <tt>for</tt>, except starts at B and counts backwards to A
+<li><tt>A( ... )</tt> :  call A as a function with given arguments
+<li><tt>code</tt> or <tt>;</tt> :  begin a new code block
+<li><tt>return A</tt>  or  <tt>return</tt> :  exit function with return variable A (if specified)
+<li><tt>exit</tt> :  exit Cicada<P>
+</ul>
+
+<P> 
+Data types:
+<ul>
+<li><tt>bool</tt> :  Boolean
+<li><tt>char</tt> :  character
+<li><tt>int</tt> :  integer
+<li><tt>double</tt> :  floating point
+<li><tt>string</tt> :  string of characters
+<li><tt>'...'</tt> :  inlined character constant (one character only)
+<li><tt>&quot;...&quot;</tt> :  inlined string containing given characters
+<li><tt>[ N ]</tt> or <tt>[ ]</tt> :  array
+<li><tt>[[ ]]</tt> :  list
+<li><tt>{ ... }</tt> :  inlined function, set, class or data type
+<li><tt>A : B</tt> :  an inherited type specialized by B from parent type A
+<li><tt>A &lt;&lt; B</tt> :  the code/type of B substituted into the variable space of A
+<li><tt>A # B</tt> :  the Bth code block of variable A<P>
+</ul>
+
+<P>  
+
+<P> 
+
+<P> 
+
+<P> <ul>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_6.html">Prev: Reference</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_62.html">Next: Bytecode operators</a>
+</div><br><br><P>Last update: November 12, 2025

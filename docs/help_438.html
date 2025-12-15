@@ -1,0 +1,95 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: The void</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_43.html">Variables</a>
+
+<H1> <CENTER> The void </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> There is one last variable &lsquo;type&rsquo;, which is no type at all.  There are two ways of writing this:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; var1 :: nothing
+
+<br>&nbsp;&nbsp;&nbsp; var2 :: *
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  <tt>nothing</tt> and <tt>*</tt> are synonyms for the void.  If <tt>var1</tt> is defined as void then we will get a void-member error if we try to access its data.  In fact, one of the few things we can do with a void member is to test whether it is void or not, using the reference-comparison operator <tt>==@</tt>.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; if var1 == @nothing&nbsp;then &amp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;out of order..\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> One way to make use of a void member is to redefine it.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; var1 :: nothing
+
+<br>&nbsp;&nbsp;&nbsp; var1 :: [1000] string
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  We could have redefined <tt>var1</tt> as anything:  a primitive or composite variable, function, etc.  But now that it has a non-void type, <tt>var1</tt> cannot be redefined again except to the same type or a derived type (see inheritance).
+
+<P> What is the use of having void-typed variables, if we can&rsquo;t use them while void?  The main reason is that members without no type are <i>universal aliases</i> (because all other data types are daughters of the void).  Just make sure to alias using the <tt>=@</tt> operator, not the <tt>:=@</tt> operator as the latter will redefine its type.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; any_var :: *
+
+<br>&nbsp;&nbsp;&nbsp; x :: int
+
+<br>&nbsp;&nbsp;&nbsp; y := &quot;some string&quot;
+
+<br>&nbsp;&nbsp;&nbsp; z :: { double, int }
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @x
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @y
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @nothing
+
+<br>&nbsp;&nbsp;&nbsp; any_var = @z
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> The fact that the void is the universal parent type also explains why void members can be redefined to any other type.  Cicada always permits an existing member&rsquo;s type to be specialized---restricted to a subtype of its original type---but never changed back to a parent or sibling type.  Similar rules apply to aliasing---aliases can be made to variables having inherited types, but not parent types---except that any member is allowed to become unlinked by aliasing to the void.
+
+<P> There are actually two uses of the word &lsquo;void&rsquo; in this document that are important to keep logically separate.  A void member is one that has no storage space.  But a void-<i>typed</i> member is one with essentially no type restriction on what it can point to.  A definition like <tt>a :: *</tt> does <i>two</i> things:  it defines a member &lsquo;<tt>a</tt>&rsquo; having no type, and it therefore neglects to give &lsquo;<tt>a</tt>&rsquo; any storage space.
+
+<P> Cicada also distinguishes between member types and variable types.  For example, after <tt>any_var</tt> was aliased to <tt>x</tt>, did <tt>any_var</tt> have a null type or was it an <tt>int</tt>?  Well, that depends on whether you are asking about the member&rsquo;s type (which was void), or the type of the variable it points to (an integer).  Both members and variables have types, and in general they may be different.  A member&rsquo;s type specification determines which variables it is allowed to point to, and if the two types are different then the member type must be a parent of the variable type.<P>
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_437.html">Prev: Aliases</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_44.html">Next: Other define and equate operators</a>
+</div><br><br><P>Last update: November 12, 2025

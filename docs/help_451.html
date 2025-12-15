@@ -1,0 +1,87 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: if</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_45.html">Loops and <tt>if</tt> blocks</a>
+
+<H1> <CENTER> <tt>if</tt> </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+ 
+
+<P> There are several differences in syntax between an <tt>if</tt> statement in Cicada and one in C.  Firstly, the logical test is between the <tt>if</tt> and a <tt>then</tt> keyword, rather than being inside parentheses.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; if a == b&nbsp;then print(&quot;They're equal.\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Secondly, some of the logical operators are different.  &lsquo;<tt>and</tt>&rsquo;, &lsquo;<tt>or</tt>&rsquo;, &lsquo;<tt>xor</tt>&rsquo; and &lsquo;<tt>not</tt>&rsquo; are all written out in words, and the is-not-equal operator is <tt>/=</tt>, not <tt>!=</tt>.  Cicada also has the reference-comparison operators &lsquo;<tt>== @</tt>&rsquo; and &lsquo;<tt>/= @</tt>&rsquo; (see <i>aliases</i>).
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; if a == @nothing and b /= @nothing&nbsp;then print(&quot;a, but not b, is void.&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Third, since the entire <tt>if</tt> statement is one single command and (unlike in C) a line break <i>ends</i> commands, if we want to break it over several lines we need to either use a &lsquo;<tt>&amp;</tt>&rsquo; which continues lines, or else parentheses <i>beginning on the line</i> of the <tt>if</tt> statement.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; if a == b&nbsp;then &amp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;They're equal.\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; else if a /= b&nbsp;then (
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;They're different.\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; )
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Finally, the latter method shows how to write multi-line <tt>if</tt> statements:  using parentheses instead of curly braces.  (Technical note:  while curly braces actually work for most <tt>if</tt> statements, they also produce a new variable space, so new member definitions and use of the keyword <tt>this</tt> won&rsquo;t do what you expect.)
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; if a /= @nothing and b /= @nothing&nbsp;then (&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| avoid a crash
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if a == @b&nbsp;then print(&quot;They're the same variable!\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;else if a == b&nbsp;then print(&quot;They're equal.\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;else&nbsp;print(&quot;They're different.\n&quot;)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; else&nbsp;print(&quot;At least one of these members is VOID!&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_45.html">Prev: Loops and <tt>if</tt> blocks</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_452.html">Next: <tt>while do</tt> and <tt>loop until</tt></a>
+</div><br><br><P>Last update: November 12, 2025

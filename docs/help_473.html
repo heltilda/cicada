@@ -1,0 +1,209 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Code substitution</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_47.html">Functions</a>
+
+<H1> <CENTER> Code substitution </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P> Why would a function ever want to run its arguments?  One good reason is that running <tt>args()</tt> is an easy way for the caller to modify optional parameters.  To do this, we put all of the function&rsquo;s optional parameters (or aliases to them) in one composite variable, set default values, then run <tt>args()</tt> <i>inside of that parameters variable</i> using the code substitution operator &lsquo;<tt>&lt;&lt;</tt>&rsquo;.  Here is an example.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; RollDice :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;numDice :: total :: loopDie :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numSides :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;isLoaded :: bool&nbsp;&nbsp;&nbsp;}
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;{ numDice } = args
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params = { 6, false }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;(params &lt;&lt; args)()
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  If we are happy with the default values of <tt>numSides</tt> and <tt>isLoaded</tt>, so we can leave them out.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; RollDice(5)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The function call only needs a coding section when we want to cheat or roll exotic dice.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; RollDice(5; isLoaded = true)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> All members of <tt>params</tt> should be explicitly named.  If we wrote:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;numSides :: int
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;isLoaded :: bool
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params :: { numSides, isLoaded }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  then <tt>args</tt> would find itself in a space with two nameless members.  An alias to <tt>numSides</tt> or <tt>isLoaded</tt> variable is not the same as an alias named <tt>numSides</tt> or <tt>isLoaded</tt>.<P>
+
+<P> In general, a code substitution <tt>D &lt;&lt; F</tt>, involving composite variables or functions <tt>D</tt> and <tt>F</tt>, returns the data space of <tt>D</tt> along with the code of <tt>F</tt>.  On the other hand, plain old <tt>F</tt> returns both the data space and the code of <tt>F</tt>.  The two basic properties of composite variables and functions are data and code, and the code substitution operator is the tool for separating and recombining these properties.
+
+<P> There are many uses for code substitution beyond optional function arguments.  For example, the terminal script uses it to run the user&rsquo;s commands inside of the workspace variable.  Code substitution can save a lot of typing when working with awkward pathnames.  For example, instead of
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; games.backgammon.RollDice.params.numSides = 20
+
+<br>&nbsp;&nbsp;&nbsp; games.backgammon.RollDice.params.isLoaded = true
+
+<br>&nbsp;&nbsp;&nbsp; games.backgammon.RollDice.params.dieColor := &quot;green&quot;
+
+<br>&nbsp;&nbsp;&nbsp; ...
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  we can just write
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; (games.backgammon.RollDice.params &lt;&lt; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;numSides = 20
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;isLoaded = true
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;dieColor := &quot;green&quot;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; })()
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice that we wrote all of our commands after a <tt>code</tt> marker, and ran the substituted code as a function.
+
+<P> A code substitution is quite temporary, lasting only as long as the expression evaluation.  The next time we run <tt>RollDice()</tt> it will be its normal self, except that its <tt>params</tt> variable will have a new member <tt>dieColor</tt>.
+
+<P> The code-number operator can be used to control which code is passed to the code-substitution operator.  Here is a function that uses either one or two sets of optional parameters, depending on how it is called.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f :: {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;code
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params_1 :: { doMoreStuff := false, ... }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;params_2 :: { otherNum :: int, ... }
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;(params_1 &lt;&lt; args)()
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if params_1.doMoreStuff&nbsp;then (params_2 &lt;&lt; args#2)()
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  When we call this function, our arguments will contain 1, 2 or 3 coding blocks.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; f(2, 5)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| don't doMoreStuff
+
+<br>&nbsp;&nbsp;&nbsp; f(2, 5; doMoreStuff = true)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| doMoreStuff w/ defaults
+
+<br>&nbsp;&nbsp;&nbsp; f(2, 5; doMoreStuff = true; otherNum = 12, ...)&nbsp;&nbsp;&nbsp;&nbsp;| change defaults
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_472.html">Prev: Function arguments</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_474.html">Next: Search Paths</a>
+</div><br><br><P>Last update: November 12, 2025

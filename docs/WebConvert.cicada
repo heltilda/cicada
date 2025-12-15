@@ -1,8 +1,7 @@
-InFileName := "/Users/clark/Desktop/cicada/Help/CicadaHelp.tex"
-OutFilePath := "/Users/clark/Desktop/cicada/WebPage/WebHelp/"
-|url := "file:///Users/clark/Desktop/cicada/WebPage/WebHelp/"
+InFileName := "/Users/brianross/Desktop/cicada/docs/docsCompileDirectory/CicadaHelp.tex"
+OutFilePath := "/Users/brianross/Desktop/cicada/docs/"
 url := "https://heltilda.github.io/cicada/"
-update_date := "June 18, 2019"
+update_date := "November 12, 2025"
 
 |* SFLogo := "<a href=\"http://sourceforge.net/projects/yazoo\"><img src=\"http://sflogo.sourceforge.net/sflogo.php?group_id=148821&amp;type=13\" width=\"120\" height=\"30\" alt=\"Get Cicada scripting language at SourceForge.net. Fast, secure and Free Open Source software downloads\" /></a>"
 piwiks := "<!-- Piwik -->\n<script type=\"text/javascript\">\nvar pkBaseURL = ((\"https:\" == document.location.protocol) ? \"https://sourceforge.net/apps/piwik/yazoo/\" : \"http://sourceforge.net/apps/piwik/yazoo/\");\ndocument.write(unescape(\"%3Cscript src='\" + pkBaseURL + \"piwik.js' type='text/javascript'%3E%3C/script%3E\"));\n</script><script type=\"text/javascript\">\npiwik_action_name = '';\npiwik_idsite = 1;\npiwik_url = pkBaseURL + \"piwik.php\";\npiwik_log(piwik_action_name, piwik_idsite, piwik_url);\n</script>\n<object><noscript><p><img src=\"http://sourceforge.net/apps/piwik/yazoo/piwik.php?idsite=1\" alt=\"piwik\"/></p></noscript></object>\n<!-- End Piwik Tag -->" *|
@@ -12,11 +11,11 @@ TEX_text := TEX_Help[<find(TEX_Help, "\\section"), find(TEX_Help, "\\end{documen
 end_TEX := size(TEX_text)
 
 notext := "#*(!*(#$)!"
-if find(TEX_text, notext, 0) /= 0  then (  printl("Can't have notext in TEX_text"), throw(100)  )
+if find(TEX_text, notext; mode = 0) /= 0  then (  printl("Can't have notext in TEX_text"), throw(100)  )
 
 Maths :: {
-    { "x_i \\leftarrow \\frac1{1 + e^{-\\sum_j w_{ij} x_j - b_i}}",
-      "<i>x<sub>i</sub></i> &nbsp;<--&nbsp; 1 / [ 1 + exp(-&sum;<i><sub>j</sub> w<sub>ij</sub> x<sub>j</sub> - b<sub>i</sub></i>) ]"  },
+    { "x_i \\leftarrow \\frac1{1 + e^{-\\sum_j w_{ij} x_j - b_i}}.",
+      "<i>x<sub>i</sub></i> &nbsp;<--&nbsp; 1 / [ 1 + exp(-&sum;<i><sub>j</sub> w<sub>ij</sub> x<sub>j</sub> - b<sub>i</sub></i>) ]."  },
     { "w_{ij} &\\leftarrow w_{ij} + \\eta \\cdot x_i x_j\\\\\nb_i &\\leftarrow b_i + \\eta \\cdot x_i.",
       "<i>w<sub>ij</sub> &nbsp;<--&nbsp; w<sub>ij</sub> + &eta; &middot; x<sub>i</sub> x<sub>j</sub> <P>&nbsp;&nbsp;&nbsp; b<sub>i</sub> &nbsp;<--&nbsp; b<sub>i</sub> + &eta; &middot; x<sub>i</sub></i>" },
     { "* \\hspace{.1in} * \\hspace{.1in} *"
@@ -36,7 +35,9 @@ Dollars :: {
     { "a", "<i>a</i>" }, { "b", "<i>b</i>" },
     { "\\left<\\textrm{enter}\\right>", "&lt;enter&gt;" }, { "\\left<\\textrm{return}\\right>", "&lt;return&gt;" },
     { "x = 0 + x", "<i>x</i> = 0 + <i>x</i>" }, { "\\texttt{a} \\longrightarrow \\texttt{b}", "<tt>a</tt> ---> <tt>b</tt>" }, { "\\sim", "~" },
-    { "\\pi", "pi" }, { "\\pi/2", "pi/2" }, { "-\\pi/2", "-pi/2" }, { "e", "<i>e</i>" }, { "1-N", "1-<i>N</i>" }, { "\\pm \\infty", "plus/minus infinity" }
+    { "\\pi", "pi" }, { "\\pi/2", "pi/2" }, { "-\\pi/2", "-pi/2" }, { "e", "<i>e</i>" }, { "1-N", "1-<i>N</i>" }, { "\\pm \\infty", "plus/minus infinity" },
+    { "z = x + y", "z = x + y" }, { "z = x - y", "z = x - y" }, { "z = x * y", "z = x * y" }, { "z = x / y", "z = x / y" },
+    { "z = x^y", "z = x^y" }, { "2N+2", "2N+2" }
 }
 
 refs :: {
@@ -59,12 +60,11 @@ Lookup :: {
     for LU_counter in <1, top(args[1])>  (
     if args[1][LU_counter][1] == args[2]  then (
         Add(args[1][LU_counter][2])
-        LU_counter = top(args[1])+100
+        return
     ))
     
-    if LU_counter < top(args[1])+100  then (
-        printl("Unknown lookup expression:  '", args[2], "'")
-        throw(100)      )
+    printl("Unknown lookup expression:  '", args[2], "'")
+    throw(100)
 }
 
 NewPage :: {
@@ -84,11 +84,11 @@ NewPage :: {
         printl("Error: more than 9 sections causes naming problems (", secnum, " ", ssecnum, " ", sssecnum, ")")
         throw(100)      )
     
-    print_string(page_name, "help_", secnum)
+    page_name = print_string("help_", secnum)
     if ssecnum /= 0  then (
-        print_string(page_name, page_name, ssecnum)
+        page_name = print_string(page_name, ssecnum)
         if sssecnum /= 0  then &
-            print_string(page_name, page_name, sssecnum)
+            page_name = print_string(page_name, sssecnum)
         else  ssecpage = page_name      )
     
     else  secpage = page_name
@@ -112,9 +112,9 @@ NewPage :: {
     cmd_pos = find(page_title, "<")
     while cmd_pos /= 0  do (
         endStr := ""
-        if find(page_title, ">", 1, cmd_pos+1) < top(page_title)  then &
-            endStr = page_title[<find(page_title, ">", 1, cmd_pos+1)+1, top>]
-        print_string(page_title, page_title[<1, cmd_pos-1>], endStr)
+        if find(page_title, ">";; startPosition = cmd_pos+1) < top(page_title)  then &
+            endStr = page_title[<find(page_title, ">";; startPosition = cmd_pos+1)+1, top>]
+        page_title = print_string(page_title[<1, cmd_pos-1>], endStr)
         cmd_pos = find(page_title, "<")     )
     
     Add("<HTML>\n\n<HEAD>\n<TITLE>Cicada Help: ", page_title, "</TITLE>\n\n",
@@ -147,7 +147,7 @@ Add :: {
     code
     
     if level > 1  then (
-        print_string(args_string[level-1], args_string[level-1], args)
+        args_string[level-1] = print_string(args_string[level-1], args)
         return      )
     
     params.page = PagesNum
@@ -209,17 +209,16 @@ PrintPage :: {
     for c1 in <low, high>
         print(c1, ": '", Pages[args[1]][c1], "'\n")
 }
-debug_on := false
 
 scan :: {
     next_mark :: [marks_num] int
     mark :: text_end :: c1 :: end_expr :: int
     table_mode := 0
-
-    GetArg :: {        
+    
+    GetArg :: {
         code
-                
-        pos = find(TEX_text, "{", 1, pos)+1
+        
+        pos = find(TEX_text, "{";; startPosition = pos)+1
         (newscan::scan)()
     
         return args_string[level]
@@ -249,7 +248,7 @@ scan :: {
         text_end = end_TEX+1
         for c1 in <1, marks_num>  (
             if pos > next_mark[c1] and next_mark[c1] /= 0  then &
-                next_mark[c1] = find(TEX_text, marks[c1], 1, pos)
+                next_mark[c1] = find(TEX_text, marks[c1];; startPosition = pos)
             if next_mark[c1] < text_end and next_mark[c1] > 0  then (
                 mark = c1
                 text_end = next_mark[c1]
@@ -266,14 +265,14 @@ scan :: {
                 Add("\n\n<br> ")
             else  (
                 Add("\n\n<P> ")
-                while find(TEX_text, "\n", 1, pos) == pos  do (
+                while find(TEX_text, "\n";; startPosition = pos) == pos  do (
                     pos = that+1
                     if pos > end_TEX  then return
         )   )   )
     
         else if mark == 3  then (    | dollar
             
-            end_expr = find(TEX_text, "$", 1, pos)
+            end_expr = find(TEX_text, "$";; startPosition = pos)
             Lookup(Dollars, TEX_text[<pos, end_expr-1>])
     
             pos = end_expr + 1      )
@@ -324,11 +323,11 @@ scan :: {
     
         else if mark == 14  then &
         
-            while find(TEX_text, " ", 1, pos) == pos  do (  pos = that+1, Add("&nbsp;")  )
+            while find(TEX_text, " ";; startPosition = pos) == pos  do (  pos = that+1, Add("&nbsp;")  )
     
         else if mark == 15  then &
         
-            pos = find(TEX_text, "\n", 1, pos)
+            pos = find(TEX_text, "\n";; startPosition = pos)
     
         else if mark == 2  then (
         
@@ -403,7 +402,7 @@ scan :: {
             
                 if Match("begin{code}")  then verbatim = 1      | only indent for short codes
                 else  verbatim = 2
-                pos = find(TEX_text, "\\begin{verbatim}", 1, pos) + 16
+                pos = find(TEX_text, "\\begin{verbatim}";; startPosition = pos) + 16
 
                 verb_marks[6] = "\\end{verbatim}"
                 marks = @verb_marks
@@ -416,9 +415,9 @@ scan :: {
                 Add("\n\n<P><P><tt> ", args_string[level], "</tt>\n\n<P>")
                 
                 if verbatim == 1  then &
-                    pos = find(TEX_text, "\\end{code}", 1, pos) + 10
+                    pos = find(TEX_text, "\\end{code}";; startPosition = pos) + 10
                 else  &
-                    pos = find(TEX_text, "\\end{longcode}", 1, pos) + 14
+                    pos = find(TEX_text, "\\end{longcode}";; startPosition = pos) + 14
                 
                 verbatim = 0        )
             
@@ -441,22 +440,22 @@ scan :: {
                 
                 Add("\n\n<br><P>&nbsp;&nbsp;&nbsp;")
                 GetArg()
-                Lookup(Maths, TEX_text[<pos+1, find(TEX_text, "\\end{align*}", 1, pos)-2>])
+                Lookup(Maths, TEX_text[<pos+1, find(TEX_text, "\\end{align*}";; startPosition = pos)-2>])
     
-                pos = find(TEX_text, "\\end{align*}", 1, pos)
+                pos = find(TEX_text, "\\end{align*}";; startPosition = pos)
                 GetArg()        )
             
             else if Match("begin{figure}")  then (
             
                 fig_name :: fig_label :: fig_caption :: string
                 
-                pos = find(TEX_text, "\\", 1, pos)
+                pos = find(TEX_text, "\\";; startPosition = pos)
                 while not Match("\\end{figure}")  do (
                     if Match("\\includegraphics")  then fig_name = GetArg()
                     else if Match("\\caption")  then fig_caption = GetArg()
                     else if Match("\\label")  then fig_label = GetArg()
                     else  pos = that+1
-                    pos = find(TEX_text, "\\", 1, pos)      )
+                    pos = find(TEX_text, "\\";; startPosition = pos)      )
                 GetArg()
                 
                 Add("<br><center><div class=\"image\"><img src=\"", url, fig_name, ".jpg\"<div><br><br>")
@@ -473,7 +472,7 @@ scan :: {
             
                 Add("\n\n<br><center><div><P><table border=\"1\"><tr><td>")
                 
-                pos = find(TEX_text, "\\begin{tabular}", 1, pos)
+                pos = find(TEX_text, "\\begin{tabular}";; startPosition = pos)
                 GetArg(), GetArg()
                 
                 table_mode = 2      )
@@ -493,7 +492,7 @@ scan :: {
                     last_page_str := @Pages[PagesNum][last_page_idx]
                     last_page_idx = that - 1
                 )  until last_page_str /= "\n"
-                if find(last_page_str, "<tr><td>", -1) == size(last_page_str)-7  then &
+                if find(last_page_str, "<tr><td>"; mode = -1) == size(last_page_str)-7  then &
                     last_page_str = that[<1, size(last_page_str)-8>]
                 
                 Add("</table>")
@@ -503,7 +502,7 @@ scan :: {
                         if Match("\\caption")  then tbl_caption = GetArg()
                         else if Match("\\label")  then tbl_label = GetArg()
                         else  pos = that+1
-                        pos = find(TEX_text, "\\", 1, pos)      )
+                        pos = find(TEX_text, "\\";; startPosition = pos)      )
 
                     for (tblID :: int) in <1, top(refs)>  (
                     if refs[tblID][1] == tbl_label  then (
@@ -511,7 +510,7 @@ scan :: {
                     ))
                     
                     Add(tbl_caption, "</div></div></center><br>")
-                    pos = find(TEX_text, "\\end{table}", 1, pos)        )
+                    pos = find(TEX_text, "\\end{table}";; startPosition = pos)        )
                 
                 GetArg()
                 
@@ -537,15 +536,46 @@ scan :: {
                 GetArg()
                 Add("</div>")       )
 
+            else if Match("begin{centering}")  then (
+            
+                GetArg()
+                Add("<div align=\"center\">")       )
+
+            else if Match("end{centering}")  then (
+            
+                GetArg()
+                Add("</div>")       )
+            
+            else if Match("begin{itemize}")  then (
+            
+                GetArg()
+                Add("<ul>")     )
+
+            else if Match("end{itemize}")  then (
+
+                GetArg()
+                Add("</ul>")        )
+            
+            else if Match("begin{enumerate}")  then (
+            
+                GetArg()
+                Add("<ol>")     )
+
+            else if Match("end{enumerate}")  then (
+
+                GetArg()
+                Add("</ol>")        )
+
             else if Match("item")  then (
 
-                Add("<li>", GetArg())       )
+                Add("<li>")
+                pos = that + 4          )
 
             else if Match("ref")  then (
             
                 Lookup(refs, GetArg())
                 
-                if find(TEX_text, " on page \\pageref", 1, pos) == pos  then (
+                if find(TEX_text, " on page \\pageref";; startPosition = pos) == pos  then (
                     GetArg()
             )   )
             
@@ -592,6 +622,11 @@ scan :: {
             
                 pos = that + 8
             
+            else if Match("$")  then (
+            
+                Add("$")
+                pos = that+1          )
+            
             else if Match("checkmark")  then (
             
                 Add("X")
@@ -635,7 +670,7 @@ scan :: {
                 GetArg()        )
             
             else  (
-                printl("Unknown command:  ", TEX_text[<pos, pos+10>])
+                printl("Unknown command:  ", TEX_text[<pos, pos+30>])
                 throw(100)
     )   )   )
     
@@ -660,6 +695,6 @@ Add("</div><br><br><P>Last update: ", update_date; page = 1)
 page_counter :: int
 total_page :: outfile_name :: string
 for page_counter in <1, PagesNum>  (
-    print_string(total_page, Pages[page_counter])
-    print_string(outfile_name, OutFilePath, PageNames[page_counter], ".html")
+    total_page = print_string(Pages[page_counter])
+    outfile_name = print_string(OutFilePath, PageNames[page_counter], ".html")
     save(outfile_name, total_page)      )

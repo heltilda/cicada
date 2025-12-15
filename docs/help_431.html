@@ -1,0 +1,69 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: Primitive variables and constants</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_43.html">Variables</a>
+
+<H1> <CENTER> Primitive variables and constants </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+
+
+<P>  Cicada has four primitive variable types:  <tt>bool</tt>, <tt>char</tt>, <tt>int</tt>, and <tt>double</tt>.  Strings are lists of <tt>char</tt>s.  Types <tt>bool</tt> and <tt>char</tt> each occupy one byte per datum, whereas the sizes of <tt>int</tt> and <tt>double</tt> depend on the definitions <tt>ccInt</tt> and <tt>ccFloat</tt> but default to C ints and doubles respectively.
+
+<P> In order to define a variable, use the define &lsquo;<tt>::</tt>&rsquo; operator.  Several variables of the same type can be defined on the same line.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; height :: time :: g :: double
+
+<br>&nbsp;&nbsp;&nbsp; units :: string
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  All primitive variables get initialized to some starting value when first created.  That value is:  0 for numeric variables (<tt>int</tt>s and <tt>double</tt>s); the null character for <tt>char</tt> variables; <tt>false</tt> for Boolean variables; and an empty string for <tt>string</tt> variables.
+
+<P> The assignment operator can be written either &lsquo;<tt>=</tt>&rsquo; as in C or &lsquo;<tt>&lt;-</tt>&rsquo;.  We&rsquo;ll use the C convention.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; g = -9.8
+
+<br>&nbsp;&nbsp;&nbsp; units = &quot;m/s^2&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  String constants are inside double quotes, character constants use single quotes, and Boolean constants are <tt>true</tt> and <tt>false</tt>.  Unlike in C, Boolean values are not interchangeable with integers:  <tt>(i::int) = true</tt> is illegal.  However, characters can be treated as ints, so <tt>((c::char) = 'c') = 27</tt> is allowed.
+
+<P> For convenience, we can define and set variables in a single step using the <tt>:=</tt> operator.  So we could have written:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; height :: time :: double
+
+<br>&nbsp;&nbsp;&nbsp; g := -9.8
+
+<br>&nbsp;&nbsp;&nbsp; units := &quot;m/s^2&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Numeric types are assumed to be integers unless there&rsquo;s a decimal point, so if we had rounded to <tt>g := 10</tt> and omitted the decimal point, then &lsquo;<tt>g</tt>&rsquo; would have had an integer type.
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_43.html">Prev: Variables</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_432.html">Next: Composite variables</a>
+</div><br><br><P>Last update: November 12, 2025

@@ -3,7 +3,7 @@
 <HEAD>
 <TITLE>Cicada Help: C implementation</TITLE>
 
-<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a>
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  memory networks in Cicada</a>
 
 <H1> <CENTER> C implementation </CENTER> </H1>
 </HEAD>
@@ -12,21 +12,7 @@
 
 
 
-<P> A neural network has two modes of operation:  computation, and training.  In computing mode, the user fixes the activity of certain input neurons, and the other neurons <i>x<sub>i</sub></i> will calculate:
-
-<P> 
-
-<br><P>&nbsp;&nbsp;&nbsp;<i>x<sub>i</sub></i> &nbsp;<--&nbsp; 1 / [ 1 + exp(-&sum;<i><sub>j</sub> w<sub>ij</sub> x<sub>j</sub> - b<sub>i</sub></i>) ]
-
-<P>  Here <i>x<sub>i</sub></i> represents the activity level of neuron <i>i</i>, <i>w<sub>ij</sub></i> is the strength of the connection from neuron <i>j</i> to neuron <i>i</i>, and <i>b<sub>i</sub></i> is the neuron&rsquo;s sensitivity.  In training mode, we will update the weights and biases of each neuron using the following formula:
-
-<P> 
-
-<br><P>&nbsp;&nbsp;&nbsp;<i>w<sub>ij</sub> &nbsp;<--&nbsp; w<sub>ij</sub> + &eta; &middot; x<sub>i</sub> x<sub>j</sub> <P>&nbsp;&nbsp;&nbsp; b<sub>i</sub> &nbsp;<--&nbsp; b<sub>i</sub> + &eta; &middot; x<sub>i</sub></i>
-
-<P>  The parameter &eta; determines the learning rate, which should be large enough to train quickly, but not so big that the algorithm overshoots and destabilizes the network.  This training algorithm (J. R. Movellan, Contrastive Hebbian learning in interactive networks, 1990) works for symmetric networks (<i>w<sub>ij</sub> = w<sub>ji</sub></i>) such as we will use.  As the saying goes, <i>neurons that fire together, wire together</i>.
-
-<P> These two basic operations of a neural network are encoded by simple formulas, but since those formulas will be used many times in the course of using a network they are the time-consuming step.  We will therefore write that part of our program is C.  Notice that our outermost function has the same form as <tt>main()</tt>, but we will use a different name so as not to conflict with Cicada&rsquo;s own <tt>main()</tt> function.<P>
+<P> The code that trains a network will be written in C, for speed.  Then we&rsquo;ll wrap Cicada functions around the C code so that we can easily call it from a script.<P>
 
 <P>  <u>NN.c</u>
 
@@ -34,9 +20,9 @@
 
 <P><P><tt> 
 
-<br> #include &quot;NN.h&quot;
-
 <br> #include &lt;math.h&gt;
+
+<br> #include &quot;NN.h&quot;
 
 <br> 
 
@@ -50,7 +36,7 @@
 
 <br> 
 
-<br> ccInt runNetwork(ccInt argc, char **argv)
+<br> int runNetwork()
 
 <br> {
 
@@ -80,7 +66,7 @@
 
 <br> &nbsp;&nbsp;&nbsp;
 
-<br> &nbsp;&nbsp;&nbsp;if ( argc == 6 )&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// i.e. if we're in training mode
+<br> &nbsp;&nbsp;&nbsp;if ( args.num == 6 )&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// i.e. if we're in training mode
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
@@ -114,7 +100,7 @@
 
 <br> &nbsp;&nbsp;&nbsp;
 
-<br> &nbsp;&nbsp;&nbsp;return 0;
+<br> &nbsp;&nbsp;&nbsp;return 0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// no error
 
 <br> }
 
@@ -248,7 +234,7 @@
 
 <br> 
 
-<br> extern int runNetwork(int, char **);
+<br> extern int runNetwork( ... );
 
 <br> extern int getSteadyState(neural_network, int, double);
 
@@ -259,6 +245,6 @@
 <P>
 
 <P> <ul>
-</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_2.html">Prev: Example:  neural networks in Cicada</a> &nbsp;&nbsp;
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_2.html">Prev: Example:  memory networks in Cicada</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_22.html">Next: Putting the C in Cicada</a>
-</div><br><br><P>Last update: May 8, 2024
+</div><br><br><P>Last update: November 12, 2025

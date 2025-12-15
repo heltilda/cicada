@@ -3,7 +3,7 @@
 <HEAD>
 <TITLE>Cicada Help: Writing and debugging a Cicada wrapper</TITLE>
 
-<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  neural networks in Cicada</a>
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_2.html">Example:  memory networks in Cicada</a>
 
 <H1> <CENTER> Writing and debugging a Cicada wrapper </CENTER> </H1>
 </HEAD>
@@ -12,7 +12,21 @@
 
 
 
-<P> Let&rsquo;s try our hand at writing a Cicada script to wrap around our C routine.  It&rsquo;s our first time scripting so we will probably have a few bugs.<P>
+<P> Once inside Cicada, we can run our neural network C function by typing
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &gt; $runNetwork(...)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The main danger here is that we might pass the wrong datatypes, or arrays of the wrong sizes, into our C code, which will then promptly crash.  To do things properly, let&rsquo;s write a Cicada class that stores the neural network data and provides methods for initializing, running and training the network.
+
+<P> This will be a learning exercise.  It&rsquo;s our first time scripting so there will probably be a few bugs.<P>
 
 <P>  <u>NN.cicada</u>
 
@@ -30,7 +44,7 @@
 
 <br> &nbsp;&nbsp;&nbsp;
 
-<br> &nbsp;&nbsp;&nbsp;weights :: [] [] double
+<br> &nbsp;&nbsp;&nbsp;weights :: [][] double
 
 <br> &nbsp;&nbsp;&nbsp;activity :: [] double
 
@@ -56,13 +70,7 @@
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;activity[^numNeurons]
 
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;weights[^0][^0]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| to speed up the resize
-
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;weights[^numNeurons][^numNeurons]
-
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
 
 <br> &nbsp;&nbsp;&nbsp;}
 
@@ -70,7 +78,7 @@
 
 <br> &nbsp;&nbsp;&nbsp;
 
-<br> &nbsp;&nbsp;&nbsp;run :: {
+<br> &nbsp;&nbsp;&nbsp;process :: {
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
@@ -100,13 +108,13 @@
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[^numInputs + 1]
 
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[&lt;2, numInputs+1&gt;] = args[1][*]
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[&lt;2, numInputs+1&gt;] = args[1][]
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if numArgs == 4&nbsp;then (
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputs[^numOutputs]
 
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputs[&lt;1, numOutputs&gt;] = args[2][*]
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;outputs[&lt;1, numOutputs&gt;] = args[2][]
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ step_size, learning_rate } = { args[3], args[4] }&nbsp;)
 
@@ -118,7 +126,7 @@
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) /= passed&nbsp;then (
 
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(&quot;usage:&nbsp;myNN.run(input, step_size OR &quot;,
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(&quot;usage:&nbsp;myNN.process(input, step_size OR &quot;,
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&quot;input, target output, step_size, learning_rate)\n&quot;)
 
@@ -128,19 +136,15 @@
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if numArgs == 2&nbsp;then &amp;
 
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtrn = $RunNetwork(weights, activity, inputs, step_size)
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtrn = $runNetwork(weights, activity, inputs, step_size)
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else &amp;
 
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtrn = $RunNetwork(weights, activity, inputs, step_size, outputs, learning_rate)
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rtrn = $runNetwork(weights, activity, inputs, step_size, outputs, learning_rate)
 
 <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if rtrn == 1&nbsp;then print(&quot;run() did not converge; try lowering step size?\n&quot;)
-
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-
-<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if rtrn == 1&nbsp;then print(&quot;process() did not converge; try lowering step size?\n&quot;)
 
 <br> &nbsp;&nbsp;&nbsp;}
 
@@ -156,9 +160,7 @@
 
 <P>
 
-<P>  We should save NN.cicada in same directory that contains the <tt>cicada</tt> application, <tt>start.cicada</tt> and <tt>user.cicada</tt>.  <tt>start.cicada</tt> runs the command prompt, and <tt>user.cicada</tt> pre-loads a number of useful functions.
-
-<P> Assuming we are at Cicada&rsquo;s command prompt, we can try out our new wrapper by typing:
+<P>  Save <tt>NN.cicada</tt> in the same directory as our NN program.  Then, from Cicada&rsquo;s command prompt, let&rsquo;s try out our new wrapper by typing:
 
 <P> 
 
@@ -172,7 +174,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; 
 
-<br>&nbsp;&nbsp;&nbsp; 32:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[^1] = 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// the 'bias' input
+<br>&nbsp;&nbsp;&nbsp; 29:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inputs[^1] = 1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// the 'bias' input
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^
 
@@ -180,7 +182,7 @@
 
 <P>
 
-<P>  Hmm..  we&rsquo;re obviously not finished with NN.cicada yet.  Fortunately compile-time errors like the one above are usually easy to sort out.  In our case we accidentally wrote a C-style comment &lsquo;<tt>//</tt>&rsquo; in place of a Cicada comment &lsquo;<tt>|</tt>&rsquo;, which Cicada interpreted as a pair of division signs.  Make the straightforward fix to NN.cicada
+<P> What we see here is a &lsquo;compile-time&rsquo; error (i.e. it failed to produce bytecode).  Evidently we wrote a C-style comment &lsquo;<tt>//</tt>&rsquo; in place of a Cicada comment &lsquo;<tt>|</tt>&rsquo;.  Make the straightforward fix to <tt>NN.cicada</tt>.
 
 <P> 
 
@@ -214,23 +216,7 @@
 
 <P>
 
-<P> We have made progress:  NN.cicada successfully &lsquo;compiled&rsquo; and began running --- before impaling itself on line 4 and duly filing a complaint.  There&rsquo;s no debugger, but we can often troubleshoot runtime crashes using the command prompt.
-
-<P> 
-
-<P><P><tt> 
-
-<br>&nbsp;&nbsp;&nbsp; &gt; neural_network.numHiddens
-
-<br>&nbsp;&nbsp;&nbsp; 
-
-<br>&nbsp;&nbsp;&nbsp; Error:&nbsp;member 'numHiddens' not found
-
-<br>&nbsp;&nbsp;&nbsp; </tt>
-
-<P>
-
-<P>  With a little knowledge of the scripting language we would see that we tried to define <tt>numInputs</tt> and <tt>numOutputs</tt> to be of type <tt>numHiddens</tt>, which would be allowed except that <tt>numHiddens</tt> itself was never defined.  What we meant to do was to define all three of these variables to be of type <tt>int</tt>.  Make the following correction to line 4:
+<P>  This is progress: at least <tt>NN.cicada</tt> is syntactically correct.  Line 4 tried to define <tt>numInputs</tt> and <tt>numOutputs</tt> to be of type <tt>numHiddens</tt>, rather than defining all three variables as type <tt>int</tt>, so let&rsquo;s fix that:
 
 <P> 
 
@@ -258,7 +244,7 @@
 
 <P>
 
-<P> This time the script successfully &lsquo;compiled&rsquo; and ran, or at least did something (unexpected) -- it printed out a usage message even though we never tried initializing a neural network.  Let&rsquo;s see if <tt>init()</tt> works when we&rsquo;re actually trying to run it.
+<P> This time the script successfully &lsquo;compiled&rsquo; and ran.. although <tt>init()</tt> produced an odd usage message despite never having been run.  But at least a <tt>neural_network</tt> object was constructed, so we can start looking around inside, using the command prompt as a sort of debugger.  <tt>init()</tt> is suspicious so let&rsquo;s see if it works when we do run it.
 
 <P> 
 
@@ -292,7 +278,7 @@
 
 <P>
 
-<P>  So something is definitely wrong.  At this stage we might want to look at a number of other variables that should have been set, and the easiest way to do that is to &lsquo;go&rsquo; inside our network.
+<P>  So something is definitely wrong.  To take a better look around, let&rsquo;s &lsquo;go&rsquo; inside our network.
 
 <P> 
 
@@ -330,7 +316,9 @@
 
 <P>
 
-<P>  The last line takes us back to our normal workspace.  So our <tt>init()</tt> call was a dud -- nothing happened.  So let&rsquo;s put a trace statement in the coding section of the <tt>init()</tt> function.. wherever that is...  ho ho, well we forgot the <tt>code</tt> marker, which explains why there isn&rsquo;t any coding section.  That should go at the beginning of <tt>init()</tt>; the method should now begin:
+<P>  The last line takes us back to our &lsquo;root&rsquo; workspace.
+
+<P> So our <tt>init()</tt> call was a dud -- nothing happened.  Our next step might be to put a trace statement in the coding section of the <tt>init()</tt> function.. hmm, wherever that is..  Looks like we forgot a <tt>code</tt> marker separating the function variables from its executable code, which fully explains why it won&rsquo;t run.  The <tt>init()</tt> method should begin:
 
 <P> 
 
@@ -350,7 +338,7 @@
 
 <P>
 
-<P> etc.  For the last time, go back and try
+<P>  Making that final change, let&rsquo;s go back and try
 
 <P> 
 
@@ -372,9 +360,9 @@
 
 <P>
 
-<P>  Finally we see what we were hoping for:  an array of neurons, initialized to a resting state and ready to start processing.
+<P>  Finally we see what we were hoping for:  an array of neurons, initialized to a resting state and ready to begin training.
 
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_22.html">Prev: Putting the C in Cicada</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_24.html">Next: The Anagrambler</a>
-</div><br><br><P>Last update: May 8, 2024
+</div><br><br><P>Last update: November 12, 2025

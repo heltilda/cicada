@@ -1,0 +1,63 @@
+<HTML>
+
+<HEAD>
+<TITLE>Cicada Help: while do and loop until</TITLE>
+
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_4.html">Cicada scripting</a> ---> <a href="https://heltilda.github.io/cicada/help_45.html">Loops and <tt>if</tt> blocks</a>
+
+<H1> <CENTER> <tt>while do</tt> and <tt>loop until</tt> </CENTER> </H1>
+</HEAD>
+
+<BODY>
+
+   
+
+<P> Cicada&rsquo;s <tt>while...do</tt> loop is pretty similar to C&rsquo;s <tt>while</tt> loop, except that the logical condition goes between the <tt>while</tt> keyword and a <tt>do</tt> keyword instead of inside parentheses.  Also, the logical operators are somewhat different and we use parentheses to group multi-line commands, in the same way as with the <tt>if</tt> statement.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; while input() /= &quot;pleeez&quot;&nbsp;do print(&quot;what's the magic word?&nbsp;&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; while input() == &quot;thank you&quot;&nbsp;do (
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;you are welcome!\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;anything else?&nbsp;&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; )
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> There are two differences between Cicada&rsquo;s <tt>loop</tt> loop and its <tt>while</tt> loop.  First, the break condition of a <tt>loop</tt> loop is evaluated at the end of the loop, so it always runs at least once.  Second, it is a <tt>loop...until</tt> loop, not a <tt>loop...while</tt> loop, so it keeps looping as long as the logical condition is <i>not</i> satisfied.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; attempt := 0
+
+<br>&nbsp;&nbsp;&nbsp; loop&nbsp;(
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot;Thank you!\n&quot;)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;attempt = attempt+1
+
+<br>&nbsp;&nbsp;&nbsp; )&nbsp;until input() == &quot;you're welcome&quot;
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; loop print(&quot;&gt; &quot;) until input() == &quot;exit&quot;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_451.html">Prev: <tt>if</tt></a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_453.html">Next: <tt>for</tt></a>
+</div><br><br><P>Last update: November 12, 2025

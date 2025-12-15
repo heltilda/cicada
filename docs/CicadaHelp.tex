@@ -93,6 +93,7 @@ Cicada is a {\bf small interpreted language} that plugs into C (or C++) code.  T
 \item Run Cicada by making a C function call:  \verb#runCicada(f, s, r)#. Here \verb#f# is an array of C functions to expose to Cicada; \verb#s# is any script to run; and \verb#r# tells Cicada whether to run an interactive terminal.
 \item Cicada can callback other C functions in your code.  \emph{This last step is how the two languages communicate}: the callback passes Cicada variables and arrays into the C code for fast processing.
 \item It's recommended to write a Cicada wrapper for each C function, to ensure that the arguments get passed into C correctly.
+\item Pass an \verb$-lcicada$ option to the linker.
 \end{enumerate}
 
 \vspace{.25in}
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
 }
 \end{verbatim} \end{code}
  
-\noindent Running this program lets us interactively process any data we want.  And since the calculation is in C, it'll run fast even on a huge dataset.
+\noindent Running this program lets us interactively process any data we want.  And since the counting is done in C, it'll run fast even on a huge dataset.
 
 \begin{code} \begin{verbatim}
 > numOdd({ 3, 5, 6, 7, 8 })
@@ -146,9 +147,9 @@ int main(int argc, char **argv)
 
 \section{Example:  memory networks in Cicada}
 
-Cicada originally aimed to be a neural network engine, missed by a mile, and ended up as a scripting language.  So let's use it to implement an \emph{associative neural network}:  a type of pattern-learning algorithm which will learn to associate inputs with desired outputs.  The time-consuming training process will be written in C for speed, but wrapped inside Cicada functions so that we can run them from a command prompt or call them from a script.\\
+Cicada originally aimed to be a neural network engine, missed by a mile, and ended up as a scripting language.  So let's use it to implement an \emph{associative neural network}:  a type of pattern-learning algorithm which will learn to associate inputs with desired outputs.\\
 
-\noindent \underline{Algorithm}: We'll use a training algorithm for symmetric networks\footnote{J. R. Movellan, Contrastive Hebbian learning in interactive networks, 1990} which trains in two phases: \emph{clamped}, and \emph{free}.  In the \emph{clamped phase}, the input neuron activities are the network input, and the output neuron activities clamp to the pattern we are trying to learn.  The other `hidden' neurons repeatedly adjust their activities $x_i$ using the formula:
+\noindent \underline{Algorithm}: We'll use a training algorithm for symmetric networks\footnote{J. R. Movellan, Contrastive Hebbian learning in interactive networks, 1990} which trains in two phases: \emph{clamped}, and \emph{free}.  In the \emph{clamped phase}, set the input neuron activities to the network input, and set the output neuron activities to the pattern we are trying to learn.  Then repeatedly adjust the other `hidden' neurons' activities $x_i$ using the formula:
 
 \begin{align*}
 x_i \leftarrow \frac1{1 + e^{-\sum_j w_{ij} x_j - b_i}}.
@@ -170,6 +171,7 @@ To use the network to recover a memory, run it in its `free' mode without applyi
 
 \subsection{C implementation}
 
+The code that trains a network will be written in C, for speed.  Then we'll wrap Cicada functions around the C code so that we can easily call it from a script.\\
 
 \noindent \underline{NN.c}
 
@@ -322,18 +324,23 @@ Finally, we need to set up our variables at the beginning of \verb#runNetwork()#
     numInputs = args.indices[2];
     
     if (args.num < 4)  return 1;
-    if (checkArgs(args, vector(double_type), vector(double_type), vector(double_type),
-            scalar(double_type), endArgs) != 0)  return 2;
-    getArgs(args, &myNN.weights, &myNN.activity, &inputs, byValue(&step_size), endArgs);
+    if (getArgs(args,
+            arrayRef(double_type, &myNN.weights),
+            arrayRef(double_type, &myNN.activity),
+            arrayRef(double_type, &inputs),
+            scalarValue(double_type, &step_size),
+        endArgs) != 0)  return 2;
     
     if (args.num == 6)  {
         numOutputs = args.indices[4];
-        if (checkArgs(args, fromArg(4), vector(double_type),
-                scalar(double_type)) != 0)  return 3;
-        getArgs(args, fromArg(4), &target_outputs, byValue(&learning_rate));      }
+        if (getArgs(args, fromArg(4),
+                arrayRef(double_type, &target_outputs),
+                scalarValue(double_type, &learning_rate)
+            ) != 0)  return 3;
+    }
 \end{verbatim} \end{code}
 
-\noindent We had to load pointers for \verb#myNN.weights#, \verb#myNN.activity# and \verb#inputs#, for two reasons: 1) they are arrays not scalars, and 2) our C code will modify the values of \verb#activity# and \verb#weights# and we want those changes to persist outside of the function call.  However, \verb#step_size# and \verb#learning_rate# are constant scalar parameters, so we load their data directly using the \verb#byValue()# macro.
+\noindent Our code loads pointers for \verb#myNN.weights#, \verb#myNN.activity# and \verb#inputs#.  There are two reasons to load these parameters by reference: 1) they are arrays not scalars, and 2) our C code will modify the values of \verb#activity# and \verb#weights# and we want those changes to persist outside of the function call.  However, \verb#step_size# and \verb#learning_rate# are constant scalar parameters, so we load their data by value using the \verb#scalarValue()# macro.
 
 The C code doesn't need to save any results, since its data is shared with Cicada, and there are scripting functions for writing to files (e.g. \verb#save()# or  \verb#saveTable()#).  Just delete the ``save results" comment line in \verb#NN.c#.\\
 
@@ -355,7 +362,7 @@ Once inside Cicada, we can run our neural network C function by typing
 > $runNetwork(...)
 \end{verbatim} \end{code}
 
-\noindent The main danger here is that we might pass the wrong datatypes, or arrays of the wrong sizes, into our C code which will then likely promptly crash.  To do things properly, let's write a Cicada class that stores the neural network data and provides methods for initializing, running and training the network.
+\noindent The main danger here is that we might pass the wrong datatypes, or arrays of the wrong sizes, into our C code, which will then promptly crash.  To do things properly, let's write a Cicada class that stores the neural network data and provides methods for initializing, running and training the network.
 
 This will be a learning exercise.  It's our first time scripting so there will probably be a few bugs.\\\vspace{.2in}
 
@@ -399,10 +406,10 @@ neural_network :: {
         
         if trap(
             inputs[^numInputs + 1]
-            inputs[<2, numInputs+1>] = args[1][*]
+            inputs[<2, numInputs+1>] = args[1][]
             if numArgs == 4  then (
                 outputs[^numOutputs]
-                outputs[<1, numOutputs>] = args[2][*]
+                outputs[<1, numOutputs>] = args[2][]
                 { step_size, learning_rate } = { args[3], args[4] }  )
             else if numArgs == 2  then &
                 step_size = args[2]
@@ -505,7 +512,7 @@ This time the script successfully `compiled' and ran.. although \verb#init()# pr
 
 \noindent The last line takes us back to our `root' workspace.
 
-So our \verb#init()# call was a dud -- nothing happened.  Our next step might be to put a trace statement in the coding section of the \verb#init()# function.. wherever that is...  Hmm, looks like we forgot a \verb#code# marker separating the function variables from its executable code, which fully explains why it won't run.  The \verb#init()# method should begin:
+So our \verb#init()# call was a dud -- nothing happened.  Our next step might be to put a trace statement in the coding section of the \verb#init()# function.. hmm, wherever that is..  Looks like we forgot a \verb#code# marker separating the function variables from its executable code, which fully explains why it won't run.  The \verb#init()# method should begin:
 
 \begin{code} \begin{verbatim}
     init :: {
@@ -573,7 +580,7 @@ anagrambler :: neural_network : {
             args[1] = find(the_word, ltr; mode = 0)    )
 
         NN_out[^size(the_word)]
-        NN_out[*].letter =! the_word
+        NN_out[].letter =! the_word
     }
     
     
@@ -589,11 +596,11 @@ anagrambler :: neural_network : {
         sort(NN_out, 2)
         
         NN_out[^numOutputs]
-        NN_out[*].order = activity[<numInputs+2, numInputs+numOutputs+1>]
+        NN_out[].order = activity[<numInputs+2, numInputs+numOutputs+1>]
         if size(the_word) < numOutputs  then NN_out[^size(the_word)]
         
         sort(NN_out, 1)
-        outputString =! NN_out[*].letter
+        outputString =! NN_out[].letter
         
         print(outputString)
     }
@@ -612,7 +619,7 @@ anagrambler :: neural_network : {
         NN_out[^numOutputs]
         
         for c1 in <1, args[2]>  &
-            process(NN_in, NN_out[*].order, params.step_size, params.learning_rate)
+            process(NN_in, NN_out[].order, params.step_size, params.learning_rate)
     }
 }
 
@@ -724,7 +731,7 @@ const Cfunction fs[] = { { "f1_in_Cicada", &f1_in_C }, { "f2", &f2 } };
 
 \item \verb#myScript# is a C string that gives a script to run when Cicada starts up.  For example:
 \begin{code} \begin{verbatim}
-char *myScript = "printl(\"Up and running!\")";
+char *myScript = "run(\"ThingsToDo\")";     // i.e. ThingsToDo.cicada
 \end{verbatim} \end{code}
 \noindent If we don't want to run a predefined script, we can just pass an empty string or \verb#NULL#.
 
@@ -754,18 +761,19 @@ a.indices[i]    // the number of array elements in the i'th argument (=1 if it i
 \hline
 type \# (macro) & Cicada type name & C type name & default data type\\
 \hline
-0 (\verb#bool_type#) & \verb#bool# & \verb#ccBool# & \verb#char#\index{bool@\texttt{bool}}\\
+0 (\verb#bool_type#) & \verb#bool# & \verb#bool# & \verb#bool#\index{bool@\texttt{bool}}\\
 1 (\verb#char_type#) & \verb#char# & \verb#char# & \verb#char#\index{char@\texttt{char}}\\
 2 (\verb#int_type#) & \verb#int# & \verb#ccInt# & \verb#int#\index{int@\texttt{int}}\\
 3 (\verb#double_type#) & \verb#double# & \verb#ccFloat# & \verb#double#\index{double@\texttt{double}}\\
 \hline
-4 (\verb#string_type#) & \verb#string# & \verb#linkedlist# & \verb#{ int; void *; int; int; }#\index{linkedlist@\texttt{linkedlist}}\\
-\hline
+%4 (\verb#string_type#) & \verb#string# & \verb#linkedlist# & \verb#{ int; void *; int; int; }#\index{linkedlist@\texttt{linkedlist}}\\
+%\hline
 5 (\verb#composite_type#) & \verb#{ }# & N/A & N/A\\
 6 (\verb#array_type#) & \verb#[ ]# & N/A & N/A\\
+7 (\verb#list_type#) & \verb#[[]]# & N/A & N/A\\
 \hline
 \end{tabular}
-\caption{Cicada data types.  Types 0 - 4 are primitive} \index{types|textbf}
+\caption{Cicada data types.  Types 0 - 3 are primitive} \index{types|textbf}
 \label{types_table}
 \end{center}
 \end{table}
@@ -776,14 +784,17 @@ Here is a Cicada-compatible C function that has one argument of each possible da
 ccInt myFunction(argsType args)
 {
     bool firstArg = *(bool *) args.p[0];
-    char secondArg = *(char *) args.p[1];
+    char secondArg[2];
     ccInt *thirdArg = (ccInt *) args.p[2];
     ccFloat *fourthArg = (ccFloat *) args.p[3];
-    linkedlist *fifthArg = (linkedlist *) args.p[4];
     
-    if ((args.type[0] != 0) || (args.type[1] != 1) || (args.type[2] != 2)
-                || (args.type[3] != 3) || (args.type[4] != 4))  return 1;
-    if ((args.indices[0] != 1) || (args.indices[1] != 1))  return 1;
+    secondArg[0] = ((char *) args.p[1])[0];        // copy array data manually here
+    secondArg[1] = ((char *) args.p[1])[1];
+    
+    if (args.num != 4) return wrong_argument_count_err;
+    if ((args.type[0][0] != 0) || (args.type[1][0] != 1)
+                || (args.type[2][0] != 2) || (args.type[3][0] != 3))  return type_mismatch_err;
+    if ((args.indices[0] != 1) || (args.indices[2] != 1))  return type_mismatch_err;
     
     ...
     
@@ -791,58 +802,135 @@ ccInt myFunction(argsType args)
 }
 \end{verbatim} \end{code}
 
-\noindent Notice that we passed the first two arguments by value but the other three arguments by reference.  We must pass an argument by reference if it might be changed, \emph{particularly} if it is a string (the \verb#linkedlist# type).  It's especially important to always pass strings by reference because otherwise any resize of the string will probably crash the program.  Arrays are typically represented by pointers in C and are passed by reference for that reason.
+\noindent This function copies its first two arguments by value and the latter two arguments by reference.  We must pass an argument by reference if it might be changed in the C code.  Arrays are usually passed by reference for efficiency.
 
-Our C function used two Cicada-defined types:  \verb#ccInt# and \verb#ccFloat#.  By default, these two types correspond to \verb#int# and \verb#double#; however these definitions can be changed in \verb#cicada.h#.  (If we change \verb#ccInt# we should also make changes to \verb#ccIntMin#, \verb#ccIntMax#, \verb#printIntFormatString#, and \verb#readIntFormatString#; and if we change \verb#ccFloat# then we should also make corresponding changes to \verb#maxPrintableDigits#, \verb#printFloatFormatString#, \verb#print_stringFloatFormatString#, and \verb#readFloatFormatString#). 
+Our C function used two Cicada-defined types:  \verb#ccInt# and \verb#ccFloat#.  By default, these two types correspond to \verb#int# and \verb#double#; however these definitions can be changed in \verb#cicada.h#.  If we change \verb#ccInt# we should also make changes to \verb#ccIntMin#, \verb#ccIntMax#, \verb#printIntFormatString#, and \verb#readIntFormatString#; and if we change \verb#ccFloat# then we should also make corresponding changes to \verb#maxPrintableDigits#, \verb#printFloatFormatString#, \verb#print_stringFloatFormatString#, and \verb#readFloatFormatString#. 
 
-There is a handy \verb#getArgs()#\index{getArgs@\texttt{getArgs}} function simplifies the loading of C variables.  Likewise our basic argument checking can be handled using \verb#checkArgs()#\index{checkArgs@\texttt{checkArgs}}.
+There is a handy \verb#getArgs()#\index{getArgs@\texttt{getArgs}} function which simplifies the loading of C variables.\index{checkArgs@\texttt{checkArgs}}
 
 \begin{code} \begin{verbatim}
 ccInt myFunction(argsType args)
 {
-    bool firstArg;
-    char secondArg;
-    ccInt *thirdArg;
-    ccFloat *fourthArg;
-    linkedlist *fifthArg;
+    ...
+    if (args.num != 4) return wrong_argument_count_err;
     
-    if (checkArgs(args, scalar(bool_type), scalar(char_type), vector(int_type),
-                vector(double_type), vector(string_type)) != 0)  return 1;
-    getArgs(args, byValue(&firstArg), byValue(&secondArg), &thirdArg, &fourthArg, &fifthArg);
+    if ((args.type[0][0] != 0) || (args.type[1][0] != 1)
+                || (args.type[2][0] != 2) || (args.type[3][0] != 3))  return type_mismatch_err;
+    if ((args.indices[0] != 1) || (args.indices[2] != 1))  return type_mismatch_err;
+    
+    getArgs(args, byValue(&firstArg), byValue(secondArg), &thirdArg, &fourthArg);
     
     ...
-    
-    return 0;         // no error
 }
 \end{verbatim} \end{code}
 
-\noindent The first argument of \verb#getArgs()# must be the argument variable; following that is the address of each variable to load, using the \verb#byValue()# macro for each C variable that is not a pointer variable. \verb#checkArgs()# works similarly, except that the macros are \verb#scalar()# / \verb#vector()# to enforce / not enforce that the number of indices should be one.  If we don't want to load all arguments, we can use the \verb#endArgs# macro\index{endArgs@\texttt{endArgs}}.  For example our function could have checked and loaded just the first three arguments with the command
+\noindent The first argument of \verb#getArgs()# must be the argument variable; following that is the address of each variable to load, using the \verb#byValue()# macro for each C variable that is not a pointer variable.
+
+Using a different set of macros, we can both load the arguments and perform type-checking:\index{checkArgs@\texttt{checkArgs}}.
 
 \begin{code} \begin{verbatim}
-    if (checkArgs(args, scalar(bool_type), scalar(char_type),
-             vector(int_type), endArgs) != 0)  return 1;
-    getArgs(args, byValue(&firstArg), byValue(&secondArg), &thirdArg, endArgs);
+ccInt myFunction(argsType args)
+{
+    ccInt errCode;
+    
+    ...
+    
+    if (args.num != 4) return wrong_argument_count_err;
+    
+    errCode = getArgs(args, scalarValue(bool_type, &firstArg), arrayValue(char_type, secondArg),
+                scalarRef(int_type, &thirdArg), arrayRef(double_type, &fourthArg));
+    if (errCode != 0)  return errCode;
+    
+    ...
+}
 \end{verbatim} \end{code}
 
-\noindent Likewise \verb#getArgs()# can skip to a particular argument using the \verb#fromArg()#\index{fromArg@\texttt{fromArg}} macro, as in
+\noindent This example uses all four macros that check-while-passing arguments.  The \verb#scalarValue()# and \verb#arrayValue()# macros copy data into their arguments; the other two copy references (pointers).  The \verb#scalarValue()# and \verb#scalarRef()# macros enforce that the number of indices should be one; the other two do not.
+
+If we only want to load certain selected arguments, we can use \verb#getArgs()# to skip to an argument, and \verb#endArgs# to stop loading arguments\index{endArgs@\texttt{endArgs}}.  Here are some possibilities:
 
 \begin{code} \begin{verbatim}
-    if (checkArgs(args, fromArg(2), vector(int_type),
-                vector(double_type), vector(string_type)) != 0)  return 1;
-    getArgs(args, fromArg(2), &thirdArg, &fourthArg, &fifthArg);
+    getArgs(args, byValue(&firstArg), byValue(secondArg), endArgs);
+    getArgs(args, fromArg(1), byValue(secondArg), &thirdArg, endArgs);
+    getArgs(args, fromArg(1), byValue(secondArg), fromArg(3), &fourthArg);
 \end{verbatim} \end{code}
 
-\noindent Notice that \verb#fromArg()# uses \emph{C-style indexing}, so the next argument read after \verb#fromArg(2)# is \verb#args.p[2]# which is the \emph{third} argument.\\
+\noindent Notice that \verb#fromArg()# uses \emph{C-style indexing}, so the next argument read after \verb#fromArg(1)# is \verb#args.p[1]# which is the \emph{second} argument.\\
 
 Let's look an example script that calls `\verb#myFunction()#'.  A typical script first sets up variables and arrays to pass, and then calls the C routine using its Cicada name (the \verb#Cfunction# string passed into \verb#runCicada()#) prefaced by a dollar sign.  We'll assume the Cicada name is the same as the C function name.
 
 \begin{code} \begin{verbatim}
-nums :: [2][5] int
-$myFunction(true, 'q', nums, pi, "a sample string")
+(dbls :: [2][5] double) = { { 0, 1, 2, 3, 4 }, { 5, 6, 7, 8, 9} }
+$myFunction(true, "hi", 5, dbls)
 \end{verbatim} \end{code}
 
-\noindent This is pretty straightforward:  four of the arguments are constants, and \verb#nums# is a two-dimensional array.  It should be noted that \verb#nums# is effectively a one-dimensional list as far as the C routine is concerned, and that the order of elements in the list is [1][1], [1][2], ..., [1][5], [2][1], ..., [2][5] (in Cicada notation where indices begin at 1).  So, for example, the array variable written in Cicada as \verb#nums[2][3]# is in memory slot \verb#thirdArg[7]# within our C code.  There are 10 array elements in total, so \verb#args.indices[2]# will be 10.  The individual dimensions (2, 5) were \emph{not} passed into C, so if our function needs to know them, then we need to pass them as separate parameters.
+\noindent This is pretty straightforward:  two of the arguments are constants, \verb#``hi"# is a string of two characters, and \verb#dbls# is a two-dimensional array.  It should be noted that \verb#dbls# is effectively a one-dimensional list as far as the C routine is concerned, and that the order of elements in the list is [1][1], [1][2], ..., [1][5], [2][1], ..., [2][5] (in Cicada notation where indices begin at 1).  So, for example, the array variable written in Cicada as \verb#dbls[2][3]# is in memory slot \verb#fourthArg[7]# within our C code.  \verb#dbls# has 10 array elements in total, so \verb#args.indices[3]# will be 10.  The individual dimensions (2, 5) were \emph{not} passed into C, so if our function needs to know them, then we need to pass them as separate parameters.
 
+
+
+
+\subsubsection{Passing strings and other lists}
+
+A Cicada string is a `list' of characters, the list being a special datatype roughly analogous to an array.  Therefore we can read a string into C the same way we read in a character array, e.g. using the \verb#arrayRef()# macro, as in the examples above.  This method lets us both read and modify the characters in the string, since the characters were passed into C by reference.  However, it does not allow us to resize the string.
+
+In order to pass a string (or other list) that our C function can resize, we have have to instruct Cicada to pass more information about the string than just the pointer to its first character.  This is done in the C function declaration passed to Cicada; for example:
+
+\begin{code} \begin{verbatim}
+const Cfunction fs[] = { { "myFunction:dadd", &myFunction } };
+\end{verbatim} \end{code}
+
+\noindent The argument styles are specified after the Cicada function name:  `\verb#d#' to pass argument data, and `\verb#a#' to pass a resizable argument.  `\verb#d#' is the default when argument styles are not specified.
+
+Inside the C code, a resizable argument is represented by an \verb#arg# pointer, and requires special functions to access.  Here is how we might modify our example to convert the string to a C-style string with a null terminator.
+
+\begin{code} \begin{verbatim}
+    ...
+    arg *secondArg;
+    char *secondArgChars;
+    ccInt numChars;
+    ...
+    
+    getArgs(args, byValue(&firstArg), &secondArg, &thirdArg, &fourthArg);
+    
+    numChars = 1;
+    stepArg(secondArg, 1, &numChars);
+    setStringSize(secondArg, 1, numChars+1, &secondArgChars);
+    secondArgChars[numChars] = 0;
+\end{verbatim} \end{code}
+
+\noindent We could have also written \verb#setMemberTop()# instead of \verb#setStringSize()# -- same arguments, identical functions, only a little bit clearer to write one or the other depending on context.
+
+The other two functions that act on \verb#args#-type variables are \verb#getArgTop()# for obtaining the number of indices spanned by an argument, and \verb#argData()# for getting the data pointer.  For example, we could also obtain \verb#secondArgChars# by writing
+
+\begin{code} \begin{verbatim}
+secondArgChars = argData(secondArg);
+\end{verbatim} \end{code}
+
+\noindent as long as we call this function \emph{after} resizing \verb#secondArg# (because the pointer will change).
+
+When we pass a whole argument we obtain an object that may have a more complex type than one or more \verb#bool#, \verb#char#, \verb#int#, or \verb#double# variables.  In the example above the argument was a list of characters, i.e. a list variable pointing to a character variable.  We can check these more elaborate datatypes in several ways:
+
+\begin{code} \begin{verbatim}
+bool passedCheck = false;
+if (args.type[1][0] == list_type)  passedCheck = (args.type[1][1] == char_type);
+if (!passedCheck)  return type_mismatch_err;
+\end{verbatim} \end{code}
+
+\noindent or
+
+\begin{code} \begin{verbatim}
+errCode = getArgs(args, fromArg(1), scalarRef(listOf(char_type), &secondArg), endArgs);
+\end{verbatim} \end{code}
+
+\noindent or
+
+\begin{code} \begin{verbatim}
+errCode = getArgs(args, fromArg(1), scalarRef(string_type, &secondArg), endArgs);
+\end{verbatim} \end{code}
+
+\noindent since \verb#string_type# is shorthand for a list of characters.
+
+There is also a corresponding \verb#array_type# and an \verb#arrayOf()# macro for type-checking.  Although multidimensional arrays become effectively one-dimensional arrays when passing arguments as data, that is not true when a resizable argument is passed, so if we were to pass the fourth argument as an \verb#arg# pointer its desired type would be \verb#arrayOf(arrayOf(double_type))#.
 
 
 
@@ -851,13 +939,13 @@ $myFunction(true, 'q', nums, pi, "a sample string")
 To finish off, we'll write a pretty generic Cicada wrapper for \verb#myFunction()# that can be adapted to wrap most other C functions.  One advantage of a wrapper is that it will let us run \verb#myFunction# by typing something like
 
 \begin{code} \begin{verbatim}
-z = f(x, y)
+yf = f(x, y0)
 \end{verbatim} \end{code}
 
 \noindent rather than
 
 \begin{code} \begin{verbatim}
-$myFunction(x, y, z)
+$myFunction(param, x, y, calcData)
 \end{verbatim} \end{code}
 
 \noindent The wrapper will also allocate data storage for our function, and prevent us from crashing the C code by passing in bad arguments.  Don't ask me what this function does.\\\vspace{.2in}
@@ -866,11 +954,9 @@ $myFunction(x, y, z)
 
 \begin{code} \begin{verbatim}
 f :: {
-    x :: char
-    y :: double
-    answer :: string
-    calc_table :: [][] int
-    error_code :: int
+    x :: string
+    y :: error_code :: int
+    calc_table :: [][] double
     
     params :: {
         dim1 :: dim2 :: int
@@ -884,34 +970,34 @@ f :: {
         { x, y } = args           | mandatory arguments
         (params << args)()        | optional arguments
     ) /= passed  then (
-        print("usage:  [string] = f(char, double [; calcSize/doRecalc = ...])\n")
+        print("usage:  yf = f(xStr, y0 [; calcSize/doRecalc = ...])\n")
         return      )
     
     calc_table[^params.dim1][^params.dim2]
     
-    error_code = $myFunction(params.doRecalc, x, calc_table, y, answer)
+    error_code = $myFunction(params.doRecalc, x, y, calc_table)
     
-    if error_code == 0  then return answer
+    if error_code == 0  then return y
     else  print("Error ", error_code, " in function f()\n")
 }
 \end{verbatim} \end{code}
 
-Our wrapper function has two parts.  The first part is everything before the \verb#code# command, which defines the variables used by function \verb#f()#.  These include the input and output arguments, optional parameters, and even a calculation table used internally by the C routine (because it's easier to pass storage into C than malloc/free it in C).  The most important thing is that the wrapper explicitly defines the type of each variable passed into C, thus ensuring proper communication between the two languages.  For example, when we write \verb#f('a', 5)# the integer argument 5 will be converted to a \verb#double# before handing it off to C, as required by \verb#myFunction()#.
+Our wrapper function has two parts.  The first part is everything before the \verb#code# command, which defines the variables used by function \verb#f()#.  These include the input and output arguments, optional parameters, and even a calculation table used internally by the C routine (because it's easier to pass storage into C than malloc/free it in C).  The most important thing is that the wrapper explicitly defines the type of each variable passed into C, thus ensuring proper communication between the two languages.  For example, when we write \verb#f("a", 5)# the integer argument 5 will be converted to a \verb#double# before handing it off to C, as required by \verb#myFunction()#.
 
-The executable part of \verb#f()# begins \emph{after} the \verb#code# marker.  First it reads the arguments passed to \verb#f()# (within a \verb#trap()# statement so that we can fail gracefully with an error message if the function wasn't called properly.)  Notice that there are two sorts of function argument: mandatory arguments (\verb#x# and \verb#y#) which are copied straightforwardly from a predefined \verb#args# variable, and optional arguments stored in \verb#params# with default values.  The optional arguments be changed using a very peculiar Cicada trick:  \verb#f()# \emph{runs its own arguments} , as a function, inside of its own \verb#params# variable.  Then \verb#f()# resizes \verb#calc_table#, calls \verb#myFunction()# and returns a result.\\
+The executable part of \verb#f()# begins \emph{after} the \verb#code# marker.  First \verb#f()# reads its arguments (within a \verb#trap()# statement so that we can fail gracefully with an error message if the function wasn't called properly).  Notice that there are two sorts of function argument: mandatory arguments (\verb#x# and \verb#y#) which are copied straightforwardly from a predefined \verb#args# variable, and optional arguments stored in \verb#params# with default values.  The optional arguments be changed using a very peculiar Cicada trick:  \verb#f()# \emph{runs its own arguments}, as a function, inside of its own \verb#params# variable.  Then it resizes \verb#calc_table#, calls \verb#myFunction()# and returns a result.\\
 
 Load our wrapper by going to Cicada's command prompt and typing:
 
 \begin{code} \begin{verbatim}
-> run("myFunctionWrapper.cicada")
+> run("myFunctionWrapper")
 \end{verbatim} \end{code}
 
 \noindent Here are some examples of function calls we can make once we've loaded our wrapper:
 
 \begin{code} \begin{verbatim}
-result := f('a', 5)
-print( f('z', 5.78; doRecalc = false) )
-result := f('a', 5; dim1 = that*2, doRecalc = false)
+result := f("a", 5)
+print( f("z", 5.78; doRecalc = false) )
+result := f("a", 5; dim1 = that*2, doRecalc = false)
 \end{verbatim} \end{code}
 
 \noindent Make sure to separate the mandatory and optional parameters using a semicolon, and separate all other arguments or commands using commas.\\
@@ -944,7 +1030,7 @@ x :: int
 
 \noindent Here \verb#x# is the variable and \verb#int# is the type.  The allowed primitive types are \verb#int#, \verb#double#, \verb#char#, \verb#string# and \verb#bool# (see Table \ref{types_table} on page \pageref{types_table}).  All Cicada variables \emph{must} be defined before they can be used, and this type cannot change unless the variable is deleted and redefined.
 
-In order to define an array, add the size of each dimension in square brackets just before the type definition.  For example,
+In order to define an array, write the size of each dimension in square brackets just before the type of the array elements.  For example,
 
 \begin{code} \begin{verbatim}
 myTable :: [5] [7] double
@@ -1130,12 +1216,12 @@ All of the information in Table \ref{OoO_table} comes from the \verb#cclang.c# s
 
 \subsection{Variables}
 
-Cicada variables are either: primitive variables which store data, composite (aka structure) variables which contain other variables, and array variables which contain many identical copies of another variable.  All variables must be be defined before they can be used.  Once created, any variable can have its data overwritten (since there are no constant types in Cicada) or its reference reassigned so that it `points' to another piece of data.  Several variables such as \verb#args# are predefined.
+Cicada variables are either: primitive variables which store data, composite (aka structure) variables which contain other variables, array variables which contain many identical copies of another variable, or lists which are like ragged arrays.  All variables must be be defined before they can be used.  Once created, any variable can have its data overwritten (since there are no constant types in Cicada) or its reference reassigned so that it `points' to another piece of data.  Several variables such as \verb#args# are predefined.
 
 
 \subsubsection{Primitive variables and constants}
 
-\index{types!primitive|(textbf} Cicada has five primitive variable types:  \verb#bool#\index{bool@\texttt{bool}|textbf}, \verb#char#\index{char@\texttt{char}|textbf}, \verb#int#\index{int@\texttt{int}|textbf}, \verb#double#\index{double@\texttt{double}|textbf} and \verb#string#\index{string@\texttt{string}|textbf}.  Types \verb#bool# and \verb#char# each occupy one byte per datum, whereas the sizes of \verb#int# and \verb#double# depend on the definitions \verb#ccInt# and \verb#ccFloat# but default to C ints and doubles respectively.  Strings can have any length.
+\index{types!primitive|(textbf} Cicada has four primitive variable types:  \verb#bool#\index{bool@\texttt{bool}|textbf}, \verb#char#\index{char@\texttt{char}|textbf}, \verb#int#\index{int@\texttt{int}|textbf}, and \verb#double#\index{double@\texttt{double}|textbf}.  Strings are lists of \verb#char#s.  Types \verb#bool# and \verb#char# each occupy one byte per datum, whereas the sizes of \verb#int# and \verb#double# depend on the definitions \verb#ccInt# and \verb#ccFloat# but default to C ints and doubles respectively.
 
 In order to define a variable, use the define `\texttt{::}' operator.  Several variables of the same type can be defined on the same line.
 
@@ -1269,9 +1355,9 @@ checkerboard :: [8][8] bool
 coordinates :: [] { x :: y :: double }
 \end{verbatim} \end{code}
 
-\noindent If we omit the dimension, as we did in defining \verb#coordinates#, then a size-0 array is produced.  However, it's not quite the same as writing the \verb#[0]# dimension explicitly, because empty brackets (or equivalently \verb#[*]#) tell Cicada that the array is likely to be resized often.  This array will then be given extra internal storage so that new elements can be added efficiently.
+\noindent If we omit the dimension, as we did in defining \verb#coordinates#, then a size-0 array is produced.  However, it's not quite the same as writing the \verb#[0]# dimension explicitly, because empty brackets tell Cicada that the array is likely to be resized often.  This array will then be given extra internal storage so that new elements can be added efficiently.
 
-We access array elements using square brackets \emph{after} the array name, just as in C.  The last element can be accessed using the keyword \verb#top#.  To access a range of elements $a$ through $b$, write \verb#[<a, b>]#.  To access all elements we can simply write \verb#[*]# or \verb#[]#.
+We access array elements using square brackets \emph{after} the array name, just as in C.  The last element can be accessed using the keyword \verb#top#.  To access a range of elements $a$ through $b$, write \verb#[<a, b>]#.  To access all elements we can simply write \verb#[]#.
 
 \begin{code} \begin{verbatim}
 numDays[1] = 31                                   | assign a single element
@@ -1279,8 +1365,8 @@ numDays[<2, 4>] = { 31, 31, 30 }                  | assign 3 elements
 checkerboard[1][1] = checkerboard[1][3] = true    | assign 2 elements
 checkerboard[3] = checkerboard[1]                 | assign a whole row of elements
 checkerboard[top] = checkerboard[top-2]           | ditto for the 6th and 8th rows
-coordinates[*].x = coordinates[*].y               | assign all 'x's
-coordinates[*].y = -1                             | assign all 'y's (scalar-to-array copying)
+coordinates[].x = coordinates[].y                 | assign all 'x's
+coordinates[].y = -1                              | assign all 'y's (scalar-to-array copying)
 \end{verbatim} \end{code}
 
 Strings are effectively character arrays, and we can use array operators to access either single characters or ranges of characters.  The single-element operator \verb#[n]# returns a character, whereas the multi-index operator \verb#[<a, b>]# returns a character array (equivalent to a string).  Given two strings \verb#s1# and \verb#s2#, the following commands are legal:  \verb#s1 = s2[<3, 4>]#, \verb#s1 = s2[<4, 4>]#, \verb#s1 =! s2[4]#; however \verb#s1 = s2[4]# is illegal since Cicada does not allow \verb#char#-to-\verb#string# assignment.  Array operators only work on string variables, not string literals, so \verb#"abc"[2]# will cause an error.
@@ -1313,7 +1399,28 @@ grid :: [5][5] int
 
 
 
-\subsubsection{Resizing arrays (and composite variables)} \index{arrays!resizing|(}
+\subsubsection{Lists}\index{lists|(textbf}
+
+Lists are very similar to one-dimensional arrays.  Define a list using double brackets:
+
+\begin{code} \begin{verbatim}
+intList :: [[ ]] int
+\end{verbatim} \end{code}
+
+\noindent There is no option to set an initial list size -- initially \verb#top(intList)# is zero.  However, if we try to copy data (\verb#intList = { 2, 3, 8 }#), then the list will automatically resize as needed.  At this point we can access the list elements using the normal array operators:  \verb#intList[2]#, \verb#intList[<1, 2>]#, \verb#intList[]#, etc.
+
+The most important difference between lists and arrays is that an array of arrays is a multidimensional array, whereas in an array of lists each list may have a different size.  Therefore the following is legal:
+
+\begin{code} \begin{verbatim}
+twoIntLists :: [] intList
+twoIntLists[1] = { 3, 4 }
+twoIntLists[2] = { 0, 1, 2 }
+\end{verbatim} \end{code}
+
+In Cicada a string is defined as a list of characters.  Therefore \verb#s :: string# is equivalent to \verb#s :: [[]] char#.
+
+
+\subsubsection{Resizing arrays/lists (and composite variables)} \index{arrays!resizing|(}
 
 All arrays in Cicada that are not `jammed' may be resized, and there are a number of ways to accomplish this.  The most straightforward method is to use the modified index operator \verb#[^...]# which sets the size of a single dimension of the array, as in
 
@@ -1323,7 +1430,7 @@ A[^9]
 
 \noindent The effect can be either to increase or reduce the size of the array.
 
-Another way to resize an array is to use the all-indices operator \verb#[]# or \verb#[*]# for the \emph{last dimension} of an array that is being copied to.  The last dimension of the array will be resized only if necessary to prevent a mismatched-indices error.  So defining \verb#B :: A, B[^22]# then
+Another way to resize an array is to use the all-indices operator \verb#[]# for the \emph{last dimension} of an array that is being copied to.  The last dimension of the array will be resized only if necessary to prevent a mismatched-indices error.  So defining \verb#B :: A, B[^22]# then
 
 \begin{code} \begin{verbatim}
 A[] = B[]
@@ -1516,9 +1623,9 @@ There's an additional complication: what happens if we try to resize one of thos
 array_1 :: [3][10] int
 array_2 := @array_1[2][<4, 7>]   | jams 4 indices of array_1
 
-array_1[*][^12]        | legal - indices 11-12 aren't aliased by array_2
+array_1[][^12]         | legal - indices 11-12 aren't aliased by array_2
 array_2[^12]           | no, this would cause problems
-remove array_1[*][5]   | not legal -- would remove 2nd column of array_2
+remove array_1[][5]    | not legal -- would remove 2nd column of array_2
 remove array_1[1]      | legal
 
 remove array_1
@@ -1615,7 +1722,7 @@ myNum = 5      | will cause an error
 
 There are actually 256 possible define/equate/alias operators, most of which cannot be scripted directly unless we modify the language.  See Section 5.\\
 
-Finally, there is another assignment operator called `forced-equate', and given the symbol `\texttt{=!}' or `\verb#<-!#'.  While equate copies data between variables whose data structures match or are compatible (e.g. \verb#{ int, string }# to \verb#{ double, string }#), forced equate copies between variables having the same memory storage size.  (Having a string in the destination variable makes the storage requirement somewhat elastic.)  A forced equate simply takes the data contained in its right-hand argument and stuffs those $N$ bytes in the same order into the left-hand variable, with no restrictions on how the storage space is parceled out within the destination variable.
+Finally, there is another assignment operator called `forced-equate', and given the symbol `\texttt{=!}' or `\verb#<-!#'.  While equate copies data between variables whose data structures match or are compatible (e.g. \verb#{ int, string }# to \verb#{ double, string }#), forced equate copies between variables having the same memory storage size.  (Having a string or other list in the destination variable makes the storage requirement somewhat elastic.)  A forced equate simply takes the data contained in its right-hand argument and stuffs those $N$ bytes in the same order into the left-hand variable, with no restrictions on how the storage space is parceled out within the destination variable.
 
 When forcing an equate from data having numeric constants, remember that Cicada interprets each written number as either as \verb#int# or \verb#double#.  So for example, if long integers are 4 bytes and doubles are 8 bytes, \verb@a =! -4@ and \verb@a =! 2e5@ each copy 4 bytes while \verb@a =! 4.@ and \verb@a =! 2e10@ each copy 8 bytes.
 
@@ -1868,7 +1975,7 @@ g :: { ; r :: {}, r[+1]:=args[1], return r }
 rtrns :: { f(5), f(12), g(3) }
 \end{verbatim} \end{code}
 
-\noindent Each set element is a \emph{copy} of a function's return value, as if it was defined using a \verb#:=# operator.  Normally this is fine, \verb#g()#'s return value `\verb#r#' \emph{cannot be copied} using that operator, because its structure \verb#{int}# doesn't match its original definition \verb#{}#!  In this case we can copy the return value `by reference' instead, by making an anonymous alias:
+\noindent Each set element is a \emph{copy} of a function's return value, as if it was defined using a \verb#:=# operator.  Normally this is fine, but here \verb#g()#'s return value `\verb#r#' \emph{cannot be copied} using that operator, because its structure \verb#{int}# doesn't match its original definition \verb#{}#!  In this case we can copy the return value `by reference' instead, by making an anonymous alias:
 
 \begin{code} \begin{verbatim}
 rtrns :: { f(5), f(12), @g(3) }
@@ -2111,7 +2218,7 @@ g :: {  code, args("B")  }
 A --> B
 \end{verbatim} \end{code}
 
-\noindent Focus on the line in which function \verb#f()# calls function \verb#g()#.  The part of \verb#args# \emph{before} the \verb#code# marker prodates \verb#g()#, so here \texttt{args} still has its old value `\texttt{A}'.  The part of \verb#args# \emph{after} the \verb#code# marker is called by \texttt{g()}, so here \texttt{args} is `\texttt{B}'.
+\noindent Focus on the line in which function \verb#f()# calls function \verb#g()#.  The part of \verb#args# \emph{before} the \verb#code# marker predates \verb#g()#, so here \texttt{args} still has its old value `\texttt{A}'.  The part of \verb#args# \emph{after} the \verb#code# marker is called by \texttt{g()}, so here \texttt{args} is `\texttt{B}'.
 
 Finally, function arguments can contain \verb#return# statements just like normal functions.
 
@@ -2141,7 +2248,7 @@ a := 5
 print(g @ f @ a)
 \end{verbatim} \end{code}
 
-\noindent This produces a notation similar to the `circle' syntax of function compositions.
+\noindent This produces a notation similar to the `circle' syntax for function composition.
 
 \index{args@\texttt{args}|)} \index{functions!arguments to|)}
 
@@ -2696,7 +2803,7 @@ step_to_member( step_to_index( step_to_member( "array", search_member "myVar" ),
 
 \paragraph{Inlined constants}\index{constants!in bytecode|(}
 
-Each of the five types of inlined constants---Booleans, characters, integers, floating-point numbers and strings---has a unique bytecode operator.  The raw data of the constant follows in subsequent bytecode words (integers).  The data for large constants -- floating-point numbers and many strings -- takes up several bytecode words.
+Each of the four types of inlined constants---Booleans, characters, integers, and floating-point numbers---along with strings has its own unique bytecode operator.  The raw data of the constant follows in subsequent bytecode words (integers).  The data for large constants -- floating-point numbers and many strings -- takes up several bytecode words.
 
 String constants in bytecode use the `Pascal' string convention rather than the C format:  the constant-string operator is the first bytecode word, followed by the \emph{character-length} of the string (also 1 bytecode word), followed by the raw string data ($N$/\verb#size(int)# words rounded up).  There is no terminating character.\index{constants!in bytecode|)}
 
@@ -2706,7 +2813,7 @@ String constants in bytecode use the `Pascal' string convention rather than the 
 
 The four flow-control commands in Cicada---\verb#if#, \verb#for#, \verb#while# and \verb#do#---are all higher-order commands that the compiler expands into expressions involving `goto's\index{goto, in bytecode|(}.  Cicada bytecode sports three `goto's:  an unconditional jump, and jump-if-true and and jump-if-false operators.  Each goto sequence begins with its bytecode command word followed by a jump offset (1 word).  The jump offset is the number of bytecode words to jump ahead \emph{from the jump offset}, which is negative if we want to jump backwards.  The jump must be take us to the \emph{start of a command} -- otherwise \verb#transform()# throws an error.  In the case of the two conditional gotos, there is a final bytecode expression following the jump offset which is the condition on which to jump.
 
-The most complicated flow-control command is the \verb#for# statement, which basically consists of a \verb#while# along with an assignment (to initialize the counter) and a counter-increment command at the end of the loop.  Notice that if we define a variable inside the \verb#for# loop, as in \verb#for (j::int) in <1, 5>#), then Cicada will plunk the whole expression \verb#j::int# into both the initialization and the increment command, which can slow down short loops considerably.\index{flow control!in bytecode|)}\index{goto, in bytecode|)}
+The most complicated flow-control command is the \verb#for# statement, which basically consists of a \verb#while# along with an assignment (to initialize the counter) and a counter-increment command at the end of the loop.  Notice that if we define a variable inside the \verb#for# loop, as in \verb#for (j::int) in <1, 5>#), then Cicada will plunk the whole expression \verb#j::int# into both the initialization and the increment command, which can slow down loops considerably.\index{flow control!in bytecode|)}\index{goto, in bytecode|)}
 
 
 
@@ -2724,7 +2831,7 @@ flag &= (1 << 1 = 2) + (1 << 2 = 4) + (1 << 3 = 8) + (1 << 5 = 32)\\
 &= 46
 \end{align*}
 
-\noindent (\verb#<<# is the bit-shift operator).  Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable} summarizes the flags words for each Cicada operator.  Clearly there are many possible operators that are not being used in Cicada.\\
+\noindent (where \verb#<<# denotes a bit-shift operator).  Table \ref{defineFlagsTable} on page \pageref{defineFlagsTable} summarizes the flags words for each Cicada operator.  Clearly there are many possible operators that are not being used in Cicada.\\
 
 
 \paragraph{Flag 0 -- equate:}  copies data from the source variable into the destination variable.  This is used by both the assignment \verb#=# and define-equate \verb#:=# operators, but \emph{not} the aliasing operators.\\
@@ -2750,7 +2857,7 @@ c :: a
 The member-define operator (\verb#*::#) sets the update-members flag, but not the new-target flag, so it operates only on members.  On the other hand, the variable-define operator (\verb#@::#) has its new-target flag set but the update-members flag clear, so it will specialize variable but not member types.  It can however create new members since it sets the add-members flag.  Plain old define (\verb#::#) sets all three flags.\\
 
 
-\paragraph{Flag 4 -- relink-target:}  instructs Cicada to make the destination member an \emph{alias} of the source variable.  This flag is set by the equate-at and define-equate-at operators.  The left-hand argument must be an entire variable, not certain indices of an array (i.e. \verb#a[*].b = @c# is legal but \verb#a[<2, 3>] = @c# is not).
+\paragraph{Flag 4 -- relink-target:}  instructs Cicada to make the destination member an \emph{alias} of the source variable.  This flag is set by the equate-at and define-equate-at operators.  The left-hand argument must be an entire variable, not certain indices of an array (i.e. \verb#a[].b = @c# is legal but \verb#a[<2, 3>] = @c# is not).
 
 In a sense, relink-target is the third of three pillars of the def-equate flags.  Whereas post-equate copies data, and update-members and new-target copy code, the relink-target flag copies the target \emph{reference} of the source member.\\
 
@@ -2879,7 +2986,7 @@ newLanguage[] = {
     { double_constant, 0, "1", cat(inbytecode, "55 a1") }
 }
 newLanguageAssociativity :: [] int
-newLanguageAssociativity[*] = { l_to_r, r_to_l }
+newLanguageAssociativity[] = { l_to_r, r_to_l }
 newCompilerID := newCompiler(newLanguage, newLanguageAssociativity)
 
 myBytecode := compile(input("Give me math:  "); compilerID = newCompilerID)
@@ -2955,7 +3062,7 @@ Boolean operators:
 \end{description}
 
 \noindent
-Member/array operators:\index{members|(}\index{arrays|(}
+Member/array/list operators:\index{members|(}\index{arrays|(}
 \begin{description}
 \item{\verb#A.B#} :  step from A into member B
 \item{\verb#[ A ]#} :  step into array index A
@@ -2963,7 +3070,7 @@ Member/array operators:\index{members|(}\index{arrays|(}
 \item{\verb#[^ N ]#} :  resize array to given size N, step into all indices 1-N
 \item{\verb#[+ A ]#} :  insert index
 \item{\verb#[+< A, B >]#} :  insert indices
-\item{\verb#[*]#  or  \verb#[]#} :  step to all indices; can resize before \verb#=# or \verb#=!#\index{arrays|)}
+\item{\verb#[]#} :  step to all indices; can resize before \verb#=# or \verb#=!#\index{arrays|)}
 \item{\verb#remove A#  or  \verb#[-< A, B >]#} :  remove member or indices A through B\\\index{remove@\texttt{remove}}
 \end{description}\index{members|)}
 
@@ -3015,6 +3122,8 @@ Data types:
 \item{\verb#string#} :  string of characters
 \item{\verb#'...'#} :  inlined character constant (one character only)
 \item{\verb#"..."#} :  inlined string containing given characters
+\item{\verb#[ N ]#} or \verb#[ ]# :  array
+\item{\verb#[[ ]]#} :  list
 \item{\verb#{ ... }#} :  inlined function, set, class or data type
 \item{\verb#A : B#} :  an inherited type specialized by B from parent type A
 \item{\verb#A << B#} :  the code/type of B substituted into the variable space of A
@@ -3096,16 +3205,16 @@ Each entry in the following list consists of:  a bytecode command word (which is
 \item{45  [ nothing ]} : returns no variable
 
 \item{46  [ array ],  \emph{num\_indices}, \emph{type}} : an array of \emph{num\_indices} elements of \emph{type}
-\item{47  [ bool ]} : Boolean data type\index{bool@\texttt{bool}}
-\item{48  [ char ]} : character data type\index{char@\texttt{char}}
-\item{49  [ int ]} : integer data type\index{int@\texttt{int}}
-\item{50  [ double ]} : floating-point data type\index{double@\texttt{double}}
-\item{51  [ string ]} : string data type\index{string@\texttt{string}|textbf}
+\item{47  [ list ],  \emph{type}} : an empty list of \emph{type}
+\item{48  [ bool ]} : Boolean data type\index{bool@\texttt{bool}}
+\item{49  [ char ]} : character data type\index{char@\texttt{char}}
+\item{50  [ int ]} : integer data type\index{int@\texttt{int}}
+\item{51  [ double ]} : floating-point data type\index{double@\texttt{double}}
 
 \item{52  [ constant bool ], num} : returns the Boolean stored in \emph{num} (one bytecode word)
 \item{53  [ constant char ], num} : returns the character stored in \emph{num} (one bytecode word)
 \item{54  [ constant int ], num} : returns the integer stored in \emph{num} (one bytecode word)
-\item{55  [ constant double ], num} : returns the floating-point number stored in \emph{num} (\emph{num} is \verb#sizeof(double)/sizeof(int)# bytecode words long)
+\item{55  [ constant double ], num} : returns the floating-point number stored in \emph{num}, which occupies \verb#sizeof(ccFloat)# / \verb#sizeof(ccInt)# bytecode words
 \item{56  [ constant string ], characters\_num, string\_data} : returns an inlined string having the given number of characters.  The string\_data field occupies one bytecode word for every four characters.
 \item{57  [ code block ]} : returns the inlined code beginning with the next bytecode sentence and ending with a 0 bytecode word
 
@@ -3334,11 +3443,11 @@ Searches a sorted list for a given value.  The list must be numeric (\verb#char#
 % bytecode()
 
 \paragraph{\texttt{bytecode()}\\\\
-\normalfont \emph{syntax: } (string) \emph{codeString} = \texttt{bytecode}((function) \emph{myFunction} [\texttt{, code, memberNumber} = (numeric)])\\
+\normalfont \emph{syntax: } (string) \emph{codeString} = \texttt{bytecode}((function) \emph{myFunction} [, (numeric) \emph{memberIndex}])\\
 \normalfont \emph{C syntax: } \texttt{\$bytecode}((function) \emph{myFunction}, (int) \emph{memberNumber}, (string) \emph{codeString})\\\\}
 \index{bytecode@\texttt{bytecode()}|(}
 
-Returns the bytecode of a given variable or member.  If there is one argument it returns the bytecode of that variable; if there are two members then it returns the bytecode of member \verb#myFunction[memberIndex]#.  Member code is never run directly, but it determines the sort of variable a member can point to (because \emph{code} and \emph{type} are equivalent in Cicada).
+Returns the bytecode of a given variable or member.  If there is one argument it returns the bytecode of that variable; if there are two then it returns the bytecode of member \verb#myFunction[memberIndex]#.  Member code is never run directly, but it determines the sort of variable a member can point to (because \emph{code} and \emph{type} are equivalent in Cicada).
 
 To read the bytecode we need to move the bytecode data from the string into an array of integers using the \verb#=!# operator.  The last integer is always 0, signifying the end of bytecode.  If there are multiple codes (due to the inheritance operator) then the codes are concatenated in parent-to-child order in the same string, and each separate code ends in a null integer.  \texttt{bytecode()} is the inverse operation to \texttt{transform()}.
 
@@ -3442,8 +3551,8 @@ Returns the nearest integer that is as high as or higher than the argument, whic
 
 \paragraph{\texttt{compile()}\\\\
 \normalfont \emph{syntax: } (string) \emph{script\_bytecode} = \texttt{compile}((string) \emph{script} [, (string) \emph{char\_positions} [, member\_names]] [, \texttt{code}, \texttt{compilerID} = (int), \texttt{filename} = (string)])\\
-\normalfont \emph{C-1 syntax: } \texttt{\$compile}((int) \emph{compilerID}, (string) \emph{script}, (string) \emph{filename}, (string) \emph{char\_positions}, (int) \emph{num\_member\_names}, (string) \emph{script\_bytecode})\\
-\normalfont \emph{C-2 syntax: } \texttt{\$getMemberNames}((int) \emph{compilerID}, (strings) \emph{member\_names}, (int) \emph{first\_name\_to\_load})\\\\}
+\normalfont \emph{C syntax: } \texttt{\$compile}((int) \emph{compilerID}, (string) \emph{script}, (string) \emph{filename}, (string) \emph{script\_bytecode}, (string) \emph{char\_positions}, (int) \emph{num\_member\_names})\\\\}
+%\normalfont \emph{C-2 syntax: } \texttt{\$getMemberNames}((int) \emph{compilerID}, (strings) \emph{member\_names}, (int) \emph{first\_name\_to\_load})\\\\}
 \index{compile@\texttt{compile()}|(textbf}
 
 Before Cicada can execute a script, that script must be compiled into a binary form called bytecode that is much easier to execute than the raw text.  The built-in \texttt{compile()} function does this job.  Given a string containing a Cicada script (\verb#script#), \verb#compile()# returns a second string (\verb#script_bytecode#) containing Cicada bytecode.  The bytecode is \emph{not} machine code -- it is only used by Cicada.
@@ -3681,7 +3790,7 @@ When the user calls \verb#go(...)#, Cicada constructs the argument list before \
 
 \paragraph{\texttt{input()}\\\\
 \normalfont \emph{syntax: } (string) \emph{str} = \texttt{input}(\emph{args\_to\_print})\\
-\normalfont \emph{C syntax: } \texttt{\$input}(\emph{args\_to\_print}, (string) \emph{str})\\\\}
+\normalfont \emph{C syntax: } \texttt{\$input}((string) \emph{str}, \emph{args\_to\_print})\\\\}
 \index{input@\texttt{input()}|(}
 
 Reads in a single line from the C standard input (which is usually the keyboard).  \texttt{input()} causes Cicada's execution to halt until an end-of-line character is read (i.e. the user hits return or enter), at which point execution resumes.  The return string contains all characters before, but not including, the end-of-line.  Reading in a null character causes the error ``I/O error" to be thrown.\\
@@ -4113,7 +4222,7 @@ myTable :: [10] { a :: b :: double }
 for (c1::int) in <1, 10> myTable[c1] = { random(), random() }
 
 sort(myTable, 1)     | sort by first column
-sort(myTable, myTable[*].a)
+sort(myTable, myTable[].a)
 \end{verbatim} \end{code}
 
 \noindent The sort-by list will be unaffected.
@@ -4331,11 +4440,11 @@ The \verb#trap()# function is actually defined in \verb#cclang.c#, and has the u
 % type()
 
 \paragraph{\texttt{type()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{theType} = \texttt{type}((variable) \emph{var} [\texttt{, code, memberNumber} = (numeric)])\\
+\normalfont \emph{syntax: } (numeric) \emph{theType} = \texttt{type}((variable) \emph{var} [, (numeric) \emph{memberIndex}])\\
 \normalfont \emph{C syntax: } \texttt{\$type}((variable) \emph{var}, (int) \emph{memberNumber},  (int) \emph{theType})\\\\}
 \index{type@\texttt{type()}|(}
 
-Returns a number representing the type of the given variable (one argument) or one of its members (if there is a second argument).  The variable is the first argument, and the member number is the second argument.  The types IDs are listed in Table \ref{types_table} on page \pageref{types_table}.  A composite-typed variable or member only returns a `5' even though its full type is properly determined by its code list -- use the \verb#bytecode()# function to obtain the code list.\\
+Returns a number representing the type of the given variable (one argument) or one of its members (if there is a second argument).  The variable is the first argument, and the member index is the optional second argument.  The types IDs are listed in Table \ref{types_table} on page \pageref{types_table}.  A composite-typed variable or member only returns a `5' even though its full type is properly determined by its code list -- use the \verb#bytecode()# function to obtain the code list.\\
 
 \index{type@\texttt{type()}|)} \index{functions!built-in|)}
 
@@ -4379,203 +4488,237 @@ Returns the names of the variables in the current directory, which is usually \v
 
 
 
+\subsection{C functions for working with whole arguments\\}\index{arg@\texttt{arg}|(}\index{arrays!dynamic in C|see{lists}} \index{functions!for strings in C|(}
+
+\paragraph{\texttt{getArgTop()}\\\\
+\normalfont \emph{syntax: } (ccInt) \emph{member\_top} = \texttt{getArgTop}((arg *) \emph{theArg})\\\\}\index{getArgTop@\texttt{getArgTop()}|(}
+
+Returns the `top' of the argument.  This is either the array dimension (if it is an array variable), the number of list elements spanned (for a list variable), or the number of members (if it's a composite variable).\index{getArgTop\texttt{getArgTop()}|)}\\
+
+
+
+\paragraph{\texttt{setMemberTop()}\\\\
+\normalfont \emph{syntax: } (ccInt) \emph{err\_code} = \texttt{setMemberTop}((arg *) \emph{theArg}, (ccInt) memberNumber, (ccInt) newTop, (char **) argData)\\\\}\index{setMemberTop\texttt{setMemberTop()}|(}
+
+Sets the `top' of one \emph{member of} the argument.  An array variable has one member whose top is one array dimension; a list variable has one member for each list it contains; and a composite variable typically each member has a name.  If the member points to primitive data, returns a pointer to that data in \verb#argData#.\index{setMemberTop\texttt{setMemberTop()}|)}\\
+
+
+
+\paragraph{\texttt{setStringSize()}\\\\
+\normalfont \emph{syntax: } (ccInt) \emph{err\_code} = \texttt{setStringSize}((arg *) \emph{theArg}, (ccInt) stringNumber, (ccInt) newStringSize, (char **) stringChars)\\\\}\index{setStringSize\texttt{setStringSize()}|(}
+
+
+
+\paragraph{\texttt{stepArg()}\\\\
+\normalfont \emph{syntax: } (arg *) \emph{sub\_arg} = \texttt{stepArg}((arg *) \emph{theArg}, (ccInt) memberNumber, (ccInt *) numIndices)\\\\}\index{stepArg\texttt{stepArg()}|(}
+
+Steps into a member of an argument, returning another \verb#arg#-type pointer.  If \verb#numIndices# is non-null, its referent is multiplied by the top of that member.  Typically one would set \verb#numIndices# to \verb#args.indices[n]# and then update this variable with each \verb#stepArg()# call.\index{stepArg\texttt{stepArg()}|)}\\
+
+
+
+\paragraph{\texttt{argData()}\\\\
+\normalfont \emph{syntax: } (void *) \emph{arg\_data} = \texttt{argData}((arg *) \emph{theArg})\\\\}\index{argData\texttt{argData()}|(}
+
+Returns a pointer to the data list of a primitive (\verb#bool#/\verb#char#/\verb#int#/\verb#double#) argument.\index{argData\texttt{argData()}|)}\\
+
+\index{arg@\texttt{arg}|)}\index{functions!for strings in C|)}
 
 % --------------- linked list routines --------------
 
 
-\subsection{Linked list routines for handling Cicada strings in C}\index{linked lists|(}\index{arrays!dynamic in C|see{linked lists}} \index{functions!for strings in C|(}
-
-Cicada strings are all stored in linked lists, and when a Cicada script calls a user-defined C function any string arguments are passed as \verb#linkedlist# variables.  The \verb#lnklst# source files were written for Cicada, but they are completely stand-alone and can be used in other C programs.
-
-The \verb#linkedlist# data type is defined as follows:
-
-\begin{code} \begin{verbatim}
-typedef struct {
-    ccInt elementNum;
-    sublistHeader *memory;
-    ccInt elementSize;
-    ccFloat spareRoom;
-} linkedlist;
-\end{verbatim} \end{code}
-
-\noindent The only field relevant for Cicada strings is \verb#elementNum#, which stores the number of characters (bytes) in the string.  \verb#memory# points to the first storage sublist, while \verb#elementSize# should always be 1 (the byte-size of a character).  \verb#spareRoom# is amount of extra room to allocate in sublists relative to \verb#elementNum#; this extra space uses memory but can speed up the insertion of new elements.
-
-Here is an example of how to use a linked list in a C function.
-
-\begin{code} \begin{verbatim}
-ccInt doubleString(ccInt argc, char **argv)
-{
-    linkedlist *theString = (linkedlist *) argv[0];
-    ccInt numInitChars = theString->elementNum;
-    
-    addElements(theString, numInitChars, ccFalse);
-    copyElements(theString, 1, theString, numInitChars+1, numInitChars);
-    
-    return 0;
-}
-\end{verbatim} \end{code}
-
-There are two rules to keep in mind when using linked lists, to avoid crashing Cicada.  1) The \verb#linkedlist# variable should only be updated by Cicada's linked list routines.  2) Whenever a linked list is updated the \emph{original} \verb#linkedlist# variable (i.e. Cicada's own copy) must be updated as well.  Therefore we should always pass linked lists \emph{by reference} to any C routine:  i.e. let's not use the \verb#byValue()# keyword for these lists when using \verb#getArgs()#.\\
-
-
-\paragraph{\texttt{newLinkedList()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{newLinkedList}((linkedlist *) \emph{LL}, (numeric) \emph{element\_num}, \emph{element\_size}, \emph{spare\_room}, (Boolean) \emph{if\_cleared})\\\\}\index{newLinkedList@\texttt{newLinkedList()}|(}
-
-Allocates the memory for a new linked list.  The \texttt{linkedlist} variable itself is not created; rather its \texttt{memory} field is filled with a pointer to a newly-allocated sublist.  The first three arguments are just three of the fields of the \texttt{linkedlist} data type described above:  the initial number of elements, the byte size of each element, and the percentage of extra room to maintain in the list.  The final argument, if set, zeros the memory of the linked list.\index{newLinkedList@\texttt{newLinkedList()}|)}\\
-
-
-
-
-\paragraph{\texttt{deleteLinkedList()}\\\\
-\normalfont \emph{syntax: } \texttt{deleteLinkedList}((linkedlist *) \emph{LL})\\\\}\index{deleteLinkedList@\texttt{deleteLinkedList()}|(}
-
-De-allocates the storage of a linked list.  The actual variable of type \texttt{linkedlist} is not itself deleted, but its \texttt{memory} pointer is set to zero, indicating that the list is no longer defined.\index{deleteLinkedList@\texttt{deleteLinkedList()}|)}\\
-
-
-
-
-\paragraph{\texttt{insertElements()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{insertElements}((linkedlist *) \emph{LL}, (numeric) \emph{insertion\_point}, \emph{new\_elements}, (Boolean) \emph{if\_cleared})\\\\}\index{insertElements@\texttt{insertElements()}|(}
-
-Adds elements to the beginning, middle or end of a linked list.  The elements are added \emph{before} the specified existing index.  So to add before the first element we must set the insertion-point argument to 1; to add after the final existing element we set that argument to the number of current elements plus one.  The number of new elements to add is given by the third argument.  The fourth argument, if set, zeros the new memory.
-
-Each linked list has a field signifying the amount of spare room it should try to maintain in the list.  This spare room takes up more memory, but it can improve the speed with which lists are resized, since adding new elements may not require allocating more sublists if the existing ones have the extra space.  When there is not enough room, \texttt{insertElements()} creates and inserts new sublists, again with the extra storage specified in the \texttt{spareRoom} field of the linked list variable. \index{insertElements@\texttt{insertElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{addElements()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{addElements}((linkedlist *) \emph{LL}, (numeric) \emph{new\_elements}, (Boolean) \emph{if\_cleared})\\\\}\index{addElements@\texttt{addElements()}|(}
-
-Same as \texttt{insertElements()}, except that the elements are appended to the end of the existing list.  (This is equivalent to calling \texttt{insertElements} with an insertion point of \texttt{elementNum}+1.) \index{addElements@\texttt{addElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{deleteElements()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{deleteElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index})\\\\} \index{deleteElements@\texttt{deleteElements()}|(}
-
-Removes a given range of elements from the linked list.  (This is not the same as zeroing the elements!)  The range of elements to delete includes the first and last indices, so for example a range of \{4, 6\} removes three elements.\index{deleteElements@\texttt{deleteElements()}|)}\\
-
-
-
-\paragraph{\texttt{deleteElement()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{deleteElement}((linkedlist *) \emph{LL}, (numeric) \emph{element\_index})\\\\} \index{deleteElement@\texttt{deleteElement()}|(}
-
-Same as \verb#deleteElements()# except only deletes one element.\index{deleteElement@\texttt{deleteElement()}|)}\\
-
-
-
-\paragraph{\texttt{resizeLinkedList()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{resizeLinkedList}((linkedlist *) \emph{LL}, (numeric) \emph{num\_elements}, (Boolean) \emph{if\_cleared})\\\\} \index{resizeLinkedList@\texttt{resizeLinkedList()}|(}
-
-Adds elements to the end, or deletes elements from the end, so that the linked list will have the required number of elements.  If elements are being added then they will be zeroed if and only if \emph{if\_cleared} is set to true (\verb#ccTrue#).\index{resizeLinkedList@\texttt{resizeLinkedList()}|)}\\
-
-
-
-
-\paragraph{\texttt{defragmentLinkedList()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{defragmentLinkedList}((linkedlist *) \emph{LL})\\\\}\index{defragmentLinkedList@\texttt{defragmentLinkedList()}|(}
-
-Rearranges the linked list's storage into one contiguous block of memory.  A linked list is ordinarily broken up over a number of sublists, since that reduces the amount of memory shuffling that has to occur when elements are inserted or removed.  If there will be no resizing of the list then it is faster to work with when it is de-fragmented, and it can save memory too (even when \texttt{spareRoom} is 0).
-
-C function calls defragment all of their string-arguments before passing them to the C routine.\index{defragmentLinkedList@\texttt{defragmentLinkedList()}|)}\\
-
-
-
-
-\paragraph{\texttt{copyElements()}\\\\
-\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{copyElements}((linkedlist *) \emph{source\_LL}, (numeric) \emph{first\_source\_index}, (linkedlist *) \emph{dest\_list}, (numeric) \emph{first\_dest\_index}, \emph{num\_elements\_to\_copy})\\\\}\index{copyElements@\texttt{copyElements()}|(}
-
-Copies data between two linked lists, or between two parts of the same linked list if the source and destination lists are the same.  If the copy is being done within a linked list, then it is performed in such a way that data never overwrites itself and then gets re-copied (in other words, the procedure works correctly and gives the expected result even when the source and destination ranges overlap).  The two lists' element sizes must match.\index{copyElements@\texttt{copyElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{compareElements()}\\\\
-\normalfont \emph{syntax: } (Boolean) \emph{err\_code/result} = \texttt{CompareElements}((linkedlist *) \emph{source\_LL}, (numeric) \emph{first\_source\_index}, (linkedlist *) \emph{dest\_list}, (numeric) \emph{first\_dest\_index}, \emph{num\_elements\_to\_compare})\\\\}\index{compareElements@\texttt{compareElements()}|(}
-
-Compares data between two linked lists, or between two parts of the same linked list.  The return value is either an error code, or the Boolean result of the comparison.\index{compareElements@\texttt{compareElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{fillElements()}\\\\
-\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{FillElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index}, (char) \emph{byte\_pattern})\\\\}\index{fillElements@\texttt{fillElements()}|(}
-
-Fills the given range of elements of a linked list with the byte pattern specified.  That is, each byte of data storage used by those elements is set to the value of the byte given in the fourth argument.\index{fillElements@\texttt{fillElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{clearElements()}\\\\
-\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{clearElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index})\\\\}\index{clearElements@\texttt{clearElements()}|(}
-
-Clears -- i.e. sets to zero -- the given range of elements of a linked list.  This is equivalent to calling \texttt{fillElements()} with a byte pattern of 0.\index{clearElements@\texttt{clearElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{setElements()}\\\\
-\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{setElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index}, (void *) \emph{read\_address})\\\\}\index{setElements@\texttt{setElements()}|(}
-
-Copies data from a buffer (the final argument) into a given range of elements in a linked list.  The range includes the first and last elements.  Whereas the linked list has fragmented memory, the buffer's storage is expected to be contiguous, and the buffer address is a pointer to the beginning of the data to copy.\index{setElements@\texttt{setElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{setElement()}\\\\
-\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{setElement}((linkedlist *) \emph{LL}, (numeric) \emph{index}, (void *) \emph{read\_address})\\\\}\index{setElement@\texttt{setElement()}|(}
-
-Copies data from a buffer into a single element of a linked list.  This is equivalent to calling \texttt{setElements()} with the same first and last element.\index{setElement@\texttt{setElement()}|)}\\
-
-
-
-
-\paragraph{\texttt{getElements()}\\\\
-\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{getElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index}, (void *) \emph{write\_address})\\\\}\index{getElements@\texttt{getElements()}|(}
-
-Copies data from a range of elements of a linked list (including the first and last elements) into a buffer.  The write address points to the start of the buffer.\index{getElements@\texttt{getElements()}|)}\\
-
-
-
-
-\paragraph{\texttt{getElement()}\\\\
-\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{getElement}((linkedlist *) \emph{LL}, (numeric) \emph{index}, (void *) \emph{write\_address})\\\\}\index{getElement@\texttt{getElement()}|(}
-
-Copies data from a single element of a linked list into a buffer.  This is equivalent to calling \texttt{getElements()} with the same first and last element.\index{getElement@\texttt{getElement()}|)}\\
-
-
-
-
-\paragraph{\texttt{elementExists()}\\\\
-\normalfont \emph{syntax: } (numeric) \emph{err\_code/if\_exists} = \texttt{elementExists}((linkedlist *) \emph{LL}, (numeric) \emph{index})\\\\}\index{elementExists@\texttt{elementExists()}|(}
-
-Returns \verb#ccTrue# or \verb#ccFalse# depending on whether a given element of a linked list exists.  An error code is thrown if the \verb#memory# field of the linked list is \verb#NULL#.\index{elementExists@\texttt{elementExists()}|)}\\
-
-
-
-
-\paragraph{\texttt{findElement()}\\\\
-\normalfont \emph{syntax: } (void *) \emph{element\_pointer} = \texttt{findElement}((linkedlist *) \emph{LL}, (numeric) \emph{element\_index})\\\\}\index{findElement@\texttt{findElement()}|(}
-
-Returns a pointer to the given element of a linked list, or \verb#NULL# if the element doesn't exist.\index{findElement@\texttt{findElement()}|)}\\
-
-
-
-
-\paragraph{\texttt{element()}\\\\
-\normalfont \emph{syntax: } (void *) \emph{element\_pointer} = \texttt{element}((linkedlist *) \emph{LL}, (numeric) \emph{element\_index})\\\\}\index{element@\texttt{element()}|(}
-
-Returns a pointer to the given element of a linked list.  Identical to \verb#findElement()# except that \verb#element()# doesn't do range checking:  if the index is out of range then \texttt{element()} will simply crash the program.\index{element@\texttt{element()}|)}\\
-
-
-
-
-\paragraph{\texttt{skipElements()}\\\\
-\normalfont \emph{syntax: } (void *) \emph{element\_pointer} = \texttt{skipElements}((linkedlist *) LL, (sublistHeader *) sublist, (void *) \emph{starting\_pointer}, (ccInt *) \emph{sublist\_index}, (numeric) \emph{indices\_to\_skip})\\\\}\index{skipElements@\texttt{skipElements()}|(}
-
-Only for real pros.  Starting from a pointer to an element in the linked list, this routine returns the pointer to another element a given number of indices farther down the list.  When canvassing large, heavily-fragmented lists it may be slightly faster to go through the list once using \texttt{skipElements()} than to call \texttt{element()}, which searches from the first sublist each time it is called.  The first three arguments are the linked list, a pointer to our current sublist and a pointer to the local index of our starting element (beginning at 0 for the first element in the sublist).  The new element must have a higher index than the old; Cicada's linked lists cannot be explored in reverse.\index{skipElements@\texttt{skipElements()}|)}\index{linked lists|)}\index{functions!for strings in C|)}\\
+%\subsection{Linked list routines for handling Cicada strings in C}\index{linked lists|(}\index{arrays!dynamic in C|see{linked lists}} \index{functions!for strings in C|(}
+%
+%Cicada strings are all stored in linked lists, and when a Cicada script calls a user-defined C function any string arguments are passed as \verb#linkedlist# variables.  The \verb#lnklst# source files were written for Cicada, but they are completely stand-alone and can be used in other C programs.
+%
+%The \verb#linkedlist# data type is defined as follows:
+%
+%\begin{code} \begin{verbatim}
+%typedef struct {
+%    ccInt elementNum;
+%    sublistHeader *memory;
+%    ccInt elementSize;
+%    ccFloat spareRoom;
+%} linkedlist;
+%\end{verbatim} \end{code}
+%
+%\noindent The only field relevant for Cicada strings is \verb#elementNum#, which stores the number of characters (bytes) in the string.  \verb#memory# points to the first storage sublist, while \verb#elementSize# should always be 1 (the byte-size of a character).  \verb#spareRoom# is amount of extra room to allocate in sublists relative to \verb#elementNum#; this extra space uses memory but can speed up the insertion of new elements.
+%
+%Here is an example of how to use a linked list in a C function.
+%
+%\begin{code} \begin{verbatim}
+%ccInt doubleString(ccInt argc, char **argv)
+%{
+%    linkedlist *theString = (linkedlist *) argv[0];
+%    ccInt numInitChars = theString->elementNum;
+%    
+%    addElements(theString, numInitChars, ccFalse);
+%    copyElements(theString, 1, theString, numInitChars+1, numInitChars);
+%    
+%    return 0;
+%}
+%\end{verbatim} \end{code}
+%
+%There are two rules to keep in mind when using linked lists, to avoid crashing Cicada.  1) The \verb#linkedlist# variable should only be updated by Cicada's linked list routines.  2) Whenever a linked list is updated the \emph{original} \verb#linkedlist# variable (i.e. Cicada's own copy) must be updated as well.  Therefore we should always pass linked lists \emph{by reference} to any C routine:  i.e. let's not use the \verb#byValue()# keyword for these lists when using \verb#getArgs()#.\\
+%
+%
+%\paragraph{\texttt{newLinkedList()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{newLinkedList}((linkedlist *) \emph{LL}, (numeric) \emph{element\_num}, \emph{element\_size}, \emph{spare\_room}, (Boolean) \emph{if\_cleared})\\\\}\index{newLinkedList@\texttt{newLinkedList()}|(}
+%
+%Allocates the memory for a new linked list.  The \texttt{linkedlist} variable itself is not created; rather its \texttt{memory} field is filled with a pointer to a newly-allocated sublist.  The first three arguments are just three of the fields of the \texttt{linkedlist} data type described above:  the initial number of elements, the byte size of each element, and the percentage of extra room to maintain in the list.  The final argument, if set, zeros the memory of the linked list.\index{newLinkedList@\texttt{newLinkedList()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{deleteLinkedList()}\\\\
+%\normalfont \emph{syntax: } \texttt{deleteLinkedList}((linkedlist *) \emph{LL})\\\\}\index{deleteLinkedList@\texttt{deleteLinkedList()}|(}
+%
+%De-allocates the storage of a linked list.  The actual variable of type \texttt{linkedlist} is not itself deleted, but its \texttt{memory} pointer is set to zero, indicating that the list is no longer defined.\index{deleteLinkedList@\texttt{deleteLinkedList()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{insertElements()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{insertElements}((linkedlist *) \emph{LL}, (numeric) \emph{insertion\_point}, \emph{new\_elements}, (Boolean) \emph{if\_cleared})\\\\}\index{insertElements@\texttt{insertElements()}|(}
+%
+%Adds elements to the beginning, middle or end of a linked list.  The elements are added \emph{before} the specified existing index.  So to add before the first element we must set the insertion-point argument to 1; to add after the final existing element we set that argument to the number of current elements plus one.  The number of new elements to add is given by the third argument.  The fourth argument, if set, zeros the new memory.
+%
+%Each linked list has a field signifying the amount of spare room it should try to maintain in the list.  This spare room takes up more memory, but it can improve the speed with which lists are resized, since adding new elements may not require allocating more sublists if the existing ones have the extra space.  When there is not enough room, \texttt{insertElements()} creates and inserts new sublists, again with the extra storage specified in the \texttt{spareRoom} field of the linked list variable. \index{insertElements@\texttt{insertElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{addElements()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{addElements}((linkedlist *) \emph{LL}, (numeric) \emph{new\_elements}, (Boolean) \emph{if\_cleared})\\\\}\index{addElements@\texttt{addElements()}|(}
+%
+%Same as \texttt{insertElements()}, except that the elements are appended to the end of the existing list.  (This is equivalent to calling \texttt{insertElements} with an insertion point of \texttt{elementNum}+1.) \index{addElements@\texttt{addElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{deleteElements()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{deleteElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index})\\\\} \index{deleteElements@\texttt{deleteElements()}|(}
+%
+%Removes a given range of elements from the linked list.  (This is not the same as zeroing the elements!)  The range of elements to delete includes the first and last indices, so for example a range of \{4, 6\} removes three elements.\index{deleteElements@\texttt{deleteElements()}|)}\\
+%
+%
+%
+%\paragraph{\texttt{deleteElement()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{deleteElement}((linkedlist *) \emph{LL}, (numeric) \emph{element\_index})\\\\} \index{deleteElement@\texttt{deleteElement()}|(}
+%
+%Same as \verb#deleteElements()# except only deletes one element.\index{deleteElement@\texttt{deleteElement()}|)}\\
+%
+%
+%
+%\paragraph{\texttt{resizeLinkedList()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{resizeLinkedList}((linkedlist *) \emph{LL}, (numeric) \emph{num\_elements}, (Boolean) \emph{if\_cleared})\\\\} \index{resizeLinkedList@\texttt{resizeLinkedList()}|(}
+%
+%Adds elements to the end, or deletes elements from the end, so that the linked list will have the required number of elements.  If elements are being added then they will be zeroed if and only if \emph{if\_cleared} is set to true (\verb#ccTrue#).\index{resizeLinkedList@\texttt{resizeLinkedList()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{defragmentLinkedList()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code} = \texttt{defragmentLinkedList}((linkedlist *) \emph{LL})\\\\}\index{defragmentLinkedList@\texttt{defragmentLinkedList()}|(}
+%
+%Rearranges the linked list's storage into one contiguous block of memory.  A linked list is ordinarily broken up over a number of sublists, since that reduces the amount of memory shuffling that has to occur when elements are inserted or removed.  If there will be no resizing of the list then it is faster to work with when it is de-fragmented, and it can save memory too (even when \texttt{spareRoom} is 0).
+%
+%C function calls defragment all of their string-arguments before passing them to the C routine.\index{defragmentLinkedList@\texttt{defragmentLinkedList()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{copyElements()}\\\\
+%\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{copyElements}((linkedlist *) \emph{source\_LL}, (numeric) \emph{first\_source\_index}, (linkedlist *) \emph{dest\_list}, (numeric) \emph{first\_dest\_index}, \emph{num\_elements\_to\_copy})\\\\}\index{copyElements@\texttt{copyElements()}|(}
+%
+%Copies data between two linked lists, or between two parts of the same linked list if the source and destination lists are the same.  If the copy is being done within a linked list, then it is performed in such a way that data never overwrites itself and then gets re-copied (in other words, the procedure works correctly and gives the expected result even when the source and destination ranges overlap).  The two lists' element sizes must match.\index{copyElements@\texttt{copyElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{compareElements()}\\\\
+%\normalfont \emph{syntax: } (Boolean) \emph{err\_code/result} = \texttt{CompareElements}((linkedlist *) \emph{source\_LL}, (numeric) \emph{first\_source\_index}, (linkedlist *) \emph{dest\_list}, (numeric) \emph{first\_dest\_index}, \emph{num\_elements\_to\_compare})\\\\}\index{compareElements@\texttt{compareElements()}|(}
+%
+%Compares data between two linked lists, or between two parts of the same linked list.  The return value is either an error code, or the Boolean result of the comparison.\index{compareElements@\texttt{compareElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{fillElements()}\\\\
+%\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{FillElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index}, (char) \emph{byte\_pattern})\\\\}\index{fillElements@\texttt{fillElements()}|(}
+%
+%Fills the given range of elements of a linked list with the byte pattern specified.  That is, each byte of data storage used by those elements is set to the value of the byte given in the fourth argument.\index{fillElements@\texttt{fillElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{clearElements()}\\\\
+%\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{clearElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index})\\\\}\index{clearElements@\texttt{clearElements()}|(}
+%
+%Clears -- i.e. sets to zero -- the given range of elements of a linked list.  This is equivalent to calling \texttt{fillElements()} with a byte pattern of 0.\index{clearElements@\texttt{clearElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{setElements()}\\\\
+%\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{setElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index}, (void *) \emph{read\_address})\\\\}\index{setElements@\texttt{setElements()}|(}
+%
+%Copies data from a buffer (the final argument) into a given range of elements in a linked list.  The range includes the first and last elements.  Whereas the linked list has fragmented memory, the buffer's storage is expected to be contiguous, and the buffer address is a pointer to the beginning of the data to copy.\index{setElements@\texttt{setElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{setElement()}\\\\
+%\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{setElement}((linkedlist *) \emph{LL}, (numeric) \emph{index}, (void *) \emph{read\_address})\\\\}\index{setElement@\texttt{setElement()}|(}
+%
+%Copies data from a buffer into a single element of a linked list.  This is equivalent to calling \texttt{setElements()} with the same first and last element.\index{setElement@\texttt{setElement()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{getElements()}\\\\
+%\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{getElements}((linkedlist *) \emph{LL}, (numeric) \emph{first\_index}, \emph{last\_index}, (void *) \emph{write\_address})\\\\}\index{getElements@\texttt{getElements()}|(}
+%
+%Copies data from a range of elements of a linked list (including the first and last elements) into a buffer.  The write address points to the start of the buffer.\index{getElements@\texttt{getElements()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{getElement()}\\\\
+%\normalfont \emph{syntax: } [(numeric) \emph{err\_code} =] \texttt{getElement}((linkedlist *) \emph{LL}, (numeric) \emph{index}, (void *) \emph{write\_address})\\\\}\index{getElement@\texttt{getElement()}|(}
+%
+%Copies data from a single element of a linked list into a buffer.  This is equivalent to calling \texttt{getElements()} with the same first and last element.\index{getElement@\texttt{getElement()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{elementExists()}\\\\
+%\normalfont \emph{syntax: } (numeric) \emph{err\_code/if\_exists} = \texttt{elementExists}((linkedlist *) \emph{LL}, (numeric) \emph{index})\\\\}\index{elementExists@\texttt{elementExists()}|(}
+%
+%Returns \verb#ccTrue# or \verb#ccFalse# depending on whether a given element of a linked list exists.  An error code is thrown if the \verb#memory# field of the linked list is \verb#NULL#.\index{elementExists@\texttt{elementExists()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{findElement()}\\\\
+%\normalfont \emph{syntax: } (void *) \emph{element\_pointer} = \texttt{findElement}((linkedlist *) \emph{LL}, (numeric) \emph{element\_index})\\\\}\index{findElement@\texttt{findElement()}|(}
+%
+%Returns a pointer to the given element of a linked list, or \verb#NULL# if the element doesn't exist.\index{findElement@\texttt{findElement()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{element()}\\\\
+%\normalfont \emph{syntax: } (void *) \emph{element\_pointer} = \texttt{element}((linkedlist *) \emph{LL}, (numeric) \emph{element\_index})\\\\}\index{element@\texttt{element()}|(}
+%
+%Returns a pointer to the given element of a linked list.  Identical to \verb#findElement()# except that \verb#element()# doesn't do range checking:  if the index is out of range then \texttt{element()} will simply crash the program.\index{element@\texttt{element()}|)}\\
+%
+%
+%
+%
+%\paragraph{\texttt{skipElements()}\\\\
+%\normalfont \emph{syntax: } (void *) \emph{element\_pointer} = \texttt{skipElements}((linkedlist *) LL, (sublistHeader *) sublist, (void *) \emph{starting\_pointer}, (ccInt *) \emph{sublist\_index}, (numeric) \emph{indices\_to\_skip})\\\\}\index{skipElements@\texttt{skipElements()}|(}
+%
+%Only for real pros.  Starting from a pointer to an element in the linked list, this routine returns the pointer to another element a given number of indices farther down the list.  When canvassing large, heavily-fragmented lists it may be slightly faster to go through the list once using \texttt{skipElements()} than to call \texttt{element()}, which searches from the first sublist each time it is called.  The first three arguments are the linked list, a pointer to our current sublist and a pointer to the local index of our starting element (beginning at 0 for the first element in the sublist).  The new element must have a higher index than the old; Cicada's linked lists cannot be explored in reverse.\index{skipElements@\texttt{skipElements()}|)}\index{linked lists|)}\index{functions!for strings in C|)}\\
 
 
 
@@ -4769,7 +4912,7 @@ Only a partial variable was used for some operation that can only be done on an 
 a[1][^4]
 \end{verbatim} \end{code}
 
-\noindent If we want to resize the second dimension we have to do that for the entire array:  \verb#a[*][^4]#.\\
+\noindent If we want to resize the second dimension we have to do that for the entire array:  \verb#a[][^4]#.\\
 
 
 
@@ -4871,29 +5014,29 @@ Usually, this error means that the user either tried to copy or compare data bet
 a[<1, 3>] = b[<1, 2>]
 \end{verbatim} \end{code}
 
-\noindent Notice that this can happen when working inside of an array; for example:
+\noindent This can happen when working inside of an array; for example:
 
 \begin{code} \begin{verbatim}
 q :: int
 threeQs :: [3] { qAlias := @q }
 \end{verbatim} \end{code}
 
-\noindent which is basically equivalent to \verb#threeQs[*].qAlias := @q#.
+\noindent which is basically equivalent to \verb#threeQs[].qAlias := @q#.
 
 Note that arrays of different dimensions can be copied/compared if their indices are specified manually and the total number of indices is the same (and each is a contiguous block of memory -- see the section on arrays).  So, for example, the following is legal:
 
 \begin{code} \begin{verbatim}
 q :: [4] int
 r :: [2][2] int
-q[*] = @r[*][*]
+q[] = @r[][]
 \end{verbatim} \end{code}
 
-If the last index of the array on the left-hand side of a compare or equate is a `\verb#[*]#' or `\verb#[]#', then Cicada will automatically resize it if that will prevent a mismatched-indices error.  Sometimes this does not work; for example, in the case below:
+If the last index of the array on the left-hand side of a compare or equate is a `\verb#[]#', then Cicada will automatically resize it if that will prevent a mismatched-indices error.  Sometimes this does not work; for example, in the case below:
 
 \begin{code} \begin{verbatim}
 a :: [2][3] string
 b :: [5] string
-a[*][*] = b[*]
+a[][] = b[]
 \end{verbatim} \end{code}
 
 \noindent we will get a mismatched-indices error because only the \emph{last} index of `\verb#a#' can be resized, which is incompatible with `\verb#b#' having an odd number of indices.  We would also get this error if the first dimension of `\verb#a#' was sized to zero, even if `\verb#b#' was also of zero size.
@@ -4950,7 +5093,7 @@ f() :: double
 
 \noindent will generate this error since the \verb#return# command returns only a variable, not the member of the function that points to it.
 
-In addition to the define operator, both equate and forced-equate require a member in order to resize an array either using \verb#[^...]#, or via a \verb#[*]# or \verb#[]# operator.  (That is because both the variable and the member have to be resized.)  Finally, the insertion and removal operators operate on members and therefore will generate this error if none is provided.\\
+In addition to the define operator, both equate and forced-equate require a member in order to resize an array either using \verb#[^...]#, or via a \verb#[]# operator.  (That is because both the variable and the member have to be resized.)  Finally, the insertion and removal operators operate on members and therefore will generate this error if none is provided.\\
 
 
 
@@ -5065,7 +5208,7 @@ b := @a[<2, 4>]
 a[+3]
 \end{verbatim} \end{code}
 
-\noindent Resizing one member (`\verb#a#') does not affect any aliases (`\verb#b#'), so there would be a contradiction in the array if the resize were allowed.  Notice that an alias to the array variable (as opposed to certain indices of the integer variable), as in
+\noindent Resizing one member (`\verb#a#') does not affect any aliases (`\verb#b#'), so there would be a contradiction in the array if the resize were allowed.  An alias to the array variable (as opposed to certain indices of the integer variable), as in
 
 \begin{code} \begin{verbatim}
 c := @a
@@ -5204,7 +5347,7 @@ Cicada was not able to perform a forced equate because the byte-sizes of the lef
 
 \noindent even though a normal equate would have worked in this situation.
 
-Before throwing this error, the forced-equate operator explores two options for making the data fit.  1) If the final step into the left-hand variable involved a \verb#[*]# operator it tries to resize that last member.  2) If the left-hand variable contains a string, that string can soak up excess bytes from the right-hand argument.  If after (1) and (2) the data on the right still cannot fit into the variable on the left, then this error is thrown.  If both (1) and (2) apply, Cicada may not able to figure out how to resize the array correctly in which case the user must resize the array manually.\\
+Before throwing this error, the forced-equate operator explores two options for making the data fit.  1) If the final step into the left-hand variable involved a \verb#[]# operator it tries to resize that last member.  2) If the left-hand variable contains a string, that string can soak up excess bytes from the right-hand argument.  If after (1) and (2) the data on the right still cannot fit into the variable on the left, then this error is thrown.  If both (1) and (2) apply, Cicada may not able to figure out how to resize the array correctly in which case the user must resize the array manually.\\
 
 
 
@@ -5232,7 +5375,7 @@ a = %
 
 \paragraph{Variable has no member (\#24)\\\\}
 
-A step was attempted into a variable without a member.  For example \verb#{}[*]# will cause this error.  This error is also thrown if we use the \verb#top# keyword (which is different from the \verb#top()# function!) anywhere outside of array brackets.\\
+A step was attempted into a variable without a member.  For example \verb#{}[]# will cause this error.  This error is also thrown if we use the \verb#top# keyword (which is different from the \verb#top()# function!) anywhere outside of array brackets.\\
 
 
 

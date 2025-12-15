@@ -1,25 +1,41 @@
 <HTML>
 
 <HEAD>
-<TITLE>Cicada Help: Example:  neural networks in Cicada</TITLE>
+<TITLE>Cicada Help: Example:  memory networks in Cicada</TITLE>
 
 <a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a>
 
-<H1> <CENTER> Example:  neural networks in Cicada </CENTER> </H1>
+<H1> <CENTER> Example:  memory networks in Cicada </CENTER> </H1>
 </HEAD>
 
 <BODY>
 
 
 
-<P> Cicada originally aimed to be a neural network engine, missed by a mile, and ended up as a scripting language instead.  As a nod to the original goal, let&rsquo;s write a program that lets a user create and train artificial neural networks:  algorithms based on models of we think neurons in our brains work that are widely used for fuzzy tasks such as pattern-recognition.  The time-consuming processes of simulating and training the networks will be written in C for speed.  (It&rsquo;s also C++ compatible.)  Then we&rsquo;ll write Cicada wrappers so that these networks can be controlled at the Cicada command prompt.  Finally, we will write (and debug) a script to use these networks to &lsquo;learn&rsquo; words that the user types at the command prompt.
+<P> Cicada originally aimed to be a neural network engine, missed by a mile, and ended up as a scripting language.  So let&rsquo;s use it to implement an <i>associative neural network</i>:  a type of pattern-learning algorithm which will learn to associate inputs with desired outputs.<P>
+
+<P>  <u>Algorithm</u>: We&rsquo;ll use a training algorithm for symmetric networks (J. R. Movellan, Contrastive Hebbian learning in interactive networks, 1990) which trains in two phases: <i>clamped</i>, and <i>free</i>.  In the <i>clamped phase</i>, set the input neuron activities to the network input, and set the output neuron activities to the pattern we are trying to learn.  Then repeatedly adjust the other &lsquo;hidden&rsquo; neurons&rsquo; activities <i>x<sub>i</sub></i> using the formula:
+
+<P> 
+
+<br><P>&nbsp;&nbsp;&nbsp;<i>x<sub>i</sub></i> &nbsp;<--&nbsp; 1 / [ 1 + exp(-&sum;<i><sub>j</sub> w<sub>ij</sub> x<sub>j</sub> - b<sub>i</sub></i>) ].
+
+<P>  Here <i>w<sub>ij</sub></i> is the connection weight from neuron <i>j</i> to neuron <i>i</i>, and <i>b<sub>i</sub></i> is a bias.  Once the network settles into a steady state, apply the following training rule to the weights and biases:
+
+<P> 
+
+<br><P>&nbsp;&nbsp;&nbsp;<i>w<sub>ij</sub> &nbsp;<--&nbsp; w<sub>ij</sub> + &eta; &middot; x<sub>i</sub> x<sub>j</sub> <P>&nbsp;&nbsp;&nbsp; b<sub>i</sub> &nbsp;<--&nbsp; b<sub>i</sub> + &eta; &middot; x<sub>i</sub></i>
+
+<P>  Next, repeat the process for the <i>free phase</i> of operation, where that the activities of the output neurons update freely using the same rule as the hidden neurons.  After reaching steady state, a <i>negative</i> weight/bias adjustment is applied.  The idea is to reinforce correlated firing patterns on the difference between what the network should vs. does currently compute.  As the saying goes, <i>neurons that fire together, wire together</i>.
+
+<P> To use the network to recover a memory, run it in its &lsquo;free&rsquo; mode without applying any training.
+
 
 <P> <ul>
 <li><a href="https://heltilda.github.io/cicada/help_21.html">C implementation</a>
 <li><a href="https://heltilda.github.io/cicada/help_22.html">Putting the C in Cicada</a>
 <li><a href="https://heltilda.github.io/cicada/help_23.html">Writing and debugging a Cicada wrapper</a>
 <li><a href="https://heltilda.github.io/cicada/help_24.html">The Anagrambler</a>
-<li><a href="https://heltilda.github.io/cicada/help_25.html">Rules for embedding C/C++ code</a>
-</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_1.html">Prev: Introduction</a> &nbsp;&nbsp;
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_1.html">Prev: Summary</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_21.html">Next: C implementation</a>
-</div><br><br><P>Last update: May 8, 2024
+</div><br><br><P>Last update: November 12, 2025

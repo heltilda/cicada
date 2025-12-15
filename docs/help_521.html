@@ -1,48 +1,107 @@
 <HTML>
 
 <HEAD>
-<TITLE>Cicada Help: Define operator flags</TITLE>
+<TITLE>Cicada Help: define flags</TITLE>
 
-<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_5.html">Reference</a> ---> <a href="https://heltilda.github.io/cicada/help_52.html">Bytecode operators</a>
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_5.html">Customizing the Cicada language</a> ---> <a href="https://heltilda.github.io/cicada/help_52.html">Cicada bytecode</a>
 
-<H1> <CENTER> Define operator flags </CENTER> </H1>
+<H1> <CENTER> <tt>define</tt> flags </CENTER> </H1>
 </HEAD>
 
 <BODY>
 
  
 
-<P> Table 3 lists the common define/equate/equate-at operators and their associated bytecode flag words (the bytecode word following the define operator).  Each flag word encodes the various binary properties of a define operator:  it is the decimal representation of the columns in the table treated as binary digits (where a checkmark equals 1).  The flags are:  equate (0), update-members (1), add-members (2), new-target (3), relink-target (4), run-constructor (5), hidden (6), and unjammable (7).  The last six operators that have asterisks in their names cannot be written into a script, but are generated automatically by the compiler in various situations.<P>
+<P> Member definition (<tt>::</tt>), assignment (<tt>=</tt>), and aliasing (<tt>=@</tt>) are all done by different flavors of the <i>define operator</i>.  What makes them different is their &lsquo;flags&rsquo;:  a set of binary properties such as:  does this operator define new members? does it copy data? etc.  In bytecode, all 8 flags are stored in a single word immediately following the define-operator bytecode word, just before the left- and right-hand arguments to the operator.  This section is devoted to that single flags bytecode word.
+
+<P> To calculate a flags word for a set of flags, we treat each flag as a binary digit and read out the number in decimal.  For example, the define operator has flags 1, 2, 3 and 5 set, so its flags bytecode word is
 
 <P> 
 
-<br><center><div><P><table border="1"><tr><td>
+<br><P>&nbsp;&nbsp;&nbsp;<i>flag</i> = (1 &lt;&lt; 1 = 2) + (1 &lt;&lt; 2 = 4) + (1 &lt;&lt; 3 = 8) + (1 &lt;&lt; 5 = 32)<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 46
 
-<b> name</b> </td><td> <b> abbr</b> </td><td> <b> symbol</b> </td><td> <b> flags</b> </td><td> <b> 7</b> </td><td> <b> 6</b> </td><td> <b> 5</b> </td><td> <b> 4</b> </td><td> <b> 3</b> </td><td> <b> 2</b> </td><td> <b> 1</b> </td><td> <b> 0</b></td></tr><tr><td>
- 
-define </td><td> def </td><td> <tt>::</tt> </td><td> 46 </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> X </td><td>&nbsp;</td></tr><tr><td>
-member-define </td><td> mdf </td><td> <tt>*::</tt> </td><td> 6 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> X </td><td>&nbsp;</td></tr><tr><td>
-variable-define </td><td> vdf </td><td> <tt>@::</tt> </td><td> 44 </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
-
-equate </td><td> equ </td><td> <tt>=</tt> </td><td> 1 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td></tr><tr><td>
-define-equate </td><td> deq </td><td> <tt>:=</tt> </td><td> 47 </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> X </td><td> X </td></tr><tr><td>
-
-equate-at </td><td> eqa </td><td> <tt>=@</tt> </td><td> 16 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
-define-equate-at </td><td> dqa </td><td> <tt>:=@</tt> </td><td> 22 </td><td> &nbsp;</td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td>&nbsp;</td></tr><tr><td>
-
-
-~define </td><td> def* </td><td> N/A </td><td> 172</td><td> X </td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
-~define-equate </td><td> deq* </td><td> N/A </td><td> 173 </td><td> X </td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td></tr><tr><td>
-~define-equate-at </td><td> dqa* </td><td> N/A </td><td> 148 </td><td> X </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
-
-~define </td><td> def** </td><td> N/A </td><td> 236 </td><td> X </td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr><tr><td>
-~define-equate </td><td> deq** </td><td> N/A </td><td> 237 </td><td> X </td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td> X </td></tr><tr><td>
-~define </td><td> def-c** </td><td> N/A </td><td> 204 </td><td> X </td><td> X </td><td> &nbsp;</td><td> &nbsp;</td><td> X </td><td> X </td><td> &nbsp;</td><td>&nbsp;</td></tr>
-
-</table><div>Table 3:  The flags of all various define, assignment and aliasing operators</div></div></center><br> 
+<P>  (where <tt>&lt;&lt;</tt> denotes a bit-shift operator).  Table 3 summarizes the flags words for each Cicada operator.  Clearly there are many possible operators that are not being used in Cicada.<P>
 
 <P> 
 
-<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_52.html">Prev: Bytecode operators</a> &nbsp;&nbsp;
-<a href="https://heltilda.github.io/cicada/help_53.html">Next: Cicada built-in functions</a>
-</div><br><br><P>Last update: May 8, 2024
+<br><P><b>Flag 0 -- equate:</b></b>
+<P>  copies data from the source variable into the destination variable.  This is used by both the assignment <tt>=</tt> and define-equate <tt>:=</tt> operators, but <i>not</i> the aliasing operators.<P>
+
+<P> 
+
+<br><P><b>Flag 1 -- update-members:</b></b>
+<P>  causes the destination member to be updated to the type of either the source <i>variable</i> (by default), or if the source variable is void then to the type of the source member.  For example, suppose we write:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; a :: *, b := 5
+
+<br>&nbsp;&nbsp;&nbsp; a = @b
+
+<br>&nbsp;&nbsp;&nbsp; 
+
+<br>&nbsp;&nbsp;&nbsp; c :: a
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Member <tt>a</tt> has no type, but the variable it points to is an integer.  Thus the member named &lsquo;<tt>c</tt>&rsquo; will be defined and allocate storage for an integer, because the define operator sets the update-member flag.<P>
+
+<P> 
+
+<br><P><b>Flag 2 -- add-members:</b></b>
+<P>  creates the looked-for member if it doesn&rsquo;t already exist inside the current-running function.  Set by all define operators, even <tt>:: @</tt> which doesn&rsquo;t assign a type to the new member but will create it.<P>
+
+<P> 
+
+<br><P><b>Flag 3 -- new-target:</b></b>
+<P>  does two things.  1) Creates a new destination <i>variable</i> if none existed already (i.e. if the destination member was void), but it will not overwrite an existing variable.  2) This flag also updates (specializes) the type of the destination variable, regardless of whether or not it had just created that variable.  The new type is the type of the source member or source variable, whichever is more restrictive.  Since a member can only point to an as-or-more-restrictively typed variable, this means that the new type will be that of the source variable unless there is none (the source member points into the void), in which case it&rsquo;s the type specification of the source member.
+
+<P> The member-define operator (<tt>*::</tt>) sets the update-members flag, but not the new-target flag, so it operates only on members.  On the other hand, the variable-define operator (<tt>@::</tt>) has its new-target flag set but the update-members flag clear, so it will specialize variable but not member types.  It can however create new members since it sets the add-members flag.  Plain old define (<tt>::</tt>) sets all three flags.<P>
+
+<P> 
+
+<br><P><b>Flag 4 -- relink-target:</b></b>
+<P>  instructs Cicada to make the destination member an <i>alias</i> of the source variable.  This flag is set by the equate-at and define-equate-at operators.  The left-hand argument must be an entire variable, not certain indices of an array (i.e. <tt>a[].b = @c</tt> is legal but <tt>a[&lt;2, 3&gt;] = @c</tt> is not).
+
+<P> In a sense, relink-target is the third of three pillars of the def-equate flags.  Whereas post-equate copies data, and update-members and new-target copy code, the relink-target flag copies the target <i>reference</i> of the source member.<P>
+
+<P> 
+
+<br><P><b>Flag 5 -- run-constructor:</b></b>
+<P>  causes the constructor of the destination variable to run after the variable has been created/had its type updated, but before any data has been copied from the source variable if the equate flag was set.  The constructor is the part of a script before the first <tt>code</tt> marker or semicolon.  If the variable has several concatenated codes, the constructors of each code are run in order from first code to last.  Primitive variables have no code, so they are unaffected by this flag.
+
+<P> The constructor-run is the 2nd-to-last operation performed by the def-equate operator, with the actual equate being the last.  This is why we are able to copy composite variables in one step:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; comp1 :: { ... }
+
+<br>&nbsp;&nbsp;&nbsp; comp2 := comp1
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The new variable <tt>comp2</tt> is defined to have the same code as <tt>comp1</tt>, so when its constructor runs it will grow the same set of members that <tt>comp1</tt> has.  Then the final equate should not have any problems, as long as we didn&rsquo;t modify <tt>comp1</tt> after defining it.<P>
+
+<P> 
+
+<br><P><b>Flag 6 -- hidden-member:</b></b>
+<P>  sets the &lsquo;hidden&rsquo; flag of any newly-defined member.  Hidden members, which are created by bytecode adapters, can only be accessed by name (which is usually unwriteable).  Array-index operators, assignment operations (<tt>=</tt>), comparisons (<tt>==</tt>), and built-in functions like <tt>print()</tt> all skip over hidden members.<P>
+
+<P> 
+
+<br><P><b>Flag 7 -- unjammable:</b></b>
+<P> makes a member unjammable, i.e. unable to prevent another member from being resized.  Ordinarily, if two members alias overlapping indices of an array, neither one can resize the array since doing so would also affect the other member.  However, if one member is defined as unjammable, then it cannot jam the other member:  the second member <i>can</i> be resized and the first member, which now has the wrong number of indices, becomes &lsquo;unjammed&rsquo; -- i.e., inoperable.  An unjammed member has to be re-aliased before it can be used again without causing a void-member error.<P>
+
+<P> 
+
+<P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_52.html">Prev: Cicada bytecode</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_522.html">Next: Adapters</a>
+</div><br><br><P>Last update: November 12, 2025

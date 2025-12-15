@@ -1,29 +1,103 @@
 <HTML>
 
 <HEAD>
-<TITLE>Cicada Help: Cicada scripting</TITLE>
+<TITLE>Cicada Help: Calling Cicada from a C program</TITLE>
 
 <a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a>
 
-<H1> <CENTER> Cicada scripting </CENTER> </H1>
+<H1> <CENTER> Calling Cicada from a C program </CENTER> </H1>
 </HEAD>
 
 <BODY>
 
 
 
+<P> Before we can use Cicada, we have to install it as a C library.  Go to the download directory and run:
+
 <P> 
 
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; ./configure &amp;&amp; make &amp;&amp; make install
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Once installed, Cicada can be called from any C program.  Here&rsquo;s how:
+
 <P> <ul>
-<li><a href="https://heltilda.github.io/cicada/help_31.html">Building and running Cicada</a>
-<li><a href="https://heltilda.github.io/cicada/help_32.html">Basic Cicada syntax</a>
-<li><a href="https://heltilda.github.io/cicada/help_33.html">Expressions</a>
-<li><a href="https://heltilda.github.io/cicada/help_34.html">Variables</a>
-<li><a href="https://heltilda.github.io/cicada/help_35.html">Other define and equate operators</a>
-<li><a href="https://heltilda.github.io/cicada/help_36.html">Loops and <tt>if</tt> blocks</a>
-<li><a href="https://heltilda.github.io/cicada/help_37.html">Sets</a>
-<li><a href="https://heltilda.github.io/cicada/help_38.html">Functions</a>
-<li><a href="https://heltilda.github.io/cicada/help_39.html">Classes and Inheritance</a>
-</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_253.html">Prev: A minimal wrapper</a> &nbsp;&nbsp;
-<a href="https://heltilda.github.io/cicada/help_31.html">Next: Building and running Cicada</a>
-</div><br><br><P>Last update: May 8, 2024
+<li> Load the Cicada header file into any source file that needs it:
+
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; #include &lt;cicada.h&gt;
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+<li> Add the following linker flag:
+
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; -lcicada
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+<li> The actual function call to run Cicada is:
+
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; runCicada(fs, myScript, runTerminal);
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+</ul>
+
+<P>  The three arguments to <tt>runCicada()</tt> are:
+
+<P> <ol>
+
+<P> <li> <tt>fs</tt> is an array of <tt>const Cfunction</tt> variables, each corresponding to a C function in our code that Cicada will need to call.  Each <tt>Cfunction</tt> is 1) a string which is the function&rsquo;s name in Cicada, followed by 2) a pointer to a function in our C code of type <tt>ccInt f(argsType)</tt>.  For example:
+
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; ccInt f1_in_C(argsType args)&nbsp;{ ... }
+
+<br>&nbsp;&nbsp;&nbsp; ccInt f2(argsType args)&nbsp;{ ... }
+
+<br>&nbsp;&nbsp;&nbsp; const Cfunction fs[] = { { &quot;f1_in_Cicada&quot;, &amp;f1_in_C }, { &quot;f2&quot;, &amp;f2 } };
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+ The C/Cicada names may be the same or different.  <tt>Cfunction</tt> and <tt>argsType</tt> are defined in <tt>cicada.h</tt>.
+
+<P> <li> <tt>myScript</tt> is a C string that gives a script to run when Cicada starts up.  For example:
+
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; char *myScript = &quot;run(\&quot;ThingsToDo\&quot;)&quot;;&nbsp;&nbsp;&nbsp;&nbsp;// i.e. ThingsToDo.cicada
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+ If we don&rsquo;t want to run a predefined script, we can just pass an empty string or <tt>NULL</tt>.
+
+<P> <li> <tt>runTerminal</tt> is a <tt>bool</tt> value and determines whether to run an interactive terminal.  If it&rsquo;s <tt>true</tt>, Cicada will open an interactive prompt <i>after</i> running <tt>myScript</tt>.  If <tt>false</tt>, Cicada will exit after running <tt>myScript</tt>.
+
+<P> </ol>
+
+<P> <ul>
+<li><a href="https://heltilda.github.io/cicada/help_31.html">C function declaration</a>
+<li><a href="https://heltilda.github.io/cicada/help_32.html">A generic wrapper</a>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_24.html">Prev: The Anagrambler</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_31.html">Next: C function declaration</a>
+</div><br><br><P>Last update: November 12, 2025

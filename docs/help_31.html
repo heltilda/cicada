@@ -1,36 +1,224 @@
 <HTML>
 
 <HEAD>
-<TITLE>Cicada Help: Building and running Cicada</TITLE>
+<TITLE>Cicada Help: C function declaration</TITLE>
 
-<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Cicada scripting</a>
+<a href="https://heltilda.github.io/cicada/index.html">Cicada</a> ---> <a href="https://heltilda.github.io/cicada/toc.html">Online Help Docs</a> ---> <a href="https://heltilda.github.io/cicada/help_3.html">Calling Cicada from a C program</a>
 
-<H1> <CENTER> Building and running Cicada </CENTER> </H1>
+<H1> <CENTER> C function declaration </CENTER> </H1>
 </HEAD>
 
 <BODY>
 
 
 
-<P> Cicada is distributed as either a set of C or C++ source files.  The C version of Cicada is designed to embed (or be embedded in) the user&rsquo;s C code, whereas the C++ version merges with a user&rsquo;s C++ code.  See the previous section for details on how to do do this.
+<P> A C/C++ function needs to be of type <tt>(ccInt)(argsType)</tt> in order to be called from within Cicada.  <tt>ccInt</tt> will just be C&rsquo;s basic <tt>int</tt> type unless you go in and change it inside of <tt>cicada.h</tt>.  The <tt>argsType</tt> variable contains all the variables and arrays passed from Cicada into the C function, along with information about their datatypes and array sizes.  Each variable or array passed to the C function is a list of one or more Booleans (one per byte), characters, integers, floating-point numbers, or strings.  The number of elements in each argument is fixed; the only dynamic memory allocation intended for C is through resizable strings, as each string is stored in a linked list (see the reference section).
 
-<P> The simplest way to build the executable is to use the command-line tool <tt>make</tt> along with a C/C++ compiler such as <tt>gcc</tt>; free versions of these exist for many platforms.  To build Cicada using <tt>make</tt>, put <i>everything</i>---source files, header files, <tt>Makefile</tt> and &lsquo;.cicada&rsquo; files---into the same directory; navigate to that directory from a command prompt; and then type &ldquo;<tt>make cicada CC=gcc</tt>&rdquo; for a C program, or just &ldquo;<tt>make cicada</tt>&rdquo; for a C++ program.  This should produce a <tt>cicada</tt> executable in that same directory.
-
-<P> Once Cicada has successfully been compiled, we can run it by opening up a command terminal, navigating into Cicada&rsquo;s directory and typing &ldquo;<tt>./cicada</tt>&rdquo; (UNIX and Mac), or just &ldquo;<tt>cicada</tt>&rdquo; (PC/Windows).  Cicada should present a command prompt, looking like this:
+<P> This is the structure of an <tt>argsType</tt> variable named &lsquo;<tt>a</tt>&rsquo;:
 
 <P> 
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; &gt;
+<br>&nbsp;&nbsp;&nbsp; a.num&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// the number of arguments
+
+<br>&nbsp;&nbsp;&nbsp; a.p[i]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// a pointer to the i'th argument
+
+<br>&nbsp;&nbsp;&nbsp; a.type[i]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// an integer giving the primitive type of the i'th argument
+
+<br>&nbsp;&nbsp;&nbsp; a.indices[i]&nbsp;&nbsp;&nbsp;// the number of array elements in the i'th argument (=1 if it is a scalar)
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
+<P>  Table 1 lists all of the Cicada types, although our C function will only ever see the primitive types (0-4).  Composite (aka structure) types are broken into their constituent primitive arrays before being passed into a C function, and multidimensional arrays are unrolled into 1D lists.<P>
+
 <P> 
 
+<br><center><div><P><table border="1"><tr><td>
+
+type # (macro) </td><td> Cicada type name </td><td> C type name </td><td> default data type</td></tr><tr><td>
+
+0 (<tt>bool_type</tt>) </td><td> <tt>bool</tt> </td><td> <tt>bool</tt> </td><td> <tt>bool</tt></td></tr><tr><td>
+1 (<tt>char_type</tt>) </td><td> <tt>char</tt> </td><td> <tt>char</tt> </td><td> <tt>char</tt></td></tr><tr><td>
+2 (<tt>int_type</tt>) </td><td> <tt>int</tt> </td><td> <tt>ccInt</tt> </td><td> <tt>int</tt></td></tr><tr><td>
+3 (<tt>double_type</tt>) </td><td> <tt>double</tt> </td><td> <tt>ccFloat</tt> </td><td> <tt>double</tt></td></tr><tr><td>
+
+
+
+5 (<tt>composite_type</tt>) </td><td> <tt>{ }</tt> </td><td> N/A </td><td> N/A</td></tr><tr><td>
+6 (<tt>array_type</tt>) </td><td> <tt>[ ]</tt> </td><td> N/A </td><td> N/A</td></tr><tr><td>
+7 (<tt>list_type</tt>) </td><td> <tt>[[]]</tt> </td><td> N/A </td><td> N/A</td></tr><tr><td>
+
+</table><div>Table 1:  Cicada data types.  Types 0 - 3 are primitive</div></div></center><br>
+
+<P> Here is a Cicada-compatible C function that has one argument of each possible data type.  It also checks a) that the correct argument types are being passed, and b) that the first two arguments are scalars.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; ccInt myFunction(argsType args)
+
+<br>&nbsp;&nbsp;&nbsp; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;bool firstArg = *(bool *) args.p[0];
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;char secondArg[2];
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccInt *thirdArg = (ccInt *) args.p[2];
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccFloat *fourthArg = (ccFloat *) args.p[3];
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;secondArg[0] = ((char *) args.p[1])[0];&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// copy array data manually here
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;secondArg[1] = ((char *) args.p[1])[1];
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if (args.num != 4) return wrong_argument_count_err;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if ((args.type[0][0] != 0) || (args.type[1][0] != 1)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| (args.type[2][0] != 2) || (args.type[3][0] != 3))&nbsp;return type_mismatch_err;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if ((args.indices[0] != 1) || (args.indices[2] != 1))&nbsp;return type_mismatch_err;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;return 0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// no error
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This function copies its first two arguments by value and the latter two arguments by reference.  We must pass an argument by reference if it might be changed in the C code.  Arrays are usually passed by reference for efficiency.
+
+<P> Our C function used two Cicada-defined types:  <tt>ccInt</tt> and <tt>ccFloat</tt>.  By default, these two types correspond to <tt>int</tt> and <tt>double</tt>; however these definitions can be changed in <tt>cicada.h</tt>.  If we change <tt>ccInt</tt> we should also make changes to <tt>ccIntMin</tt>, <tt>ccIntMax</tt>, <tt>printIntFormatString</tt>, and <tt>readIntFormatString</tt>; and if we change <tt>ccFloat</tt> then we should also make corresponding changes to <tt>maxPrintableDigits</tt>, <tt>printFloatFormatString</tt>, <tt>print_stringFloatFormatString</tt>, and <tt>readFloatFormatString</tt>. 
+
+<P> There is a handy <tt>getArgs()</tt> function which simplifies the loading of C variables.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; ccInt myFunction(argsType args)
+
+<br>&nbsp;&nbsp;&nbsp; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if (args.num != 4) return wrong_argument_count_err;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if ((args.type[0][0] != 0) || (args.type[1][0] != 1)
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|| (args.type[2][0] != 2) || (args.type[3][0] != 3))&nbsp;return type_mismatch_err;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if ((args.indices[0] != 1) || (args.indices[2] != 1))&nbsp;return type_mismatch_err;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;getArgs(args, byValue(&amp;firstArg), byValue(secondArg), &amp;thirdArg, &amp;fourthArg);
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  The first argument of <tt>getArgs()</tt> must be the argument variable; following that is the address of each variable to load, using the <tt>byValue()</tt> macro for each C variable that is not a pointer variable.
+
+<P> Using a different set of macros, we can both load the arguments and perform type-checking:.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; ccInt myFunction(argsType args)
+
+<br>&nbsp;&nbsp;&nbsp; {
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;ccInt errCode;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if (args.num != 4) return wrong_argument_count_err;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;errCode = getArgs(args, scalarValue(bool_type, &amp;firstArg), arrayValue(char_type, secondArg),
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scalarRef(int_type, &amp;thirdArg), arrayRef(double_type, &amp;fourthArg));
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;if (errCode != 0)&nbsp;return errCode;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;...
+
+<br>&nbsp;&nbsp;&nbsp; }
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This example uses all four macros that check-while-passing arguments.  The <tt>scalarValue()</tt> and <tt>arrayValue()</tt> macros copy data into their arguments; the other two copy references (pointers).  The <tt>scalarValue()</tt> and <tt>scalarRef()</tt> macros enforce that the number of indices should be one; the other two do not.
+
+<P> If we only want to load certain selected arguments, we can use <tt>getArgs()</tt> to skip to an argument, and <tt>endArgs</tt> to stop loading arguments.  Here are some possibilities:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;getArgs(args, byValue(&amp;firstArg), byValue(secondArg), endArgs);
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;getArgs(args, fromArg(1), byValue(secondArg), &amp;thirdArg, endArgs);
+
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;getArgs(args, fromArg(1), byValue(secondArg), fromArg(3), &amp;fourthArg);
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice that <tt>fromArg()</tt> uses <i>C-style indexing</i>, so the next argument read after <tt>fromArg(1)</tt> is <tt>args.p[1]</tt> which is the <i>second</i> argument.<P>
+
+<P> Let&rsquo;s look an example script that calls &lsquo;<tt>myFunction()</tt>&rsquo;.  A typical script first sets up variables and arrays to pass, and then calls the C routine using its Cicada name (the <tt>Cfunction</tt> string passed into <tt>runCicada()</tt>) prefaced by a dollar sign.  We&rsquo;ll assume the Cicada name is the same as the C function name.
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; (dbls :: [2][5] double) = { { 0, 1, 2, 3, 4 }, { 5, 6, 7, 8, 9} }
+
+<br>&nbsp;&nbsp;&nbsp; $myFunction(true, &quot;hi&quot;, 5, dbls)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  This is pretty straightforward:  two of the arguments are constants, <tt>``hi&quot;</tt> is a string of two characters, and <tt>dbls</tt> is a two-dimensional array.  It should be noted that <tt>dbls</tt> is effectively a one-dimensional list as far as the C routine is concerned, and that the order of elements in the list is [1][1], [1][2], ..., [1][5], [2][1], ..., [2][5] (in Cicada notation where indices begin at 1).  So, for example, the array variable written in Cicada as <tt>dbls[2][3]</tt> is in memory slot <tt>fourthArg[7]</tt> within our C code.  <tt>dbls</tt> has 10 array elements in total, so <tt>args.indices[3]</tt> will be 10.  The individual dimensions (2, 5) were <i>not</i> passed into C, so if our function needs to know them, then we need to pass them as separate parameters.
+
 <P> <ul>
-</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_3.html">Prev: Cicada scripting</a> &nbsp;&nbsp;
-<a href="https://heltilda.github.io/cicada/help_32.html">Next: Basic Cicada syntax</a>
-</div><br><br><P>Last update: May 8, 2024
+<li><a href="https://heltilda.github.io/cicada/help_311.html">Passing strings and other lists</a>
+</ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_3.html">Prev: Calling Cicada from a C program</a> &nbsp;&nbsp;
+<a href="https://heltilda.github.io/cicada/help_311.html">Next: Passing strings and other lists</a>
+</div><br><br><P>Last update: November 12, 2025
