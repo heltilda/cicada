@@ -1412,7 +1412,7 @@ intList :: [[ ]] int
 The most important difference between lists and arrays is that an array of arrays is a multidimensional array, whereas in an array of lists each list may have a different size.  Therefore the following is legal:
 
 \begin{code} \begin{verbatim}
-twoIntLists :: [] intList
+twoIntLists :: [2] intList
 twoIntLists[1] = { 3, 4 }
 twoIntLists[2] = { 0, 1, 2 }
 \end{verbatim} \end{code}
