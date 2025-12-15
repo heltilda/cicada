@@ -211,8 +211,9 @@ void _C_function()
     argsType fArgs, oneArg;
     variable *argsVariable;
     ccInt (*theF)(argsType);
-    ccInt fList = -1, functionID, numDataWindows, numStrings, numArgs, memberCounter, argCounter, holdErrCode;
-    const char *fArgsFormat;
+    ccInt fList = -1, functionID, numDataWindows, numStrings, numArgs, memberCounter, argCounter;
+    static ccInt noType = no_type;
+    const char *fArgsFormat, *oneAF;
     
     const Cfunction *functionLists[2] = { inbuiltCfunctions, userCfunctions };
     const int functionsNum[2] = { inbuiltCfunctionsNum, userCfunctionsNum };
@@ -234,6 +235,7 @@ void _C_function()
         // get the argument variable
     
     callBytecodeFunction();
+    if ((searchView.windowPtr == NULL) && (errCode == passed))   setError(void_member_err, pcCodePtr-1);
     if (errCode != passed)  return;
     
     
@@ -254,14 +256,15 @@ void _C_function()
     
     extCallMode = true;
     
-    if (CargType(fArgsFormat, 0) == 'a')  {
+    oneAF = fArgsFormat;
+    if (CargType(oneAF) == 'A')  {
         numDataWindows = 1;
         numStrings = 0;     }
     else  {
         numDataWindows = numStrings = 0;
         for (argCounter = 1; argCounter <= numArgs; argCounter++)  {
-            const char argChar = CargType(fArgsFormat, argCounter-1);
-            if (argChar == 'w')  numDataWindows++;
+            const char argChar = CargType(oneAF);
+            if (argChar == 'a')  numDataWindows++;
             else  {
                 argView.windowPtr = getViewMember(argCounter);
                 if (argView.windowPtr != NULL)   {
@@ -269,7 +272,9 @@ void _C_function()
                     argView.width = argView.windowPtr->width;
                     countDataLists(&argView, (void *) &numDataWindows, (void *) &numStrings);
                     if (errCode != passed)  break;
-    }   }   }   }
+            }   }
+            if ((oneAF[0] != 0) && (oneAF[1] != 0))  oneAF++;
+    }   }
     if (errCode != passed)  {  extCallMode = false;  return;  }
     
     
@@ -277,7 +282,7 @@ void _C_function()
     
     fArgs.num = numDataWindows+numStrings;
     fArgs.p = (void **) malloc(fArgs.num*sizeof(char *));
-    fArgs.type = (ccInt *) malloc(fArgs.num*sizeof(ccInt));
+    fArgs.type = (ccInt **) malloc(fArgs.num*sizeof(ccInt *));
     fArgs.indices = (ccInt *) malloc(fArgs.num*sizeof(ccInt));
     if ((fArgs.p == NULL) || (fArgs.type == NULL) || (fArgs.indices == NULL))
         {  setError(out_of_memory_err, pcCodePtr-1);  extCallMode = false;  return;  }
@@ -285,22 +290,23 @@ void _C_function()
     
         // Now fill the argument pointer/info lists.
     
-    if (CargType(fArgsFormat, 0) == 'a')  {
+    oneAF = fArgsFormat;
+    if (CargType(oneAF) == 'A')  {
         *(fArgs.p) = (void *) &searchView;
-        *(fArgs.type) = composite_type;
+        *(fArgs.type) = searchView.windowPtr->variable_ptr->types;
         *(fArgs.indices) = 1;           }
     else  {
         oneArg = fArgs;
         for (argCounter = 1; argCounter <= numArgs; argCounter++)  {
-            const char argChar = CargType(fArgsFormat, argCounter-1);
+            const char argChar = CargType(oneAF);
             window *argWindow = getViewMember(argCounter);
-            if (argChar == 'w')  {
+            if (argChar == 'a')  {
                 *(oneArg.p) = (void *) getViewMember(argCounter);
                 if (argWindow == NULL)  {
-                    *(oneArg.type) = no_type;
+                    *(oneArg.type) = &noType;
                     *(oneArg.indices) = 0;      }
                 else  {
-                    *(oneArg.type) = *argWindow->variable_ptr->types;
+                    *(oneArg.type) = argWindow->variable_ptr->types;
                     *(oneArg.indices) = argWindow->width;       }
                 incrementArg(&oneArg);
             }
@@ -311,7 +317,11 @@ void _C_function()
                     argView.width = argView.windowPtr->width;
                     argvFillHandles(&argView, (void *) &oneArg, NULL);
                     if (errCode != passed)  break;
-    }   }   }   }
+            }   }
+            if ((oneAF[0] != 0) && (oneAF[1] != 0))  oneAF++;
+    }   }
+    
+    extCallMode = false;
     
     
         // store the return value of the function in intRegister
@@ -320,24 +330,6 @@ void _C_function()
     
     if (errCode == passed)
         intRegister = (ccInt) theF(fArgs);
-    
-    
-        // fix the string windows (in case the string linked lists were resized) and clean up
-    
-    holdErrCode = errCode;
-    errCode = passed;                   // otherwise this could trip up argvFixStrings()
-    if (CargType(fArgsFormat, 0) != 'a')  {
-        oneArg = fArgs;
-        for (argCounter = 1; argCounter <= numArgs; argCounter++)  {
-            const char argChar = CargType(fArgsFormat, argCounter-1);
-            argView.windowPtr = getViewMember(argCounter);
-            if (argChar == 'w')  incrementArg(&oneArg);
-            else if (argView.windowPtr != NULL)  {
-                argView.offset = argView.windowPtr->offset;
-                argView.width = argView.windowPtr->width;
-                argvFixStrings(&argView, (void *) &oneArg, NULL);
-    }   }   }
-    if ((errCode == passed) && (holdErrCode != passed))  errCode = holdErrCode;
     
     free((void *) fArgs.p);
     free((void *) fArgs.type);
@@ -353,10 +345,10 @@ void _C_function()
 }
 
 
-const char CargType(const char *argString, ccInt argNum)
+const char CargType(const char *argString)
 {
-    if (argString == NULL)  return 'd';
-    return argString[argNum];
+    if (*argString == 0)  return 'd';
+    return *argString;
 }
 
 
@@ -398,11 +390,10 @@ void _def_general()
     ccInt counter, rtrn, flags, sourceType, sourceDataType, arrayDimsToConstruct, dimCounter, arrayDepth, ca;
     ccInt *dgCommandPtr, *subjectCommand, *objectCommand, holdCodeNumber, holdMemberID, firstToCustomize = 0, *types;
     unsigned char charRegister;
-    bool canResizeDestination, errorInConstructor, isVoid, sourceIsScalar, varIsString, useVarCode;
+    bool canResizeDestination, errorInConstructor, isVoid, sourceIsScalar, varIsString, useVarCode, newTarget;
     window fauxStringWindow;
     variable fauxStringVariable;
     member *sourceMember;
-    deFlags f;
     view sourceView, destView, holdThatView, holdDestView, searchViewToReturn;
     code_ref *loopCodeRef;
     linkedlist *theCodeList = NULL;
@@ -417,7 +408,7 @@ void _def_general()
     pcCodePtr++;
     
     
-        // equate resizes arrays if sizes don't match & [*] is present at the end of the destination variable path
+        // equate resizes arrays if sizes don't match & [] is present at the end of the destination variable path
     
     canResizeDestination = (*pcCodePtr == step_to_all);
     
@@ -427,14 +418,9 @@ void _def_general()
     subjectCommand = pcCodePtr;
     if (flags != equ_flags)   {
         
-        f.isUnjammable = getFlag(flags, unjammable_flag);
-        f.doRelink = getFlag(flags, relink_target_flag);
-        f.doEquate = getFlag(flags, post_equate_flag);
-        f.addNewMembers = canAddMembers = getFlag(flags, can_add_members_flag);
-        f.updateMembers = getFlag(flags, update_members_flag);
-        f.newTarget = getFlag(flags, new_target_flag);
-        f.runConstructor = getFlag(flags, run_constructor_flag);
-        f.hiddenMember = isHiddenMember = getFlag(flags, hidden_member_flag);
+        canAddMembers = getFlag(flags, can_add_members_flag);
+        newTarget = getFlag(flags, new_target_flag);
+        isHiddenMember = getFlag(flags, hidden_member_flag);
         
         searchViewToReturn.windowPtr = NULL;
         
@@ -476,7 +462,7 @@ void _def_general()
             
             if (linkBroken)  {
                 rtrn = findMemberID(pathStemVar, holdMemberID,
-                                &destPath.stemMember, &destPath.stemMemberNumber, f.addNewMembers, f.hiddenMember);
+                                &destPath.stemMember, &destPath.stemMemberNumber, canAddMembers, isHiddenMember);
                 if (rtrn != passed)  setError(rtrn, subjectCommand);
         }   }
         
@@ -496,7 +482,7 @@ void _def_general()
         
         if (errCode == passed)  {
             if (searchView.windowPtr == NULL)  setError(void_member_err, objectCommand);
-            else if (((f.newTarget) || (f.updateMembers) || (f.doRelink)) && (GL_Path.stemMember == NULL))
+            else if (((newTarget) || (getFlag(flags, update_members_flag)) || (getFlag(flags, relink_target_flag))) && (GL_Path.stemMember == NULL))
                 setError(undefined_member_err, objectCommand);      }
         
         if (errCode != passed)  return;
@@ -504,13 +490,12 @@ void _def_general()
         
             // figure out what type of object is being copied, and the array indices spanned over it
         
-        sourceType = /*sourceDataType =*/ GL_Object.type;
+        sourceType = GL_Object.type;
         isVoid = (sourceDataType == no_type);
         
         useVarCode = true;
-        if ((f.updateMembers) || (f.newTarget))  {
+        if ((getFlag(flags, update_members_flag)) || (newTarget))  {
         if ((sourceType == var_type) && (sourceView.windowPtr == NULL))  {
-//        if ((sourceType == no_type) || ((sourceType == var_type) && (sourceView.windowPtr == NULL)))  {
         if (sourceMember != NULL)  {
             useVarCode = false;
             GL_Object.codeList = &(sourceMember->codeList);
@@ -532,7 +517,7 @@ void _def_general()
                     rtrn = addElements(&(GL_Object.arrayDimList), 1, true);
                     if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
                     else  *LL_int(&(GL_Object.arrayDimList), GL_Object.arrayDimList.elementNum) = sourceView.width;
-                    if (!f.newTarget)  arrayDimsToConstruct = 1;          }
+                    if (!newTarget)  arrayDimsToConstruct = 1;          }
                 
                 
                     // if the source object itself is an array, step through the dimensions of the array
@@ -550,21 +535,26 @@ void _def_general()
                 
                 if (sourceView.windowPtr != NULL)  {
                     variable *sourceVar = sourceView.windowPtr->variable_ptr;
+                    bool seenList = false;
                     while (GL_Object.arrayDimList.elementNum > dimCounter)  {
-                        member *arrayMember = LL_member(sourceVar, 1);
                         dimCounter++;
-                        if (*sourceVar->types == list_type)  *LL_int(&(GL_Object.arrayDimList), dimCounter) = -1;
-                        else  *LL_int(&(GL_Object.arrayDimList), dimCounter) = arrayMember->indices;
-                        if (arrayMember->memberWindow == NULL)  break;
-                        sourceVar = arrayMember->memberWindow->variable_ptr;
-                }   }
+                        if (*sourceVar->types == list_type)  {
+                            *LL_int(&(GL_Object.arrayDimList), dimCounter) = -1;
+                            seenList = true;        }
+                        else if (seenList)  *LL_int(&(GL_Object.arrayDimList), dimCounter) = 0;
+                        else  {
+                            member *arrayMember = LL_member(sourceVar, 1);
+                            *LL_int(&(GL_Object.arrayDimList), dimCounter) = arrayMember->indices;
+                            if (arrayMember->memberWindow == NULL)  break;
+                            sourceVar = arrayMember->memberWindow->variable_ptr;
+                }   }   }
         }   }
         
-        else if ((sourceType != no_type) && (f.doRelink))  {  setError(illegal_target_err, subjectCommand);  return;  }
+        else if ((sourceType != no_type) && (getFlag(flags, relink_target_flag)))  {  setError(illegal_target_err, subjectCommand);  return;  }
         
         if (!useVarCode)  {
             sourceDataType = sourceMember->eventualType;
-            if (f.newTarget)  isVoid = (sourceDataType == no_type);
+            if (newTarget)  isVoid = (sourceDataType == no_type);
             if ((sourceMember->type == array_type) || (sourceMember->type == list_type))  {
                 dimCounter = GL_Object.arrayDimList.elementNum;
                 rtrn = addElements(&(GL_Object.arrayDimList), sourceMember->arrayDepth, false);
@@ -580,21 +570,13 @@ void _def_general()
         GL_Object.type = var_type;
         codeNumber = holdCodeNumber;
         
-        if (f.newTarget)  arrayDimsToConstruct = GL_Object.arrayDimList.elementNum;
+        if (newTarget)  arrayDimsToConstruct = GL_Object.arrayDimList.elementNum;
         
-        arrayDepth = GL_Object.arrayDimList.elementNum;
-        if (GL_Path.stemMember != NULL)   {
-            
-            rtrn = checkType(&(GL_Path.stemMember->codeList), &(GL_Path.stemMember->type), &(GL_Path.stemMember->eventualType),
-                        &(GL_Path.stemMember->arrayDepth), sourceDataType, arrayDepth, &(GL_Path.stemView), true, f.updateMembers);
+        if (sourceDataType == string_const_type)  {
+            rtrn = addElements(&(GL_Object.arrayDimList), 1, false);
             if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
-            
-            if ((!f.doRelink) && (GL_Path.stemMember->memberWindow != NULL))  {
-                variable *stemVar = GL_Path.stemMember->memberWindow->variable_ptr;
-                rtrn = checkType(&(stemVar->codeList), stemVar->types, stemVar->types + stemVar->arrayDepth,
-                                 &(stemVar->arrayDepth), sourceDataType, arrayDepth, &searchView, false, f.newTarget);
-                if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
-        }   }
+            *LL_int(&(GL_Object.arrayDimList), GL_Object.arrayDimList.elementNum) = -1;     }
+        arrayDepth = GL_Object.arrayDimList.elementNum;
         
         
             // build our each of our array variables, followed by the variable having the given eventualType 
@@ -607,9 +589,26 @@ void _def_general()
                 types[ca] = list_type;
                 *LL_int(&(GL_Object.arrayDimList), ca+1) = 0;
         }   }
-        types[arrayDepth] = sourceDataType;
+        if (sourceDataType == string_const_type)  types[arrayDepth] = char_type;
+        else  types[arrayDepth] = sourceDataType;
         
-        rtrn = buildOneVarLayer(types, 1, arrayDimsToConstruct, &firstToCustomize, &sourceView, &searchViewToReturn, &f, isVoid);
+        
+            // check the types
+        
+        if (GL_Path.stemMember != NULL)   {
+            
+            rtrn = checkType(&(GL_Path.stemMember->codeList), &(GL_Path.stemMember->type), &(GL_Path.stemMember->eventualType),
+                        &(GL_Path.stemMember->arrayDepth), types[arrayDepth], arrayDepth, &(GL_Path.stemView), true, getFlag(flags, update_members_flag));
+            if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
+            
+            if ((!getFlag(flags, relink_target_flag)) && (GL_Path.stemMember->memberWindow != NULL))  {
+                variable *stemVar = GL_Path.stemMember->memberWindow->variable_ptr;
+                rtrn = checkType(&(stemVar->codeList), stemVar->types, stemVar->types + stemVar->arrayDepth,
+                                 &(stemVar->arrayDepth), types[arrayDepth], arrayDepth, &searchView, false, newTarget);
+                if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
+        }   }
+        
+        rtrn = buildOneVarLayer(types, 1, arrayDimsToConstruct, &firstToCustomize, &sourceView, &searchViewToReturn, flags, isVoid, NULL);
         free(types);
         if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
         
@@ -619,12 +618,12 @@ void _def_general()
             // At last, check/update the variable code list, and run the constructors of the new object, if that is allowed.
         
         errorInConstructor = false;
-        if ((!isVoid) && (errCode == passed) && ((f.newTarget) || (f.doRelink)))  {
+        if ((!isVoid) && (errCode == passed) && ((newTarget) || (getFlag(flags, relink_target_flag))))  {
             
             
                 // First customize the codes:  i.e. make them new anchors if we just defined a composite object (function)
             
-            if ((errCode == passed) && (f.newTarget) && (sourceDataType == composite_type))  {
+            if ((errCode == passed) && (newTarget) && (sourceDataType == composite_type))  {
                 theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
                 for (counter = firstToCustomize; counter <= theCodeList->elementNum; counter++)   {
                     
@@ -644,14 +643,14 @@ void _def_general()
                     
                     refCodeRef(loopCodeRef);
             }   }
-            else if (f.runConstructor)
+            else if (getFlag(flags, run_constructor_flag))
                 theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
             
             
                 // Run all codes.  Don't start at firstToCustomize (some may not have properly initialized the first time
                 // (if run in constructor mode, it doesn't know if there have been errors, which are tolerated))
             
-            if ((f.runConstructor) && (errCode == passed) && (sourceDataType == composite_type))  {
+            if ((getFlag(flags, run_constructor_flag)) && (errCode == passed) && (sourceDataType == composite_type))  {
             for (counter = 1; counter <= theCodeList->elementNum; counter++)   {
                 beginExecution((code_ref *) element(theCodeList, counter), true, searchView.offset, searchView.width, 0);
                 if (errCode == return_flag)  errCode = passed;
@@ -663,14 +662,14 @@ void _def_general()
         if (errCode != passed)  {        // handle any lingering errors (e.g. from construction)
             if (!errorInConstructor)  setError(errCode, dgCommandPtr);
             
-            if (searchView.windowPtr != NULL)  relinkGLStemMember(&sourceView, false, f.newTarget, f.isUnjammable);
+            if (searchView.windowPtr != NULL)  relinkGLStemMember(&sourceView, false, newTarget, getFlag(flags, unjammable_flag));
             searchView.windowPtr = NULL;
             return;      }
         
         if ((GL_Object.type == var_type) && (searchView.windowPtr != NULL))
             GL_Object.codeList = &(searchView.windowPtr->variable_ptr->codeList);
         
-        if ((!f.doEquate) || (searchView.windowPtr == NULL))  {   // if no data copy, exit here
+        if ((!getFlag(flags, post_equate_flag)) || (searchView.windowPtr == NULL))  {   // if no data copy, exit here
             if (searchViewToReturn.windowPtr != NULL)  {
                 searchView = searchViewToReturn;
                 resizeLinkedList(&(GL_Object.arrayDimList), 0, false);        }
@@ -736,7 +735,7 @@ void _def_general()
         else if (sourceDataType == char_type)  {  charRegister = (unsigned char) intRegister;  toCopy = &charRegister;  }
         else if (sourceDataType == double_type)  toCopy = &doubleRegister;
         else if (sourceDataType == bool_type)  toCopy = &boolRegister;
-        else if (sourceDataType == string_type)  {
+        else if (sourceDataType == string_const_type)  {
             fauxStringWindow.variable_ptr = &fauxStringVariable;
             fauxStringWindow.offset = 0;
             fauxStringWindow.width = stringRegister.elementNum;
@@ -751,7 +750,7 @@ void _def_general()
     
     if (sourceIsScalar)  {
         variable *destVar = destView.windowPtr->variable_ptr;
-        if ((*destVar->types > string_type) && (!isVarString(destVar)))  setError(type_mismatch_err, objectCommand);
+        if ((*destVar->types >= composite_type) && (!isVarString(destVar)))  setError(type_mismatch_err, objectCommand);
         else  copyCompareVarToList(toCopy, sourceDataType, &destView, copyJumpTable);       }
     
     
@@ -765,9 +764,21 @@ void _def_general()
         
         if ((destView.multipleIndices) && (!sourceView.multipleIndices))
             sourceWidth = numMemberIndices(&sourceView);
+        else if ((sourceView.multipleIndices) && (!destView.multipleIndices))  {
+            if (destView.windowPtr != NULL)  {
+            if (destView.windowPtr->variable_ptr->types[0] == list_type)  {
+                GL_Path.stemMemberNumber = destView.offset+1;
+                GL_Path.stemMember = LL_member(destView.windowPtr->variable_ptr, GL_Path.stemMemberNumber);
+                GL_Path.offset = 0;
+                GL_Path.indices = GL_Path.stemMember->indices;
+                GL_Path.stemView = destView;
+                stepView(&destView, GL_Path.stemMember, 0, GL_Path.indices);
+                if (errCode != passed)  return;
+                destView.multipleIndices = true;
+        }   }}
         
-        if ((sourceWidth != destView.width) && ((*sourceView.windowPtr->variable_ptr->types != char_type)
-                            || (*destView.windowPtr->variable_ptr->types != string_type)))  {
+        if (sourceWidth != destView.width)  {
+            canResizeDestination = (canResizeDestination) || (GL_Path.stemView.windowPtr->variable_ptr->types[0] == list_type);
             if ((canResizeDestination) && (GL_Path.stemView.width != 0)
                             && (sourceWidth % GL_Path.stemView.width == 0) && (GL_Path.stemMember != NULL))     {
                 
@@ -776,7 +787,7 @@ void _def_general()
                     {  setError(incomplete_variable_err, subjectCommand);  return;  }
                 
                 
-                    // if we're reading from the same window we're writing to (for example, myvar[*] = myvar[<2, 5>]),
+                    // if we're reading from the same window we're writing to (for example, myvar[] = myvar[<2, 5>]),
                     // then just resize the window instead of copying anything -- this avoids conflicts 
                 
                 if (GL_Path.stemMember->memberWindow == sourceView.windowPtr)  {
@@ -802,12 +813,13 @@ void _def_general()
                     destView.width = sourceWidth;
             }   }
             
-            else  {  setError(mismatched_indices_err, dgCommandPtr);  return;  }    }
-        
+            else  {  setError(mismatched_indices_err, dgCommandPtr);  return;  }
+        }
         
             // copy the data over
         
-        copyCompareMultiView(copyWindowData, &sourceView, &destView);       }
+        copyCompareMultiView(copyWindowData, &sourceView, &destView);
+    }
     
     if ((flags != equ_flags) && (searchViewToReturn.windowPtr != NULL))  {
         searchView = searchViewToReturn;
@@ -821,10 +833,10 @@ void _def_general()
 // then m array variables with 'n' indices, then int variables  
 
 ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt arrayDimsToConstruct,
-        ccInt *firstToCustomize, view *sourceView, view *searchViewToReturn, const deFlags *f, const bool isVoid)
+        ccInt *firstToCustomize, view *sourceView, view *searchViewToReturn, const ccInt flags, const bool isVoid, const void *sourceData)
 {
     ccInt oneDimSize, arrayDepth = GL_Object.arrayDimList.elementNum - loopArrayDim + 1, rtrn, ci, numIndices, numLists;
-    bool expectNewVar = ((loopArrayDim <= arrayDimsToConstruct) || ((f->newTarget) && (!isVoid))), wasUnjammed;
+    bool expectNewVar = ((loopArrayDim <= arrayDimsToConstruct) || ((getFlag(flags, new_target_flag)) && (!isVoid))), wasUnjammed;
     variable *theNewVariable, *searchVar = NULL;
     
     if (arrayDepth == 0)  oneDimSize = 0;
@@ -832,7 +844,7 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     
         // update the type specification of the member
     
-    if (f->updateMembers)  {
+    if (getFlag(flags, update_members_flag))  {
         if (GL_Path.indices != GL_Path.stemMember->indices)  return incomplete_member_err;
             updateType(&(GL_Path.stemMember->codeList), &(GL_Path.stemMember->type), &(GL_Path.stemMember->eventualType),
                     &(GL_Path.stemMember->arrayDepth), *types, types[arrayDepth], arrayDepth, true);
@@ -843,13 +855,13 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     
     if (expectNewVar)  {
         if (searchView.width != searchView.windowPtr->variable_ptr->instances)  return incomplete_variable_err;
-        if ((GL_Path.stemMember->memberWindow == NULL) && ((!f->doRelink) || (loopArrayDim <= arrayDimsToConstruct)))  {
+        if ((GL_Path.stemMember->memberWindow == NULL) && ((!getFlag(flags, relink_target_flag)) || (loopArrayDim <= arrayDimsToConstruct)))  {
             ccInt stepWidth = searchView.width*GL_Path.indices;
             rtrn = addVariable(&theNewVariable, types, arrayDepth,
                     ((*types == composite_type) || (*types == list_type) || ((*types < composite_type) && (stepWidth == 0)) ));
             if (rtrn == passed)
                 rtrn = addWindow(theNewVariable, 0, stepWidth, &(GL_Path.stemMember->memberWindow),
-                        (loopArrayDim <= arrayDimsToConstruct) || (!f->isUnjammable));
+                        (loopArrayDim <= arrayDimsToConstruct) || (!getFlag(flags, unjammable_flag)));
             if (rtrn != passed)  return rtrn;
             
             refWindow(GL_Path.stemMember->memberWindow);       // OK, since newWindow is always a member
@@ -867,8 +879,9 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
             wasUnjammed = true;
         }}}
         
-        if ((f->doRelink) || (wasUnjammed))  {
-            rtrn = relinkGLStemMember(sourceView, f->doRelink && (!isVoid), f->newTarget, f->isUnjammable);
+        if ((getFlag(flags, relink_target_flag)) || (wasUnjammed))  {
+            rtrn = relinkGLStemMember(sourceView, getFlag(flags, relink_target_flag) && (!isVoid),
+                        getFlag(flags, new_target_flag), getFlag(flags, unjammable_flag));
             if (rtrn != passed)  return rtrn;
     }   }
     
@@ -877,7 +890,7 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     
     stepView(&searchView, GL_Path.stemMember, GL_Path.offset, GL_Path.indices);
     if (errCode == void_member_err)  errCode = passed;
-    if (loopArrayDim == 1)  {
+    if ((loopArrayDim == 1) && (searchViewToReturn != NULL))  {
         *searchViewToReturn = searchView;
     }
     
@@ -894,7 +907,13 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
                     &(searchVar->arrayDepth), *types, types[arrayDepth], arrayDepth, false);
     }
     
-    if (loopArrayDim > arrayDimsToConstruct)  return passed;
+    if (loopArrayDim > arrayDimsToConstruct)  {
+        if (sourceData != NULL)  {
+        for (ci = 1; ci <= searchView.width; ci++)  {
+            setElement(&(searchView.windowPtr->variable_ptr->mem.data), searchView.offset+ci, sourceData);
+        }}
+        return passed;
+    }
     
     
         // each array/list variable should have a single member
@@ -902,7 +921,7 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     if (*types == array_type)  {  numIndices = oneDimSize;  numLists = 1;  }
     else  {  numIndices = 0;  numLists = searchView.width;  }
     
-    if (searchVar->mem.members.elementNum == 0)  {
+    if ((searchVar->mem.members.elementNum == 0) && (*searchVar->types != list_type))  {
         GL_Path.stemMemberNumber = 1;
         rtrn = addMembers(searchVar, GL_Path.stemMemberNumber, numIndices, &(GL_Path.stemMember), false, numLists, true);
         if (rtrn != passed)  return rtrn;
@@ -911,19 +930,21 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     
     else  {
     for (ci = 0; ci < numLists; ci++)  {
+        GL_Path.stemMemberNumber = ci+1;
         GL_Path.stemMember = LL_member(searchVar, ci+1);
         if (GL_Path.stemMember->indices != numIndices)  {
-            if (!f->addNewMembers)  return mismatched_indices_err;
-            if (f->doRelink)  GL_Path.stemMember->indices = numIndices;
-            else if (f->newTarget)  {
+            if (!getFlag(flags, can_add_members_flag))  return mismatched_indices_err;
+            if (getFlag(flags, relink_target_flag))  GL_Path.stemMember->indices = numIndices;
+            else if (getFlag(flags, new_target_flag))  {
                 resizeMember(GL_Path.stemMember, searchView.width, numIndices);
                 if (errCode != passed)  return errCode;
     }}  }   }
     
+    GL_Path.stemView = searchView;
     for (ci = 0; ci < numLists; ci++)  {
         GL_Path.offset = ci;
         GL_Path.indices = numIndices;
-        rtrn = buildOneVarLayer(types+1, loopArrayDim+1, arrayDimsToConstruct, firstToCustomize, sourceView, searchViewToReturn, f, isVoid);
+        rtrn = buildOneVarLayer(types+1, loopArrayDim+1, arrayDimsToConstruct, firstToCustomize, sourceView, searchViewToReturn, flags, isVoid, sourceData);
         if (rtrn != passed)  return rtrn;
     }
     
@@ -932,25 +953,24 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
 
 
 
-// copyCompareMultiView() is used for commands like a[*] = { 2, 3 } -- we step out of a's element-var into a fake dummy array variable,
+// copyCompareMultiView() is used for commands like a[] = { 2, 3 } -- we step out of a's element-var into a fake dummy array variable,
 // so that both source and destination variables are one level removed from the data variables and the data copying can work properly.
-// (This is also used for comparing, e.g. 'a[*] == { 2, 3 }'.) 
+// (This is also used for comparing, e.g. 'a[] == { 2, 3 }'.) 
 
 void copyCompareMultiView(void(*ccFunction)(view *, view *), view *view1, view *view2)
 {
-    window dummyWindow1, dummyWindow2;
-    variable dummyVar;
+    static window dummyWindow1, dummyWindow2;
+    static variable dummyVar;
     bool multiView1 = ((view1->multipleIndices) && (!(view2->multipleIndices)));
     bool multiView2 = ((view2->multipleIndices) && (!(view1->multipleIndices)));
-    bool hasString = ((*view1->windowPtr->variable_ptr->types == string_type) || (*view2->windowPtr->variable_ptr->types == string_type));
     ccInt rtrn = passed;
     
     if (multiView1)  {
         rtrn = newLinkedList(&(dummyVar.mem.members), 1, sizeof(member), 0., false);
-        encompassMultiView(view1, &dummyWindow1, &dummyWindow2, &dummyVar, hasString);      }
+        encompassMultiView(view1, &dummyWindow1, &dummyWindow2, &dummyVar);      }
     else if (multiView2)  {
         rtrn = newLinkedList(&(dummyVar.mem.members), 1, sizeof(member), 0., false);
-        encompassMultiView(view2, &dummyWindow1, &dummyWindow2, &dummyVar, hasString);      }
+        encompassMultiView(view2, &dummyWindow1, &dummyWindow2, &dummyVar);      }
     if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
     
     ccFunction(view1, view2);
@@ -963,11 +983,12 @@ void copyCompareMultiView(void(*ccFunction)(view *, view *), view *view1, view *
 
 // encompassMultiView() makes Cicada pretend that it is in a variable looking at (the original) view->memberWindow->variable_ptr.
 
-void encompassMultiView(view *theView, window *dummyWindow1, window *dummyWindow2, variable *dummyVar, bool hasString)
+void encompassMultiView(view *theView, window *dummyWindow1, window *dummyWindow2, variable *dummyVar)
 {
-    member *dummyMember = LL_member(dummyVar, 1);
-    ccInt dummyTypes[2];
+    static member *dummyMember;
+    static ccInt dummyTypes[2];
     
+    dummyMember = LL_member(dummyVar, 1);
     dummyMember->memberWindow = dummyWindow2;
     dummyMember->indices = theView->width / baseView.width;
     dummyMember->ifHidden = false;
@@ -978,12 +999,8 @@ void encompassMultiView(view *theView, window *dummyWindow1, window *dummyWindow
     dummyWindow2->width = theView->width;
     
     dummyWindow1->offset = theView->offset;
-    if ((hasString) && (*theView->windowPtr->variable_ptr->types == char_type))  {
-        dummyTypes[0] = string_type;
-        theView->offset = 0;       }
-    else  {
-        dummyTypes[0] = array_type;
-        theView->offset = theView->windowPtr->offset;       }
+    dummyTypes[0] = array_type;
+    theView->offset = theView->windowPtr->offset;
     dummyTypes[1] = *theView->windowPtr->variable_ptr->types;
     
     dummyVar->types = dummyTypes;
@@ -1057,8 +1074,7 @@ ccInt checkType(linkedlist *destLL, ccInt *sourceType, ccInt *eventualSourceType
     ccInt counter, expectedSourceType = expectedEventualSourceType;
     
     if (expectedArrayDepth > 0)  {
-        if (*sourceType == string_type)  expectedSourceType = string_type;
-        else if (*sourceType == list_type)  expectedSourceType = list_type;
+        if (*sourceType == list_type)  expectedSourceType = list_type;
         else  expectedSourceType = array_type;      }
     
     if ((expectedEventualSourceType == no_type) && (!ifUpdate))  return passed;     // we're always allowed to unlink a variable
@@ -1142,8 +1158,10 @@ void _forced_equate()
 {
     view sourceView, holdThatView, destView;
     step_params destPath;
-    void *objectCopy = NULL, *stringPtr;
-    ccInt sourceDataSize = 0, destDataSize = 0, sourceStringSize = no_string, destStringSize = no_string;
+    void *objectCopy = NULL, *bufferPtr;
+    sizeViewInfo SVinfo;
+    writeViewInfo WVinfo;
+    ccInt sourceDataSize; //, sourceStringSize = no_string, destStringSize = no_string;
     ccInt sourceType, holdCodeNumber;
     char byteBackup;
     bool canResizeDestination = false, resizedFromZero = false;
@@ -1195,16 +1213,18 @@ void _forced_equate()
     if (sourceType == var_type)  {
         if (sourceView.windowPtr == NULL)  {  setError(not_a_variable_err, pcCodePtr-1);  return;  }
         
-        sourceDataSize = 0;
-        sizeView(&sourceView, &sourceDataSize, &sourceStringSize);
-        if (sourceStringSize != no_string)  sourceDataSize += sourceStringSize;    // we don't care what form the source data is in
+        SVinfo.dataSize = SVinfo.listElSize = 0;
+        SVinfo.includeDataLists = true;
+        sizeView(&sourceView, &SVinfo, NULL);
+        sourceDataSize = SVinfo.dataSize;
+//        if (sourceStringSize != no_string)  *sourceDataSize += sourceStringSize;    // we don't care what form the source data is in
         
         objectCopy = (void *) malloc((size_t) sourceDataSize + sizeof(char));      // avoid size-0 malloc
         if (objectCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
         
-        stringPtr = objectCopy;     // do this twice since readView() modifies stringPtr
-        readView(&sourceView, &stringPtr, &sourceStringSize);
-        stringPtr = objectCopy;       }
+        bufferPtr = objectCopy;     // do this twice since readView() modifies bufferPtr
+        readView(&sourceView, &bufferPtr, NULL);
+        bufferPtr = objectCopy;       }
     
     
         // if the data to copy is a constant (i.e. is stored in one of the registers), make a pointer to that register
@@ -1213,12 +1233,12 @@ void _forced_equate()
     else  {
         sourceDataSize = typeSizes[sourceType];
         if (sourceType <= char_type)  {
-            if (sourceType == bool_type)  stringPtr = (void *) &boolRegister;
-            else  {  byteBackup = (char) intRegister;  stringPtr = (void *) &byteBackup;  }    }
-        else if (sourceType == int_type)  stringPtr = (void *) &intRegister;
-        else if (sourceType == double_type)  stringPtr = (void *) &doubleRegister;
-        else if (sourceType == string_type)  {
-            stringPtr = objectCopy = malloc(stringRegister.elementNum);
+            if (sourceType == bool_type)  bufferPtr = (void *) &boolRegister;
+            else  {  byteBackup = (char) intRegister;  bufferPtr = (void *) &byteBackup;  }    }
+        else if (sourceType == int_type)  bufferPtr = (void *) &intRegister;
+        else if (sourceType == double_type)  bufferPtr = (void *) &doubleRegister;
+        else  {
+            bufferPtr = objectCopy = malloc(stringRegister.elementNum);
             if (objectCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
             getElements(&stringRegister, 1, stringRegister.elementNum, objectCopy);
             sourceDataSize = stringRegister.elementNum;
@@ -1227,12 +1247,14 @@ void _forced_equate()
     
         // Get the byte size of the destination variable.
     
-    sizeView(&searchView, &destDataSize, &destStringSize);
+    SVinfo.dataSize = SVinfo.listElSize = 0;
+    SVinfo.includeDataLists = false;
+    sizeView(&searchView, &SVinfo, NULL);
     
     
-        // If the source and destination variable sizes don't match, we can try resizing the latter if the destination path ended in [*].
+        // If the source and destination variable sizes don't match, we can try resizing the latter if the destination path ended in [].
     
-    if (((sourceDataSize > destDataSize) && (destStringSize == no_string)) || (sourceDataSize < destDataSize))  {
+    if (((sourceDataSize > SVinfo.dataSize) && (SVinfo.listElSize == 0)) || (sourceDataSize < SVinfo.dataSize))  {
         
                       // zero indices in source -- hard to deal with, so just throw an error
         
@@ -1240,26 +1262,27 @@ void _forced_equate()
         else if (destPath.stemMember == NULL)  setError(undefined_member_err, pcCodePtr-1);
         
         
-            // if [*] was present and current top of that list is zero, then size it to 1 so we can measure its byte-size per index
+            // if [] was present and current top of that list is zero, then size it to 1 so we can measure its byte-size per index
         
         if ((canResizeDestination) && (destPath.stemMember->indices == 0) && (GL_Path.stemView.width > 0) && (errCode == passed))     {        
             resizeMember(destPath.stemMember, destPath.stemView.width, 1);
             if (errCode == passed)  {
                 searchView.width = destPath.stemView.width;
-                sizeView(&searchView, &destDataSize, &destStringSize);
+                SVinfo.dataSize = SVinfo.listElSize = 0;
+                sizeView(&searchView, &SVinfo, NULL);
                 resizedFromZero = true;
         }   }
         
         
-            // If sizes don't match and the dest. path ended in a [*], try to resize the destination variable.
+            // If sizes don't match and the dest. path ended in a [], try to resize the destination variable.
         
         if (errCode == passed)  {
-        if (((sourceDataSize > destDataSize) && (destStringSize == no_string)) || (sourceDataSize < destDataSize))  {
-            if ((destDataSize > 0) && (canResizeDestination) && 
-                    ( (destStringSize != no_string) || (sourceDataSize % (destDataSize/destPath.stemMember->indices) == 0) ))  {
+        if (((sourceDataSize > SVinfo.dataSize) && (SVinfo.listElSize == 0)) || (sourceDataSize < SVinfo.dataSize))  {
+            if ((SVinfo.dataSize > 0) && (canResizeDestination) && 
+                    ( (SVinfo.listElSize > 0) || (sourceDataSize % (SVinfo.dataSize/destPath.stemMember->indices) == 0) ))  {
                 resizeMember(destPath.stemMember, destPath.stemView.width,     // this also rescales seachView.width
-                                                        sourceDataSize/(destDataSize/destPath.stemMember->indices));
-                destDataSize = sourceDataSize;         }
+                                                        sourceDataSize/(SVinfo.dataSize/destPath.stemMember->indices));
+                SVinfo.dataSize = sourceDataSize;         }
             
             
                 // either we can't resize, or we tried and the dest. variable is still size-0 so there's no hope
@@ -1267,15 +1290,23 @@ void _forced_equate()
             else if (resizedFromZero)  resizeMember(destPath.stemMember, destPath.stemView.width, 0);
     }   }}
     
-    if (destStringSize != no_string)  {
-        destStringSize = sourceDataSize-destDataSize;
-        if ((errCode == passed) && (destStringSize < 0))  setError(unequal_data_size_err, pcCodePtr-1);     }
-    else if ((errCode == passed) && (sourceDataSize != destDataSize))  setError(unequal_data_size_err, pcCodePtr-1);
+    WVinfo.bufferPtr = bufferPtr;
+    WVinfo.listElSize = SVinfo.listElSize;
+    if (SVinfo.listElSize > 0)  {
+        WVinfo.extraIndicesNeeded = sourceDataSize-SVinfo.dataSize;
+        if ((errCode == passed) && (WVinfo.extraIndicesNeeded < 0))  setError(unequal_data_size_err, pcCodePtr-1);
+        if (WVinfo.extraIndicesNeeded > 0)  {
+            if (WVinfo.extraIndicesNeeded % WVinfo.listElSize != 0)  setError(unequal_data_size_err, pcCodePtr-1);
+            else  WVinfo.extraIndicesNeeded /= WVinfo.listElSize;
+    }   }
+    else  {
+        if ((errCode == passed) && (sourceDataSize != SVinfo.dataSize))  setError(unequal_data_size_err, pcCodePtr-1);
+        WVinfo.extraIndicesNeeded = 0;      }
     
     
         // write the data from the buffer to the destination variable
     
-    if (errCode == passed)  writeView(&searchView, &stringPtr, &destStringSize);
+    if (errCode == passed)  writeView(&searchView, &WVinfo, NULL);
     
     
         // free the memory & clean up
@@ -1329,8 +1360,6 @@ void sidStep(bool allowAddMember)
     pcCodePtr++;
     callSearchPathFunction();
     if (errCode != passed)  return;
-    
-    if (*searchView.windowPtr->variable_ptr->types == string_type)  {  setError(not_composite_err, theIDPtr);  return;  }
     
     
         // look for the member in this variable
@@ -1418,10 +1447,8 @@ void sticsStep(bool allowAddMember)
         // special case:  allow us to step into 0 indices of a size-0 array
     
     searchVar = searchView.windowPtr->variable_ptr;
-    if ((GL_Path.indices == 0) &&
-            ((*searchVar->types == string_type) || (*searchVar->types == array_type) || (*searchVar->types == list_type)))  {
+    if ((GL_Path.indices == 0) && ((*searchVar->types == array_type) || (*searchVar->types == list_type)))  {
         ccInt searchIdx = 1;
-        if (*searchVar->types == string_type)  searchIdx += searchView.offset;
         GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, searchIdx);
         if ((firstIndex >= 1) && (lastIndex <= GL_Path.stemMember->indices))  {
             GL_Path.stemMemberNumber = 1;
@@ -1539,7 +1566,7 @@ void doResize(bool allowAddMember)
             GL_Path.stemMember = (member *) element(memberLL, firstIndex);
     }   }
 
-    else if ((searchType == string_type) || (searchType == list_type))  {
+    else if (searchType == list_type)  {
         GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, searchView.offset + 1);
         if (searchView.width != 1)
             {  setError(multiple_indices_not_allowed_err, pcCodePtr-1);  return;  }
@@ -1646,7 +1673,7 @@ void masterInsert(bool multipleIndices, bool allowAddMember)
     if ((errCode == invalid_index_err) && (firstIndex == GL_Path.offset))   {
         errCode = passed;
         if (firstIndex == 1)  {      // if all indices have been deleted, fix the error as long as there is a member to add to
-            if (*searchView.windowPtr->variable_ptr->types == string_type)
+            if (*searchView.windowPtr->variable_ptr->types == list_type)
                 GL_Path.stemMemberNumber = searchView.offset+1;
             else  GL_Path.stemMemberNumber = 1;
             GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, GL_Path.stemMemberNumber);
@@ -1660,7 +1687,7 @@ void masterInsert(bool multipleIndices, bool allowAddMember)
     
     if (errCode != passed)  return;
     
-    if ((*searchView.windowPtr->variable_ptr->types != string_type)
+    if ((searchView.windowPtr->variable_ptr->types[0] != list_type)
                 && (searchView.width != searchView.windowPtr->variable_ptr->instances))
         {  setError(incomplete_variable_err, pcCodePtr-1);  return;  }
     
@@ -1680,7 +1707,7 @@ void callSearchPathFunction()
     if (errCode == passed)  {
         if (GL_Object.type != var_type)  setError(not_a_variable_err, commandPtr);
         else if (searchView.windowPtr == NULL)  setError(void_member_err, commandPtr);
-        else if (*searchView.windowPtr->variable_ptr->types < string_type)  setError(not_composite_err, commandPtr);      }
+        else if (*searchView.windowPtr->variable_ptr->types < composite_type)  setError(not_composite_err, commandPtr);      }
 }
 
 
@@ -1727,17 +1754,16 @@ void navigate(void (*stepFunction)(bool), bool defineMode, bool takeStep, bool a
         if ((searchView.width > 1) && (GL_Path.indices != GL_Path.stemMember->indices))
             {  setError(incomplete_member_err, pcCodePtr-1);  return;  }
         
-        if (searchType == composite_type)  {
-            if (GL_Path.indices == 0)  {  setError(no_member_err, pcCodePtr-1);  return;  }
-            else if (GL_Path.indices > 1)  {  setError(step_multiple_members_err, pcCodePtr-1);  return;  }     }
+        if ((searchType == composite_type) || (searchType == list_type))  {
+            ccInt memberWidth;
+            if (searchType == list_type)  memberWidth = searchView.width;
+            else  memberWidth = GL_Path.indices;
+            if (memberWidth == 0)  {  setError(no_member_err, pcCodePtr-1);  return;  }
+            else if (memberWidth > 1)  {  setError(step_multiple_members_err, pcCodePtr-1);  return;  }
+        }
         
         stepView(&searchView, GL_Path.stemMember, GL_Path.offset, GL_Path.indices);
-        
-        if (searchView.windowPtr != NULL)  {
-        if ((*searchView.windowPtr->variable_ptr->types == list_type) && (searchView.width > 1))  {
-            setError(step_multiple_members_err, pcCodePtr-1);
-            return;
-    }   }}
+    }
     
     
         // set our object info before returning
@@ -1883,7 +1909,7 @@ void _if_eq()
         else if (firstDataType == char_type)  {  charRegisterBackup1 = (unsigned char) intRegister;  toCompare1 = &charRegisterBackup1;  }
         else if (firstDataType == double_type)  {  doubleRegisterBackup = doubleRegister;  toCompare1 = &doubleRegisterBackup;  }
         else if (firstDataType == bool_type)  {  boolRegisterBackup1 = boolRegister;  toCompare1 = &boolRegisterBackup1;  }
-        else if (firstDataType == string_type)  {
+        else if (firstDataType == string_const_type)  {
             fauxStringWindow1.variable_ptr = &fauxStringVariable1;
             fauxStringWindow1.offset = 0;
             fauxStringWindow1.width = stringRegister.elementNum;
@@ -1915,7 +1941,7 @@ void _if_eq()
             else if (secondDataType == char_type)  {  charRegisterBackup2 = (unsigned char) intRegister;  toCompare2 = &charRegisterBackup2;  }
             else if (secondDataType == double_type)  toCompare2 = &doubleRegister;
             else if (secondDataType == bool_type)  {  boolRegisterBackup2 = boolRegister;  toCompare2 = &boolRegisterBackup2;  }
-            else if (secondDataType == string_type)  {
+            else if (secondDataType == string_const_type)  {
                 fauxStringWindow2.variable_ptr = &fauxStringVariable2;
                 fauxStringWindow2.offset = 0;
                 fauxStringWindow2.width = stringRegister.elementNum;
@@ -1930,9 +1956,9 @@ void _if_eq()
         if (firstArgIsScalar)  {
             if ((secondDataType == var_type) || (secondDataType == no_type)) setError(type_mismatch_err, pcCodePtr-1);
             else if (secondArgIsScalar)  {
-                if (secondDataType == string_type)  {  fauxMember.memberWindow = toCompare2;  toCompare2 = &fauxMember;  }
+                if (secondDataType == string_const_type)  {  fauxMember.memberWindow = toCompare2;  toCompare2 = &fauxMember;  }
                 compareJumpTable[5*firstDataType + secondDataType](toCompare1, toCompare2);     }
-            else if ((firstDataType == string_type) && (secondDataType == char_type))
+            else if ((firstDataType == string_const_type) && (secondDataType == char_type))
                 copyCompareMultiView(compareWindowData, &searchView, &firstArgView);
             else  copyCompareVarToList(toCompare1, firstDataType, &searchView, compareJumpTable);   }
         else if (firstDataType == no_type)  {
@@ -1940,7 +1966,7 @@ void _if_eq()
             else  setError(type_mismatch_err, pcCodePtr-1);   }
         else  {
             if ((firstDataType != var_type) && (secondArgIsScalar))  {
-                if ((firstDataType == char_type) && (secondDataType == string_type))
+                if ((firstDataType == char_type) && (secondDataType == string_const_type))
                     copyCompareMultiView(compareWindowData, &searchView, &firstArgView);
                 else  copyCompareVarToList(toCompare2, secondDataType, &firstArgView, compareJumpTable);  }
             else if ( ((firstDataType == var_type) || (firstArgView.multipleIndices))
@@ -1959,13 +1985,13 @@ void _if_eq()
 void stepInIfString(const bool argAisScalar, const ccInt argAtype, bool *argBisScalar, ccInt *argBtype,
                 view *viewToStep, window **toCompare)
 {
-    if ((argAisScalar) && (argAtype == string_type) && (*argBtype == var_type))  {
+    if ((argAisScalar) && (argAtype == string_const_type) && (*argBtype == var_type))  {
         ccInt *types = viewToStep->windowPtr->variable_ptr->types;
         if (((types[0] == array_type) || (types[0] == list_type)) && (types[1] == char_type))  {
             member *oneMember = LL_member(viewToStep->windowPtr->variable_ptr, 1);
             stepView(viewToStep, oneMember, 0, oneMember->indices);
             *argBisScalar = true;
-            *argBtype = string_type;
+            *argBtype = string_const_type;
             *toCompare = viewToStep->windowPtr;
     }   }
 }
@@ -1990,7 +2016,7 @@ void copyCompareReadArg(void(*runBytecodeFunction)(void), ccInt *dataType, bool 
     
     if (*dataType == var_type)  {
         if (searchView.windowPtr == NULL)  *dataType = no_type;
-        else if ((*searchView.windowPtr->variable_ptr->types >= bool_type) && (*searchView.windowPtr->variable_ptr->types <= string_type))  {
+        else if ((*searchView.windowPtr->variable_ptr->types >= bool_type) && (*searchView.windowPtr->variable_ptr->types <= double_type))  {
             *dataType = *searchView.windowPtr->variable_ptr->types;
             if ((!searchView.multipleIndices) && (searchView.width == 1))  {        // 2nd condition in case baseView.width /= 1
                 *argIsScalar = true;
@@ -2092,15 +2118,24 @@ void Math_LE(ccFloat firstArgument)  {  boolRegister = (firstArgument <= doubleR
 
 void mathOperator(void(*theOp)(ccFloat), ccInt theType)
 {
-    ccFloat firstArgument;
+    ccFloat firstArgument; //, secondArgument;
     
     callNumericFunction(double_type);           // arg 1
     if (errCode != passed)  return;
     firstArgument = doubleRegister;
     
     callNumericFunction(double_type);           // arg 2
-    GL_Object.type = theType;
+    if (errCode != passed)  return;
+//    secondArgument = doubleRegister;
     
+/*    if (theType != bool_type)  {
+        callNumericFunction(double_type);       // arg 3
+        if (errCode != passed)  return;
+//        secondArgument = doubleRegister;
+    }*/
+    
+    GL_Object.type = theType;
+//    doubleRegister = secondArgument;
     theOp(firstArgument);   // compute the function (return value isn't specified because result is stored in global variables)
 }
 
@@ -2388,10 +2423,23 @@ void _parent_var()
 
 void _top_var()
 {
+//    ccInt theTop;
+    
     if (topView.windowPtr == NULL)  {  setError(no_member_err, pcCodePtr-1);  return;  }
+//    theTop = numMemberIndices(&topView);
     
     GL_Object.type = int_type;
     intRegister = numMemberIndices(&topView);
+/*    ccInt intConst = intRegister = *pcCodePtr;
+    
+    GL_Object.type = int_type;*/
+    
+//    pcCodePtr++;
+    
+/*    getConstVar(int_type, 1, false, NULL);
+    if (errCode == passed)  {
+        *LL_int(&searchView.windowPtr->variable_ptr->mem.data, searchView.offset+1) = numMemberIndices(&topView);
+    }*/
 }
 
 
@@ -2444,7 +2492,6 @@ void _bool_cmd()  {  GL_Object.type = bool_type;  }
 void _char_cmd()  {  GL_Object.type = char_type;  }
 void _int_cmd()  {  GL_Object.type = int_type;  }
 void _double_cmd()  {  GL_Object.type = double_type;  }
-void _string_cmd()  {  GL_Object.type = string_type;  }
 
 
 
@@ -2452,11 +2499,13 @@ void _string_cmd()  {  GL_Object.type = string_type;  }
 
 void _constant_bool()
 {
+    /*bool boolConst =*/ boolRegister = (bool) *pcCodePtr;
+    
     GL_Object.type = bool_type;
     
-    boolRegister = (bool) *pcCodePtr;
-    
     pcCodePtr++;
+    
+//    getConstVar(bool_type, 1, false, ( char *) &boolConst);
 }
 
 
@@ -2465,11 +2514,13 @@ void _constant_bool()
 
 void _constant_char()
 {
+    /*unsigned char charConst =*/ intRegister = *pcCodePtr;
+    
     GL_Object.type = char_type;
     
-    intRegister = *pcCodePtr;
-    
     pcCodePtr++;
+    
+//    getConstVar(char_type, 1, false, (char *) &charConst);
 }
 
 
@@ -2478,11 +2529,13 @@ void _constant_char()
 
 void _constant_int()
 {
+    /*ccInt intConst =*/ intRegister = *pcCodePtr;
+    
     GL_Object.type = int_type;
     
-    intRegister = *pcCodePtr;
-    
     pcCodePtr++;
+    
+//    getConstVar(int_type, 1, false, (char *) &intConst);
 }
 
 
@@ -2490,11 +2543,13 @@ void _constant_int()
 
 void _constant_double()
 {
+    /*ccFloat floatConst =*/ doubleRegister = *(ccFloat *) pcCodePtr;
+    
     GL_Object.type = double_type;
     
-    doubleRegister = *(ccFloat *) pcCodePtr;
-    
     pcCodePtr += sizeof(ccFloat)/sizeof(ccInt);
+    
+//    getConstVar(double_type, 1, false, (char *) &floatConst);
 }
 
 
@@ -2503,12 +2558,44 @@ void _constant_double()
 
 void _constant_string()
 {
-    GL_Object.type = string_type;
+//    ccInt stringSize = *pcCodePtr, *stringStart = pcCodePtr+1;
+    
+    GL_Object.type = string_const_type;
     resizeLinkedList(&stringRegister, *pcCodePtr, false);
     pcCodePtr++;
     
     setElements(&stringRegister, 1, stringRegister.elementNum, (void *) pcCodePtr);
     pcCodePtr += (ccInt) ceil(((ccFloat) stringRegister.elementNum)/sizeof(ccInt));
+    
+//    getConstVar(char_type, stringSize, true, (char *) &stringStart);
+}
+
+
+void getConstVar(const ccInt varType, const ccInt numIndices, const bool makeList, const void *sourceData)
+{
+    GL_Path.offset = 0;
+    GL_Path.indices = 1;
+    searchMember((ccInt) *pcCodePtr, &GL_Path.stemMember, &GL_Path.stemMemberNumber, true, true);
+    
+    if (GL_Path.stemMember->memberWindow == NULL)  {
+        ccInt numArrayDims, types[2], firstToCustomize, rtrn;
+        
+        if (makeList)  {
+            types[0] = list_type;  types[1] = varType;  numArrayDims = 1;
+            resizeLinkedList(&(GL_Object.arrayDimList), 1, false);
+            *LL_int(&GL_Object.arrayDimList, 1) = 1;
+        }
+        else  {  types[0] = varType;  numArrayDims = 0;  }
+        
+        rtrn = buildOneVarLayer(types, 1, numArrayDims, &firstToCustomize, &searchView, NULL, def_flags, false, sourceData);
+        if (rtrn != passed)  setError(rtrn, pcCodePtr);
+    }
+    else  {
+        if (searchView.width > 1)  searchView.width = 1;
+        stepView(&searchView, GL_Path.stemMember, GL_Path.offset, GL_Path.indices);
+    }
+    
+    pcCodePtr++;
 }
 
 
@@ -2646,12 +2733,13 @@ void skipThreeArgs() {  callSkipFunction();  callSkipFunction();  callSkipFuncti
 void skipBackArgs() {  while (*pcCodePtr == parent_variable)  pcCodePtr++;  }
 
 void skipInt()  {  pcCodePtr++;  }
-void skipDouble()  {  pcCodePtr += sizeof(ccFloat)/sizeof(ccInt);  }
-void skipString()  {  ccInt StrLength = *pcCodePtr;  pcCodePtr += 1 + (ccInt) ceil(1.*StrLength/sizeof(ccInt));  }
+void skipTwoInts()  {  pcCodePtr += 2;  }
+void skipDouble()  {  pcCodePtr += sizeof(ccFloat)/sizeof(ccInt) /*+ 1*/;  }
+void skipString()  {  ccInt StrLength = *pcCodePtr;  pcCodePtr += /*2*/ 1 + (ccInt) ceil(1.*StrLength/sizeof(ccInt));  }
 
 void skipIntAndOneArg()  {  pcCodePtr++;  callSkipFunction();  }
 void skipIntAndTwoArgs()  {  pcCodePtr++;  callSkipFunction();  callSkipFunction();  }
-void skipOneArgAndInt()  {  pcCodePtr++;  callSkipFunction();  }
+void skipOneArgAndInt()  {  callSkipFunction();  pcCodePtr++;  }
 
 void skipCode()  {  runSkipMode(0);  pcCodePtr++;  }
 
@@ -2753,6 +2841,9 @@ void checkCommand(ccInt theCmd)      // checks bread-and-butter operators
     else  {
         if ((leftArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(leftArgs[theCmd]);
         if ((rightArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(rightArgs[theCmd]);     }
+/*    if (((theCmd >= 27) && (theCmd <= 32)) && (errCode == passed))  {
+        checkBytecodeArg(var_arg);         // the result variable
+    }*/
 }
 
 void checkBackCommand(ccInt theCmd)
@@ -2776,22 +2867,28 @@ void checkFunction(ccInt theCmd)      // checks user-defined/built-in functions
     if (errCode == passed)  checkBytecodeArg(var_arg);
 }
 
-void checkInteger(ccInt theCmd)          // checks commands that have integer constants
+void checkInteger(ccInt theCmd)          // checks commands that have bool/char/integer constants (all of which are stored as integers)
 {
     pcCodePtr++;
-    if (pcCodePtr >= endCodePtr)  {  pcCodePtr = endCodePtr;  setError(code_overflow_err, pcCodePtr-1);  }
+    if (pcCodePtr >= endCodePtr)  {  pcCodePtr = endCodePtr-1;  setError(code_overflow_err, pcCodePtr-1);  }
     
     if ((leftArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(leftArgs[theCmd]);
     if ((rightArgs[theCmd] != no_arg) && (errCode == passed))  checkBytecodeArg(rightArgs[theCmd]);
 }
 
-void checkDouble(ccInt theCmd)    // checks inlined doubles
+void checkIntegerConst(ccInt theCmd)          // checks commands that have bool/char/integer constants (all of which are stored as integers)
 {
-    pcCodePtr += sizeof(ccFloat)/sizeof(ccInt);
-    if (pcCodePtr >= endCodePtr)  {  pcCodePtr = endCodePtr;  setError(code_overflow_err, pcCodePtr-1);  }
+    pcCodePtr++; // += 2;
+    if (pcCodePtr >= endCodePtr)  {  pcCodePtr = endCodePtr-1;  setError(code_overflow_err, pcCodePtr-1);  }
 }
 
-void checkString(ccInt theCmd)    // checks inlined strings
+void checkDoubleConst(ccInt theCmd)    // checks inlined doubles
+{
+    pcCodePtr += sizeof(ccFloat)/sizeof(ccInt); // + 1;
+    if (pcCodePtr >= endCodePtr)  {  pcCodePtr = endCodePtr-1;  setError(code_overflow_err, pcCodePtr-1);  }
+}
+
+void checkStringConst(ccInt theCmd)    // checks inlined strings
 {
     ccInt sizeofStrings = *pcCodePtr;
     if (sizeofStrings < 0)  {  setError(illegal_command_err, pcCodePtr);  return;  }
@@ -2800,9 +2897,9 @@ void checkString(ccInt theCmd)    // checks inlined strings
     
     pcCodePtr++;
     
-    if (pcCodePtr + (ccInt) ceil(1.*sizeofStrings/sizeof(ccInt)) >= endCodePtr)      // step over the width of the string
-        {  pcCodePtr = endCodePtr;  setError(code_overflow_err, pcCodePtr-1);  return;  }
-    pcCodePtr += (ccInt) ceil(1.*sizeofStrings/sizeof(ccInt));
+    if (pcCodePtr + (ccInt) ceil(1.*sizeofStrings/sizeof(ccInt)) /*+ 1*/ >= endCodePtr)      // step over the width of the string
+        {  pcCodePtr = endCodePtr;  setError(code_overflow_err, endCodePtr-1);  return;  }
+    pcCodePtr += (ccInt) ceil(1.*sizeofStrings/sizeof(ccInt)); // + 1;
 }
 
 void checkCode(ccInt theCmd)      // checks a code block
@@ -3075,7 +3172,8 @@ void callFunction(void(*commandJumpTable[commands_num])(void))
     ccInt theFunction = *pcCodePtr;
     
     pcCodePtr++;
-    commandJumpTable[theFunction]();
+    if ((theFunction < 0) || (theFunction >= commands_num))  setError(illegal_command_err, pcCodePtr-1);
+    else  commandJumpTable[theFunction]();
 }
 
 void callCodeFunction()
@@ -3154,7 +3252,7 @@ char leftArgs[commands_num] =
     data_arg, data_arg, data_arg, no_arg, data_arg,
         data_arg, data_arg, var_arg, var_arg, code_arg,
     no_arg, no_arg, no_arg, no_arg, no_arg,
-        no_arg, no_arg, no_arg, no_arg, no_arg, no_arg,
+        no_arg, no_arg, no_arg, no_arg, no_arg,
     no_arg, no_arg, no_arg, no_arg, no_arg,             // 50
         no_arg, no_arg, no_arg     };
 
@@ -3168,7 +3266,7 @@ char rightArgs[commands_num] =
     data_arg, data_arg, data_arg, data_arg, data_arg,
         data_arg, data_arg, data_arg, code_arg, code_arg,
     no_arg, no_arg, no_arg, no_arg, no_arg,
-        no_arg, type_arg, type_arg, no_arg, no_arg, no_arg,
+        no_arg, type_arg, type_arg, no_arg, no_arg,
     no_arg, no_arg, no_arg, no_arg, no_arg,             // 50
         no_arg, no_arg, no_arg       };
 
@@ -3190,7 +3288,7 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
     &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
         &illegalCmd, &illegalCmd, &checkCommand, &checkCommand, &illegalCmd,
     &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
-        &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
+        &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
     &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
         &illegalCmd, &illegalCmd, &illegalCmd      },
 
@@ -3203,7 +3301,7 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
     &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
         &illegalCmd, &illegalCmd, &checkCommand, &checkCommand, &illegalCmd,
     &checkCommand, &checkCommand, &checkCommand, &checkBackCommand, &checkCommand,
-        &checkCommand, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
+        &checkCommand, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
     &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
         &illegalCmd, &illegalCmd, &illegalCmd         },
 
@@ -3216,9 +3314,9 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
     &checkCommand, &checkCommand, &checkCommand, &checkCommand, &checkCommand,
         &checkCommand, &checkCommand, &checkCommand, &checkCommand, &illegalCmd,
     &checkCommand, &checkCommand, &checkCommand, &checkBackCommand, &checkCommand,
-        &checkCommand, &illegalCmd, &illegalCmd, &checkCommand, &checkCommand, &checkCommand,
-    &checkCommand, &checkCommand, &checkInteger, &checkInteger, &checkInteger,
-        &checkDouble, &checkString, &illegalCmd         },
+        &checkCommand, &illegalCmd, &illegalCmd, &checkCommand, &checkCommand,
+    &checkCommand, &checkCommand, &checkIntegerConst, &checkIntegerConst, &checkIntegerConst,
+        &checkDoubleConst, &checkStringConst, &illegalCmd         },
 
 {   &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,                // code
         &illegalCmd, &checkFunction, &checkFunction, &checkCommand, &checkCommand,
@@ -3229,7 +3327,7 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
     &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
         &illegalCmd, &illegalCmd, &checkCommand, &checkCommand, &checkCommand,
     &checkCommand, &checkCommand, &checkCommand, &checkBackCommand, &checkCommand,
-        &checkCommand, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
+        &checkCommand, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
     &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd, &illegalCmd,
         &illegalCmd, &illegalCmd, &checkCode         },
 
@@ -3242,9 +3340,9 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
     &checkCommand, &checkCommand, &checkCommand, &checkCommand, &checkCommand,
         &checkCommand, &checkCommand, &checkCommand, &checkCommand, &checkCommand,
     &checkCommand, &checkCommand, &checkCommand, &checkBackCommand, &checkCommand,
-        &checkCommand, &checkIndices, &checkIndices, &checkCommand, &checkCommand, &checkCommand,
-    &checkCommand, &checkCommand, &checkInteger, &checkInteger, &checkInteger,
-        &checkDouble, &checkString, &checkCode         }  };
+        &checkCommand, &checkIndices, &checkIndices, &checkCommand, &checkCommand,
+    &checkCommand, &checkCommand, &checkIntegerConst, &checkIntegerConst, &checkIntegerConst,
+        &checkDoubleConst, &checkStringConst, &checkCode         }  };
 
 
 
@@ -3254,14 +3352,14 @@ void(*checkJumpTables[6][commands_num])(ccInt) =  {
 void(*skipJumpTable[commands_num])(void) = {     // for skipping over code
     &_illegal, &skipInt, &skipIntAndOneArg, &skipIntAndOneArg, &skipNoArgs,
         &skipOneArg, &skipTwoArgs, &skipIntAndOneArg, &skipIntAndTwoArgs, &skipTwoArgs,
-    &skipInt, &skipOneArgAndInt, &skipTwoArgs, &skipThreeArgs, &skipOneArg,
+    &skipInt, &skipIntAndOneArg, &skipTwoArgs, &skipThreeArgs, &skipOneArg,
         &skipTwoArgs, &skipTwoArgs, &skipThreeArgs, &skipOneArg, &skipTwoArgs,
     &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs,
         &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs,
     &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipOneArg, &skipTwoArgs,
         &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs, &skipTwoArgs,
     &skipNoArgs, &skipNoArgs, &skipNoArgs, &skipBackArgs, &skipNoArgs,
-        &skipNoArgs, &skipTwoArgs, &skipTwoArgs, &skipNoArgs, &skipNoArgs, &skipNoArgs,
+        &skipNoArgs, &skipTwoArgs, &skipOneArg, &skipNoArgs, &skipNoArgs,
     &skipNoArgs, &skipNoArgs, &skipInt, &skipInt, &skipInt,
         &skipDouble, &skipString, &skipCode      };
 
@@ -3275,7 +3373,7 @@ void(*sentenceStartJumpTable[commands_num])(void) = {    // start-of-sentence:  
     &_divf, &_powerf, &_modi, &_if_not, &_if_and,
         &_if_or, &_if_xor, &_code_number, &_sub_code, &_append_code,
     &_get_args, &_this_var, &_that_var, &_parent_var, &_top_var,
-        &_no_var, &_illegal, &_illegal, &_string_cmd, &_bool_cmd, &_char_cmd,
+        &_no_var, &_illegal, &_illegal, &_bool_cmd, &_char_cmd,
     &_int_cmd, &_double_cmd, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_constant_string, &_code_block   };
 
@@ -3289,7 +3387,7 @@ void(*numericJumpTable[commands_num])(void) = {     // numeric arguments
     &_divf, &_powerf, &_modi, &_illegal, &_illegal,
         &_illegal, &_illegal, &doubleAdapter, &doubleAdapter, &doubleAdapter,
     &doubleAdapter, &doubleAdapter, &doubleAdapter, &doubleAdapter, &doubleAdapter,
-        doubleAdapter, &_illegal, &_illegal, &_illegal, &_illegal, &_illegal,
+        doubleAdapter, &_illegal, &_illegal, &_illegal, &_illegal,
     &_illegal, &_illegal, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_illegal, &_illegal    };
 
@@ -3303,7 +3401,7 @@ void(*codeJumpTable[commands_num])(void) = {     // right argument of define whe
     &_divf, &_powerf, &_modi, &_if_not, &_if_and,
         &_if_or, &_if_xor, &_code_number, &_sub_code, &_append_code,
     &_get_args, &_this_var, &_that_var, &_parent_var, &_top_var,
-        &_no_var, &_array_cmd, &_list_cmd, &_string_cmd, &_bool_cmd, &_char_cmd,
+        &_no_var, &_array_cmd, &_list_cmd, &_bool_cmd, &_char_cmd,
     &_int_cmd, &_double_cmd, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_constant_string, &_code_block   };
 
@@ -3317,7 +3415,7 @@ void(*bytecodeJumpTable[commands_num])(void) = {     // generic jump table for m
     &_divf, &_powerf, &_modi, &_if_not, &_if_and,
         &_if_or, &_if_xor, &_code_number, &_sub_code, &_append_code,
     &_get_args, &_this_var, &_that_var, &_parent_var, &_top_var,
-        &_no_var, &_illegal, &_illegal, &_string_cmd, &_bool_cmd, &_char_cmd,
+        &_no_var, &_illegal, &_illegal, &_bool_cmd, &_char_cmd,
     &_int_cmd, &_double_cmd, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_constant_string, &_code_block   };
 
@@ -3331,7 +3429,7 @@ void(*defineJumpTable[commands_num])(void) = {     // jump table for the left si
     &_divf, &_powerf, &_modi, &_if_not, &_if_and,
         &_if_or, &_if_xor, &_code_number, &_sub_code, &_append_code,
     &_get_args, &_this_var, &_that_var, &_parent_var, &_top_var,
-        &_no_var, &_illegal, &_illegal, &_string_cmd, &_bool_cmd, &_char_cmd,
+        &_no_var, &_illegal, &_illegal, &_bool_cmd, &_char_cmd,
     &_int_cmd, &_double_cmd, &_constant_bool, &_constant_char, &_constant_int,
         &_constant_double, &_constant_string, &_code_block   };
 

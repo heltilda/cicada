@@ -535,7 +535,7 @@ ccInt clearElements(linkedlist *theList, ccInt firstElement, ccInt lastElement)
 
 // setElements() -- reads data from a buffer into a linked list.
 
-ccInt setElements(linkedlist *theList, ccInt firstElement, ccInt lastElement, void *readAddress)
+ccInt setElements(linkedlist *theList, ccInt firstElement, ccInt lastElement, const void *readAddress)
 {
     ccInt firstSet, lastSet, top, bottom;
     sublistHeader *currentSublist;
@@ -571,7 +571,7 @@ ccInt setElements(linkedlist *theList, ccInt firstElement, ccInt lastElement, vo
 
 // setElement() -- sets a single element.
 
-ccInt setElement(linkedlist *theList, ccInt theElement, void *readAddress)
+ccInt setElement(linkedlist *theList, ccInt theElement, const void *readAddress)
 {
     return setElements(theList, theElement, theElement, readAddress);
 }

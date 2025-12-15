@@ -51,7 +51,7 @@ extern const char **userCfunctionArgs;
 
 extern ccInt cc_newCompiler(argsType);
 extern ccInt cc_compile(argsType);
-extern ccInt cc_getMemberNames(argsType);
+//extern ccInt cc_getMemberNames(argsType);
 extern ccInt cc_transform(argsType);
 extern ccInt cc_trap(argsType);
 extern ccInt cc_throw(argsType);
@@ -69,12 +69,10 @@ extern ccInt makeLinkList(const ccInt, const ccInt, const ccInt, const ccFloat *
 extern ccInt cc_sort(argsType);
 
 extern ccInt cc_load(argsType);
-extern ccInt loadFile(const char *, linkedlist *, bool);
+extern ccInt loadFile(const char *, arg *, bool);
 extern ccInt cc_save(argsType);
-extern char *LL2Cstr(linkedlist *);
 extern ccInt cc_input(argsType);
 extern ccInt cc_print(argsType);
-extern void printChar(const unsigned char *);
 
 extern ccInt cc_read_string(argsType);
 extern bool isWordChar(const char *);

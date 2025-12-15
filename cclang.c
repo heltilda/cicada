@@ -96,11 +96,15 @@ commandTokenType cicadaLanguage[] = {
     { "@" type3arg "(" type1arg ")", stepVarLevel, "34567", inbytecode bc(user_function) bcArg(1)
                     bc_define(defxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script) },
     
+    { "$math." type7arg "." Cfunctionarg "(" type1arg ")", stepVarLevel, "134567",
+                    inbytecode bc(C_function) bcArg(2) bc_define(defxxFlags) bc(search_member) anonymousmember
+                    bc(code_block) bcArg(3) bc_define(defFlags) bc(search_member) anonymousmember bc(type_lists) bcArg(1) bc(end_of_script) },
+    
     { "$" Cfunctionarg "(" type1arg ")", stepVarLevel, "134567",
                     inbytecode bc(C_function) bcArg(1) bc_define(defxxFlags) bc(search_member) anonymousmember
                     bc(code_block) bcArg(2) bc(end_of_script) },
     
-    { "trap (" type1arg ")", stepVarLevel, "1567", inbytecode bc(C_function) bc(-5)             // trap() is special
+    { "trap (" type1arg ")", stepVarLevel, "1567", inbytecode bc(C_function) bc(-4)             // trap() is special
                 bc_define(defcxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(1) bc(end_of_script) },
     
     
@@ -124,47 +128,15 @@ commandTokenType cicadaLanguage[] = {
     { type3arg "." type9arg, stepVarLevel, "34567", inbytecode bc(step_to_member_ID) bcArg(2) bcArg(1) },
     { type3arg "[" type5arg "]", stepVarLevel, "34567", inbytecode bc(step_to_index) bcArg(1) bcArg(2) },
     { type3arg "[ <" type5arg "," type5arg "> ]", stepVarLevel, "34567", inbytecode bc(step_to_indices) bcArg(1) bcArg(2) bcArg(3) },
-    { type3arg "[ * ]", stepVarLevel, "34567", inbytecode bc(step_to_all) bcArg(1) },
     { type3arg "[ ]", stepVarLevel, "34567", inbytecode bc(step_to_all) bcArg(1) },
     { type3arg "[^" type5arg "]", stepVarLevel, "134567", inbytecode bc(resize_cmd) bcArg(1) bcArg(2) },
     { type3arg "[ +" type5arg "]", stepVarLevel, "134567", inbytecode bc(insert_index) bcArg(1) bcArg(2) },
     { type3arg "[ + <" type5arg "," type5arg "> ]", stepVarLevel, "134567", inbytecode bc(insert_indices) bcArg(1) bcArg(2) bcArg(3) },
     
-    { "top (" type1arg ")", stepVarLevel, "567", inbytecode bc(C_function) bc(-7) bc_define(defxxFlags) bc(search_member) anonymousmember
+    { "top (" type1arg ")", stepVarLevel, "567", inbytecode bc(C_function) bc(-6) bc_define(defxxFlags) bc(search_member) anonymousmember
                     bc(code_block) bcArg(1) bc(end_of_script) },
     
     { "remove" type3arg, commandLevel, "1", inbytecode bc(remove_cmd) bcArg(1) },
-    
-    
-        // Comparison operators
-    
-    { type6arg "==" type6arg, compareLevel, "6", inbytecode bc(if_equal) bcArg(1) bcArg(2) },
-    { type6arg "/=" type6arg, compareLevel, "6", inbytecode bc(if_not_equal) bcArg(1) bcArg(2) },
-    { type5arg ">" type5arg, compareLevel, "6", inbytecode bc(if_greater) bcArg(1) bcArg(2) },
-    { type5arg ">=" type5arg, compareLevel, "6", inbytecode bc(if_greater_or_equal) bcArg(1) bcArg(2) },
-    { type5arg "<" type5arg, compareLevel, "6", inbytecode bc(if_less) bcArg(1) bcArg(2) },
-    { type5arg "<=" type5arg, compareLevel, "6", inbytecode bc(if_less_or_equal) bcArg(1) bcArg(2) },
-    { type3arg "== @" type3arg, compareLevel, "6", inbytecode bc(if_at) bcArg(1) bcArg(2) },
-    { type3arg "/= @" type3arg, compareLevel, "6", inbytecode bc(if_not_at) bcArg(1) bcArg(2) },
-    
-    
-        // Arithmetic operators
-    
-    { type5arg "+" type5arg, addsubLevel, "567", inbytecode bc(add_num) bcArg(1) bcArg(2) },
-    { type5arg "-" type5arg, addsubLevel, "567", inbytecode bc(subtract_num) bcArg(1) bcArg(2) },
-    { type5arg "*" type5arg, multdivLevel, "567", inbytecode bc(multiply_num) bcArg(1) bcArg(2) },
-    { type5arg "/" type5arg, multdivLevel, "567", inbytecode bc(divide_num) bcArg(1) bcArg(2) },
-    { type5arg "^" type5arg, expLevel, "567", inbytecode bc(raise_to_power) bcArg(1) bcArg(2) },
-    { "-" type5arg, negationLevel, "567", inbytecode bc(multiply_num) bc_constant_int(-1) bcArg(1) },
-    { type5arg "mod" type5arg, multdivLevel, "567", inbytecode bc(mod_int) bcArg(1) bcArg(2) },
-    
-    
-        // Logical operators
-    
-    { "not" type6arg, notBoolLevel, "6", inbytecode bc(if_not) bcArg(1) },
-    { type6arg "and" type6arg, binaryBoolLevel, "6", inbytecode bc(if_and) bcArg(1) bcArg(2) },
-    { type6arg "or" type6arg, binaryBoolLevel, "6", inbytecode bc(if_or) bcArg(1) bcArg(2) },
-    { type6arg "xor" type6arg, binaryBoolLevel, "6", inbytecode bc(if_xor) bcArg(1) bcArg(2) },
     
     
         // Operators on code
@@ -183,7 +155,7 @@ commandTokenType cicadaLanguage[] = {
     { "\\", 0, "34567", inbytecode bc(parent_variable) },
     { type3arg ".parent", backstepVarLevel, "34567", inbytecode bcArg(1) bc(parent_variable) },
     { type3arg ".\\", backstepVarLevel, "34567", inbytecode bcArg(1) bc(parent_variable) },
-    { "top", 0, "34567", inbytecode bc(top_variable) },
+    { "top", 0, "34567", inbytecode bc(top_variable) }, //anonymousmember },
     { "*", 0, "347", inbytecode bc(no_variable) },
     { "nothing", 0, "347", inbytecode bc(no_variable) },
     
@@ -199,21 +171,71 @@ commandTokenType cicadaLanguage[] = {
     { "char", 0, "7", inbytecode bc(type_char) },
     { "int", 0, "7", inbytecode bc(type_int) },
     { "double", 0, "7", inbytecode bc(type_float) },
-    { "string", 0, "7", inbytecode bc(type_string) },
+//    { "string", 0, "7", inbytecode bc(type_string) },
     
     
         // Hard-coded constants
     
-    { "false", 0, "67", inbytecode bc_constant_bool(0) },
-    { "true", 0, "67", inbytecode bc_constant_bool(1) },
+    { "false", 0, "67", inbytecode bc_constant_bool(0) }, //anonymousmember },
+    { "true", 0, "67", inbytecode bc_constant_bool(1) }, //anonymousmember },
     
-    { "'" chararg "'", 0, "67", inbytecode bc(constant_char) bcArg(1) },
-    { int_constant, 0, "567", inbytecode bc(constant_int) bcArg(1) },
-    { double_constant, 0, "567", inbytecode bc(constant_double) bcArg(1) },
-    { "\"" stringarg "\"", 0, "67", inbytecode bc(constant_string) bcArg(1) },
+    { "'" chararg "'", 0, "67", inbytecode bc(constant_char) bcArg(1) }, //anonymousmember },
+    { int_constant, 0, "567", inbytecode bc(constant_int) bcArg(1) }, //anonymousmember },
+    { double_constant, 0, "567", inbytecode bc(constant_double) bcArg(1) }, //anonymousmember },
+    { "\"" stringarg "\"", 0, "67", inbytecode bc(constant_string) bcArg(1) }, //anonymousmember },
     { "{" type1arg "}", 0, "78", inbytecode bc(code_block) bcArg(1) bc(end_of_script) },
     
     { variable_name, 0, "9", inbytecode bcArg(1) },
+    
+    
+        // Arithmetic operators
+    
+    { type5arg "+" type5arg, addsubLevel, "567", inbytecode bc(add_num) bcArg(1) bcArg(2) }, //, bc(search_member) anonymousmember },
+    { type5arg "-" type5arg, addsubLevel, "567", inbytecode bc(subtract_num) bcArg(1) bcArg(2) }, // bc(search_member) anonymousmember },
+    { type5arg "*" type5arg, multdivLevel, "567", inbytecode bc(multiply_num) bcArg(1) bcArg(2) }, // bc(search_member) anonymousmember },
+    { type5arg "/" type5arg, multdivLevel, "567", inbytecode bc(divide_num) bcArg(1) bcArg(2) }, // bc(search_member) anonymousmember },
+    { type5arg "^" type5arg, expLevel, "567", inbytecode bc(raise_to_power) bcArg(1) bcArg(2) }, // bc(search_member) anonymousmember },
+    { "-" type5arg, negationLevel, "567", inbytecode bc(multiply_num) bc_constant_int(-1) bcArg(1) }, // bc(search_member) anonymousmember },
+    { type5arg "mod" type5arg, multdivLevel, "567", inbytecode bc(mod_int) bcArg(1) bcArg(2) }, // bc(search_member) anonymousmember },
+/*    { type5arg "+" type5arg, addsubLevel, "567", "$math.double.add(" arg1 "," arg2 ")" },
+    { type5arg "-" type5arg, addsubLevel, "567", "$math.double.subtract(" arg1 "," arg2 ")" },
+    { type5arg "*" type5arg, multdivLevel, "567", "$math.double.multiply(" arg1 "," arg2 ")" },
+    { type5arg "/" type5arg, multdivLevel, "567", "$math.double.divide(" arg1 "," arg2 ")" },
+    { type5arg "^" type5arg, expLevel, "567", "$math.double.pow(" arg1 "," arg2 ")" },
+    { type5arg "mod" type5arg, multdivLevel, "567", "$math.int.modulo(" arg1 "," arg2 ")" },
+    { "-" type5arg, negationLevel, "567", "-1*" arg1 },*/
+    
+    
+        // Comparison operators
+    
+    { type6arg "==" type6arg, compareLevel, "6", inbytecode bc(if_equal) bcArg(1) bcArg(2) },
+    { type6arg "/=" type6arg, compareLevel, "6", inbytecode bc(if_not_equal) bcArg(1) bcArg(2) },
+    { type5arg ">" type5arg, compareLevel, "6", inbytecode bc(if_greater) bcArg(1) bcArg(2) },
+    { type5arg ">=" type5arg, compareLevel, "6", inbytecode bc(if_greater_or_equal) bcArg(1) bcArg(2) },
+    { type5arg "<" type5arg, compareLevel, "6", inbytecode bc(if_less) bcArg(1) bcArg(2) },
+    { type5arg "<=" type5arg, compareLevel, "6", inbytecode bc(if_less_or_equal) bcArg(1) bcArg(2) },
+    { type3arg "== @" type3arg, compareLevel, "6", inbytecode bc(if_at) bcArg(1) bcArg(2) },
+    { type3arg "/= @" type3arg, compareLevel, "6", inbytecode bc(if_not_at) bcArg(1) bcArg(2) },
+/*    { type6arg "==" type6arg, compareLevel, "6", "$math.bool.ifEqual(" arg1 "," arg2 ")" },
+    { type6arg "/=" type6arg, compareLevel, "6", "$math.bool.ifnotEqual(" arg1 "," arg2 ")" },
+    { type5arg ">" type5arg, compareLevel, "6", "$math.bool.ifGreater(" arg1 "," arg2 ")" },
+    { type5arg ">=" type5arg, compareLevel, "6", "$math.bool.ifGE(" arg1 "," arg2 ")" },
+    { type5arg "<" type5arg, compareLevel, "6", "$math.bool.ifLess(" arg1 "," arg2 ")" },
+    { type5arg "<=" type5arg, compareLevel, "6", "$math.bool.ifLE(" arg1 "," arg2 ")" },
+    { type3arg "== @" type3arg, compareLevel, "6", "$math.bool.ifAt(" arg1 "," arg2 ")" },
+    { type3arg "/= @" type3arg, compareLevel, "6", "$math.bool.ifnotAt(" arg1 "," arg2 ")" },*/
+    
+    
+        // Logical operators
+    
+    { "not" type6arg, notBoolLevel, "6", inbytecode bc(if_not) bcArg(1) },
+    { type6arg "and" type6arg, binaryBoolLevel, "6", inbytecode bc(if_and) bcArg(1) bcArg(2) },
+    { type6arg "or" type6arg, binaryBoolLevel, "6", inbytecode bc(if_or) bcArg(1) bcArg(2) },
+    { type6arg "xor" type6arg, binaryBoolLevel, "6", inbytecode bc(if_xor) bcArg(1) bcArg(2) },
+/*    { "not" type6arg, notBoolLevel, "6", "$math.bool.ifNot(" arg1 ")" },
+    { type6arg "and" type6arg, binaryBoolLevel, "6", "$math.bool.ifAnd(" arg1 "," arg2 ")" },
+    { type6arg "or" type6arg, binaryBoolLevel, "6", "$math.bool.ifOr(" arg1 "," arg2 ")" },
+    { type6arg "xor" type6arg, binaryBoolLevel, "6", "$math.bool.ifXOr(" arg1 "," arg2 ")" },*/
     
     
         // High-level flow control commands, each several bytecode 'sentences' long
@@ -221,12 +243,14 @@ commandTokenType cicadaLanguage[] = {
     { "for" type3arg "in <" type5arg "," type5arg ">" type1arg, commandLevel, "1",
                     inbytecode bc_define(equFlags) bcArg(1) bcArg(2)
                     bcPosition(1) bc_jump_if_true(2) bc(if_greater) bcArg(1)
-                    bcArg(3) bcArg(4) bc_define(equFlags) bcArg(1) bc(add_num) bc(that_variable) bc_constant_int(1)
+                    bcArg(3) bcArg(4) bc_define(equFlags) bcArg(1)
+                    bc(add_num) bc(that_variable) bc_constant_int(1) //bc(search_member) anonymousmember
                     bc_jump_always(1) bcPosition(2) },
     { "backfor" type3arg "in <" type5arg "," type5arg ">" type1arg, commandLevel, "1",
                     inbytecode bc_define(equFlags) bcArg(1) bcArg(3)
                     bcPosition(1) bc_jump_if_true(2) bc(if_less) bcArg(1)
-                    bcArg(2) bcArg(4) bc_define(equFlags) bcArg(1) bc(subtract_num) bc(that_variable) bc_constant_int(1)
+                    bcArg(2) bcArg(4) bc_define(equFlags) bcArg(1)
+                    bc(subtract_num) bc(that_variable) bc_constant_int(1) //bc(search_member) anonymousmember
                     bc_jump_always(1) bcPosition(2) },
     { "if" type6arg "then" type1arg optionalargs "else" type1arg, commandLevel, "1",
                     inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)

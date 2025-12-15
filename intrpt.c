@@ -55,10 +55,18 @@ const ccFloat LLFreeSpace = 1.;
 // These copy data between two type-matched windows.
 
 void copyWindowData(view *sourceView, view *destView)
-{   doCopyCompare(sourceView, destView, &copyWindowData, &copyData, &copyString, copyJumpTable);  }
+{
+    doCopyCompare(sourceView, destView, false, &copyWindowData, &copyData, &preCopyResizeList, copyJumpTable);
+}
 
 void copyData(linkedlist *sourceLL, ccInt sourceIndex, linkedlist *destLL, ccInt destIndex, ccInt numberToCopy)
 {  copyElements(sourceLL, sourceIndex, destLL, destIndex, numberToCopy);  }
+
+void preCopyResizeList(member *destListMember, ccInt *destWidth, ccInt sourceWidth)
+{
+    resizeMember(destListMember, 1, sourceWidth);
+    if (errCode == passed)  *destWidth = sourceWidth;
+}
 
 void copyString(window *sourceStringWindow, member *destStringMember)
 {
@@ -96,15 +104,15 @@ void copyCharToChar(void *Char1, void *Char2)
 {  *(unsigned char *) Char2 = *(unsigned char *) Char1;  }
 
 void copyCharToInt(void *theChar, void *theInt)
-{  *(ccInt *) theInt = ((ccInt) *(char *) theChar);  }
+{  *(ccInt *) theInt = ((ccInt) *(unsigned char *) theChar);  }
 
 void copyCharToDouble(void *theChar, void *theDouble)
-{  *(ccFloat *) theDouble = ((ccFloat) *(char *) theChar);  }
+{  *(ccFloat *) theDouble = ((ccFloat) *(unsigned char *) theChar);  }
 
 void copyIntToChar(void *theInt, void *theChar)
 {
     if (!((*(ccInt *) theInt <= UCHAR_MAX) && (*(ccInt *) theInt >= 0)))  setWarning(out_of_range_err, pcCodePtr-1);
-    else  *(char *) theChar = (char) *(ccInt *) theInt;  }
+    else  *(unsigned char *) theChar = (unsigned char) *(ccInt *) theInt;  }
 
 void copyIntToInt(void *Int1, void *Int2)
 {  *(ccInt *) Int2 = *(ccInt *) Int1;  }
@@ -115,7 +123,7 @@ void copyIntToDouble(void *theInt, void *theDouble)
 void copyDoubleToChar(void *theDouble, void *theChar)
 {
     if (!((*(ccFloat *) theDouble <= UCHAR_MAX) && (*(ccFloat *) theDouble >= 0)))  setWarning(out_of_range_err, pcCodePtr-1);
-    else  *(char *) theChar = (char) *(ccFloat *) theDouble;  }
+    else  *(unsigned char *) theChar = (unsigned char) *(ccFloat *) theDouble;  }
 
 void copyDoubleToInt(void *theDouble, void *theInt)
 {
@@ -142,13 +150,18 @@ void(*copyJumpTable[])(void *, void *) = {
 // Compare data between two type-matched windows to test for equality.
 
 void compareWindowData(view *sourceView, view *destView)
-{   doCopyCompare(sourceView, destView, &compareWindowData, &compareData, &compareString, compareJumpTable);  }
+{   doCopyCompare(sourceView, destView, true, &compareWindowData, &compareData, &setCompareToFalse, compareJumpTable);  }
 
 void compareData(linkedlist *sourceLL, ccInt sourceIndex, linkedlist *destLL, ccInt destIndex, ccInt numberToCompare)
 {
     if (!boolRegister)  return;
     if (sourceLL->elementSize != destLL->elementSize)  boolRegister = false;
     else if (!compareElements(sourceLL, sourceIndex, destLL, destIndex, numberToCompare))  boolRegister = false;
+}
+
+void setCompareToFalse(member *destListMember, ccInt *destWidth, ccInt sourceWidth)
+{
+    boolRegister = false;
 }
 
 void compareString(window *stringWindow1, member *stringMember2)
@@ -168,13 +181,13 @@ void compareCharToChar(void *Char1, void *Char2)
 {  if (*(unsigned char *) Char1 != *(unsigned char *) Char2)  boolRegister = false;  }
 
 void compareCharToInt(void *theChar, void *theInt)
-{  if (((ccInt) *(char *) theChar) != *(ccInt *) theInt)  boolRegister = false;  }
+{  if (((ccInt) *(unsigned char *) theChar) != *(ccInt *) theInt)  boolRegister = false;  }
 
 void compareCharToDouble(void *theChar, void *theDouble)
-{  if (((ccFloat) *(char *) theChar) != *(ccFloat *) theDouble)  boolRegister = false;  }
+{  if (((ccFloat) *(unsigned char *) theChar) != *(ccFloat *) theDouble)  boolRegister = false;  }
 
 void compareIntToChar(void *theInt, void *theChar)
-{  if (*(ccInt *) theInt != ((ccInt) *(char *) theChar))  boolRegister = false;  }
+{  if (*(ccInt *) theInt != ((ccInt) *(unsigned char *) theChar))  boolRegister = false;  }
 
 void compareIntToInt(void *Int1, void *Int2)
 {  if (*(ccInt *) Int1 != *(ccInt *) Int2)  boolRegister = false;  }
@@ -183,7 +196,7 @@ void compareIntToDouble(void *theInt, void *theDouble)
 {  if (((ccFloat) *(ccInt *) theInt) != *(ccFloat *) theDouble)  boolRegister = false;  }
 
 void compareDoubleToChar(void *theDouble, void *theChar)
-{  if (*(ccFloat *) theDouble != ((ccFloat) *(char *) theChar))  boolRegister = false;  }
+{  if (*(ccFloat *) theDouble != ((ccFloat) *(unsigned char *) theChar))  boolRegister = false;  }
 
 void compareDoubleToInt(void *theDouble, void *theInt)
 {  if (*(ccFloat *) theDouble != ((ccFloat) *(ccInt *) theInt))  boolRegister = false;  }
@@ -211,18 +224,18 @@ void(*compareJumpTable[])(void *, void *) = {
 // This is used for copying and comparing data.
 // This routine skips hidden members.
 
-void doCopyCompare(view *sourceView, view *destView,
+void doCopyCompare(view *sourceView, view *destView, bool amComparing,
         void(*ccComposite)(view *, view *),
         void(*ccData)(linkedlist *, ccInt, linkedlist *, ccInt, ccInt),
-        void(*ccString)(window *, member *),
+        void(*ccList)(member *, ccInt *, ccInt),
         void(**ccJumpTable)(void *, void *))
 {
     variable *sourceVar = sourceView->windowPtr->variable_ptr, *destVar = destView->windowPtr->variable_ptr;
     member *loopSourceMember, *loopDestMember;
-    ccInt sourceType = *sourceVar->types, destType = *destVar->types;
-    ccInt sourceMemberNumber, destMemberNumber, indexCounter;
-    ccInt sourceOffset, destOffset, sourceWidth, destWidth;
-    bool sourceIsString = isVarString(sourceVar), destIsString = isVarString(destVar);
+    ccInt sourceType = *sourceVar->types, destType = *destVar->types, extraIndices;
+    ccInt sourceMemberNumber, destMemberNumber, indexCounter, sourceMemberTop, destMemberTop, sourceMemberWidth, destMemberWidth;
+    ccInt sourceOffset, destOffset, sourceWidth, destWidth, ca;
+    bool sourceIsString = isVarString(sourceVar), destIsString = isVarString(destVar), spanMultipleIndices;
     
     
         // explore composite variables by individually stepping into their members
@@ -233,60 +246,98 @@ void doCopyCompare(view *sourceView, view *destView,
         if (destType < composite_type)  setError(type_mismatch_err, pcCodePtr-1);
         if (errCode != passed)  return;
         
-        sourceMemberNumber = 0;
-        destMemberNumber = 0;
+        spanMultipleIndices = ((sourceVar->types[sourceVar->arrayDepth]==composite_type)
+                    == (destVar->types[destVar->arrayDepth]==composite_type) && (sourceVar->arrayDepth == destVar->arrayDepth));
+        if (spanMultipleIndices)  {
+            for (ca = 1; ca < sourceVar->arrayDepth; ca++)  {       // a list that we're in doesn't prevent us from multi-stepping in
+            if ((sourceVar->types[ca] == list_type) || (destVar->types[ca] == list_type))  {
+                spanMultipleIndices = false;
+                break;
+        }   }}
+        
+        getMemberLimits(sourceVar, sourceView, &sourceMemberNumber, &sourceMemberTop, &sourceMemberWidth);
+        getMemberLimits(destVar, destView, &destMemberNumber, &destMemberTop, &destMemberWidth);
         findNextVisibleMember(sourceVar, &loopSourceMember, &sourceMemberNumber);
         findNextVisibleMember(destVar, &loopDestMember, &destMemberNumber);
         sourceOffset = destOffset = 0;
         
-        while (sourceMemberNumber <= sourceVar->mem.members.elementNum)     {
+        extraIndices = 0;
+        if ((!amComparing) && (destType == list_type))  extraIndices = sourceMemberWidth-destMemberWidth;
+        
+        while ((sourceMemberNumber <= sourceMemberTop) || (destMemberNumber <= destMemberTop))     {
             
             view nextSourceView = *sourceView, nextDestView = *destView;
             
-            if (destMemberNumber > destVar->mem.members.elementNum)  setError(type_mismatch_err, pcCodePtr-1);
+            if (((destMemberNumber > destVar->mem.members.elementNum) && (loopSourceMember->indices > 0))
+                        || ((sourceMemberNumber > sourceVar->mem.members.elementNum) && (loopDestMember->indices > 0)))
+                setError(type_mismatch_err, pcCodePtr-1);
             if (errCode != passed)  return;
             
-            if ((sourceType == destType) && (sourceVar->types[sourceVar->arrayDepth] == destVar->types[destVar->arrayDepth]))  {
-                sourceWidth = loopSourceMember->indices;
-                destWidth = loopDestMember->indices;        }
-            else  {
-                sourceWidth = destWidth = 1;
-                if ((loopSourceMember->indices == 0) || (loopDestMember->indices == 0))  {
-                    sourceWidth = destWidth = 0;
-                    if (loopSourceMember->indices != loopDestMember->indices)  {
-                        setError(type_mismatch_err, pcCodePtr-1);
-                        return;
-            }   }   }
+            if (extraIndices != 0)  {
+                ccInt newMemberSize = loopDestMember->indices + extraIndices;
+                if (newMemberSize < 0)  newMemberSize = 0;
+                extraIndices -= (newMemberSize-loopDestMember->indices);
+                resizeMember(loopDestMember, destView->width, newMemberSize);
+                if (errCode != passed)  return;
+            }
             
-            if (isBusy(loopSourceMember, busy_source_copy_flag))  {  setError(self_reference_err, pcCodePtr-1);  return;  }
-            if (isBusy(loopDestMember, busy_dest_copy_flag))  {  setError(self_reference_err, pcCodePtr-1);  return;  }
-            setBusy(loopSourceMember, busy_source_copy_flag);
-            setBusy(loopDestMember, busy_dest_copy_flag);
+            sourceWidth = destWidth = 0;
+            if ((sourceMemberNumber <= sourceMemberTop) && (destMemberNumber <= destMemberTop))  {
+                
+                if (spanMultipleIndices)  {    // ((sourceType != composite_type) && (destType != composite_type))  {
+                    sourceWidth = loopSourceMember->indices;
+                    destWidth = loopDestMember->indices;
+                    if ((sourceWidth != destWidth) && (destType == list_type))  {
+                        ccList(loopDestMember, &destWidth, sourceWidth);
+                }   }
+                else  {
+                    sourceWidth = destWidth = 1;
+                    if ((loopSourceMember->indices == 0) || (loopDestMember->indices == 0))  {
+                        sourceWidth = destWidth = 0;
+                        if (loopSourceMember->indices != loopDestMember->indices)  {
+                            setError(type_mismatch_err, pcCodePtr-1);
+                            return;
+                }   }   }
+                
+                if ((amComparing) && (!boolRegister))  return;
+                
+                if (isBusy(loopSourceMember, busy_source_copy_flag))  {  setError(self_reference_err, pcCodePtr-1);  return;  }
+                if (isBusy(loopDestMember, busy_dest_copy_flag))  {  setError(self_reference_err, pcCodePtr-1);  return;  }
+                setBusy(loopSourceMember, busy_source_copy_flag);
+                setBusy(loopDestMember, busy_dest_copy_flag);
+                
+                stepView(&nextSourceView, loopSourceMember, sourceOffset, sourceWidth);
+                stepView(&nextDestView, loopDestMember, destOffset, destWidth);
+                
+                if (errCode == passed)
+                    ccComposite(&nextSourceView, &nextDestView);
+                
+                clearBusy(loopSourceMember, busy_source_copy_flag);
+                clearBusy(loopDestMember, busy_dest_copy_flag);
+                
+                if (errCode != passed)  {
+                    if ((nextSourceView.windowPtr == NULL) && (nextDestView.windowPtr == NULL))  errCode = passed;
+                    else  return;
+            }   }
             
-            stepView(&nextSourceView, loopSourceMember, sourceOffset, sourceWidth);
-            stepView(&nextDestView, loopDestMember, destOffset, destWidth);
-            
-            if (errCode == passed)
-                ccComposite(&nextSourceView, &nextDestView);
-            
-            clearBusy(loopSourceMember, busy_source_copy_flag);
-            clearBusy(loopDestMember, busy_dest_copy_flag);
-            
-            if (errCode != passed)  {
-                if ((nextSourceView.windowPtr == NULL) && (nextDestView.windowPtr == NULL))  errCode = passed;
-                else  return;     }
-            
-            if (sourceOffset+sourceWidth >= loopSourceMember->indices)  {
-                findNextVisibleMember(sourceVar, &loopSourceMember, &sourceMemberNumber);
-                sourceOffset = 0;        }
-            else  sourceOffset += sourceWidth;
-            
-            if (destOffset+destWidth >= loopDestMember->indices)  {
-                findNextVisibleMember(destVar, &loopDestMember, &destMemberNumber);
-                destOffset = 0;          }
-            else  destOffset += destWidth;      }
+            if (sourceMemberNumber <= sourceMemberTop)  {
+                if (sourceOffset+sourceWidth >= loopSourceMember->indices)  {
+                    findNextVisibleMember(sourceVar, &loopSourceMember, &sourceMemberNumber);
+                    sourceOffset = 0;
+                }
+                else  sourceOffset += sourceWidth;
+            }
+            if (destMemberNumber <= destMemberTop)  {
+                if (destOffset+destWidth >= loopDestMember->indices)  {
+                    findNextVisibleMember(destVar, &loopDestMember, &destMemberNumber);
+                    destOffset = 0;
+                }
+                else  destOffset += destWidth;
+            }
+        }
         
-        if (destMemberNumber <= destVar->mem.members.elementNum)  setError(type_mismatch_err, pcCodePtr-1);    }
+        if (destMemberNumber <= destMemberTop)  setError(type_mismatch_err, pcCodePtr-1);
+    }
     
     
         // if it's a primitive variable then we handle that here
@@ -302,37 +353,26 @@ void doCopyCompare(view *sourceView, view *destView,
         else if (destType >= composite_type)  setError(type_mismatch_err, pcCodePtr-1);
         
         else   {
-        
-                // strings are special and we have to copy/compare each one individually
-            
-            if ((sourceIsString) || (sourceType == list_type))  {
-                if (destType != sourceType)  setError(type_mismatch_err, pcCodePtr-1);
-                else for (indexCounter = 1; indexCounter <= sourceView->width; indexCounter++)  {
-                    ccString(LL_member(sourceVar, sourceView->offset + indexCounter)->memberWindow,
-                            LL_member(destVar, destView->offset + indexCounter));
-            }   }
-            
             
                 // finally, if we have mismatched but compatible types (think composite variables having ints versus doubles),
                 // then we have to step through them member by member
             
-            else   {
-                if ((destIsString) || (destType == list_type))  setError(type_mismatch_err, pcCodePtr-1);
-                else {
-                    void(*ccFunction)(void *, void *) = ccJumpTable[5*(*sourceVar->types) + (*destVar->types)];
-                    linkedlist *sourceLL = &(sourceVar->mem.data), *destLL = &(destVar->mem.data);
-                    sublistHeader *sourceLLsublist = sourceLL->memory, *destLLsublist = destLL->memory;
-                    ccInt sourceSublistLocalIndex = 0, destSublistLocalIndex = 0;
-                    
-                    if (sourceView->width > 0)  {       // skipElements() will crash if sourceLL or destLL has 0 elements
-                        ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, sourceView->offset),
-                                    skipElements(destLL, &destLLsublist, &destSublistLocalIndex, destView->offset));
-                        if (errCode == passed)  {
-                        for (indexCounter = 2; indexCounter <= sourceView->width; indexCounter++)  {
-                            ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, 1),
-                                        skipElements(destLL, &destLLsublist, &destSublistLocalIndex, 1)  );
-                            if (errCode != passed)  break;
-        }   }   }   }   }}
+            if ((destIsString) || (destType == list_type))  setError(type_mismatch_err, pcCodePtr-1);
+            else {
+                void(*ccFunction)(void *, void *) = ccJumpTable[5*(*sourceVar->types) + (*destVar->types)];
+                linkedlist *sourceLL = &(sourceVar->mem.data), *destLL = &(destVar->mem.data);
+                sublistHeader *sourceLLsublist = sourceLL->memory, *destLLsublist = destLL->memory;
+                ccInt sourceSublistLocalIndex = 0, destSublistLocalIndex = 0;
+                
+                if (sourceView->width > 0)  {       // skipElements() will crash if sourceLL or destLL has 0 elements
+                    ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, sourceView->offset),
+                                skipElements(destLL, &destLLsublist, &destSublistLocalIndex, destView->offset));
+                    if (errCode == passed)  {
+                    for (indexCounter = 2; indexCounter <= sourceView->width; indexCounter++)  {
+                        ccFunction( skipElements(sourceLL, &sourceLLsublist, &sourceSublistLocalIndex, 1),
+                                    skipElements(destLL, &destLLsublist, &destSublistLocalIndex, 1)  );
+                        if (errCode != passed)  break;
+        }   }   }   }}
     }
 }
 
@@ -340,9 +380,29 @@ void doCopyCompare(view *sourceView, view *destView,
 bool isVarString(variable *theVar)
 {
     ccInt *types = theVar->types;
-    if (types[0] == string_type)  return true;
     if (types[0] == list_type)  return (types[1] == char_type);
     return false;
+}
+
+
+void getMemberLimits(variable *theVar, view *theView, ccInt *memberBase, ccInt *memberTop, ccInt *totalMemberWidth)
+{
+    ccInt cm;
+    
+    if (*theVar->types == list_type)  {
+        *memberBase = theView->offset;
+        *memberTop = theView->offset+theView->width;
+        theView->width = 1;
+    }
+    else  {
+        *memberBase = 0;
+        *memberTop = theVar->mem.members.elementNum;
+    }
+    
+    *totalMemberWidth = 0;
+    for (cm = *memberBase+1; cm <= *memberTop; cm++)  {
+        *totalMemberWidth += LL_member(theVar, cm)->indices;
+    }
 }
 
 
@@ -354,7 +414,8 @@ void findNextVisibleMember(variable *theVariable, member **theMember, ccInt *mem
         (*memberCounter)++;
         if (*memberCounter > theVariable->mem.members.elementNum)  return;
         *theMember = LL_member(theVariable, *memberCounter);
-    }  while (((*theMember)->ifHidden) || ((*theMember)->indices == 0));
+    }  while ((*theMember)->ifHidden);      // don't skip over empty lists; resize them instead
+//    }  while (((*theMember)->ifHidden) || ((*theMember)->indices == 0));
 }
 
 
@@ -386,23 +447,24 @@ void copyCompareVarToList(void *sourceData, ccInt sourceDataType, view *destView
 // Next 3 routines:  used by size(), as well as forced-equate for 'type-checking'.
 // Here we calculate the size in bytes of a window (including its members, ...)
 
-void sizeView(view *theView, void *dataSize, void *sizeofStrings)
-{  doReadWrite(theView, dataSize, sizeofStrings, false, false, false, &sizeView, &sizeData, &sizeString);  }
+void sizeView(view *theView, void *dataSize, member *listMember)
+{  doReadWrite(theView, dataSize, listMember, false, false, false, &sizeView, &sizeData);  }
 
-void sizeData(view *theView, void *dataSize, void *dummy)
+void sizeData(view *theView, void *dsArg, member *listMember)
 {
+    sizeViewInfo *info = (sizeViewInfo *) dsArg;
     ccInt sizeToAdd = theView->windowPtr->variable_ptr->mem.data.elementSize*theView->width;
     
-    if (extCallMode)  sizeToAdd += align(sizeToAdd);
-    *(ccInt *) dataSize += sizeToAdd;
-}
-
-void sizeString(view *theView, ccInt stringIndex, void *dataSize, void *sizeofStrings)
-{
-    member *stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
+    if (listMember != NULL)  {
+        ccInt elSize = theView->windowPtr->variable_ptr->mem.data.elementSize;
+        if ((info->listElSize == 0) || (elSize < info->listElSize))  {
+            info->listElSize = elSize;
+    }   }
     
-    if (*(ccInt *) sizeofStrings == no_string)  *(ccInt *) sizeofStrings = 0;
-    *(ccInt *) sizeofStrings += stringMember->indices;
+    if ((listMember == NULL) || (info->includeDataLists))  {
+        if (extCallMode)  sizeToAdd += align(sizeToAdd);
+        info->dataSize += sizeToAdd;
+    }
 }
 
 
@@ -411,12 +473,12 @@ void sizeString(view *theView, ccInt stringIndex, void *dataSize, void *sizeofSt
 // not wired in yet -- doesn't work because it can't subtract a window that was already counted
 // from a later window that completely encloses it (i.e. the difference is a lower + upper piece)
 
-void storageSizeView(view *theView, void *dataSize, void *dummy)
-{  doReadWrite(theView, dataSize, dummy, false, true, false, &storageSizeView, &storageSizeData, &storageSize_String);  }
+void storageSizeView(view *theView, void *dataSize, member *dummy)
+{  doReadWrite(theView, dataSize, dummy, false, true, false, &storageSizeView, &storageSizeData);  }
 
-void storageSizeData(view *theView, void *dataSize, void *ssMode)
+void storageSizeData(view *theView, void *dataSize, member *dummy)
 {
-    ccInt loopWindowNum, mode = *(ccInt *) ssMode;
+    ccInt loopWindowNum, mode = ((ccInt *) dataSize)[1];
     window *loopWindow;
     pinned_LL *windowsPLL = &(theView->windowPtr->variable_ptr->windows);
     
@@ -466,61 +528,44 @@ void storageSizeData(view *theView, void *dataSize, void *ssMode)
     else if (mode == 3)  clearBusy(theView->windowPtr, busy_SS_flag);
 }
 
-void storageSize_String(view *theView, ccInt stringIndex, void *dataSize, void *dummy)
-{
-    member *stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
-    view charView;
-    
-    charView.windowPtr = theView->windowPtr;
-    charView.offset = 0;
-    charView.width = 1;
-    
-    stepView(&charView, stringMember, 0, stringMember->indices);
-    if (errCode == passed)  storageSizeView(&charView, dataSize, dummy);
-}
-
 
 // Next 3 routines:  used by forced-equate.
 // These copy data from a source buffer into a window.
 
-void writeView(view *theView, void *bufferPtr, void *sizeofStrings)        // writes the variables
-{  doReadWrite(theView, bufferPtr, sizeofStrings, true, false, false, &writeView, &writeData, &writeString);  }
+void writeView(view *theView, void *bufferPtr, member *listMember)        // writes the variables
+{  doReadWrite(theView, bufferPtr, listMember, true, false, false, &writeView, &writeData);  }
 
-void writeData(view *theView, void *bufferPtr, void *dummy)
+void writeData(view *theView, void *theArg, member *listMember)
 {
+    writeViewInfo *info = (writeViewInfo *) theArg;
     linkedlist *theLL = &(theView->windowPtr->variable_ptr->mem.data);
     
-    setElements(theLL, theView->offset+1, theView->offset+theView->width, *(void **) bufferPtr);
-    *(char **) bufferPtr += theLL->elementSize*theView->width;
-    if (extCallMode)  *(char **) bufferPtr += align(theLL->elementSize*theView->width);
-}
-
-void writeString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeofStrings)
-{
-    member *stringMember;
-    view stringView;
+    if (listMember != NULL)  {
+        ccInt newListSize = 0;
+        if (info->extraIndicesNeeded > 0)  {
+            ccInt elSize = theView->windowPtr->variable_ptr->mem.data.elementSize;
+            if (elSize == info->listElSize)  {
+                newListSize = info->extraIndicesNeeded;
+                info->extraIndicesNeeded = 0;
+        }   }
+        resizeMember(listMember, 1, newListSize);
+        if ((newListSize == 0) || (errCode != passed))  return;
+        theView->width = newListSize;
+    }
     
-    stringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
-    stringView.windowPtr = stringMember->memberWindow;
-    resizeMember(stringMember, 1, *(ccInt *) sizeofStrings);
-    if (errCode != passed)  return;
-    
-    if (*(ccInt *) sizeofStrings == 0)  return;
-    
-    setElements(&(stringMember->memberWindow->variable_ptr->mem.data), stringMember->memberWindow->offset+1,
-            stringMember->memberWindow->offset+stringMember->memberWindow->width, *(void **) bufferPtr);
-    *(char **) bufferPtr += *(ccInt *) sizeofStrings;
-    *(ccInt *) sizeofStrings = 0;
+    setElements(theLL, theView->offset+1, theView->offset+theView->width, (void *) info->bufferPtr);
+    info->bufferPtr += theLL->elementSize*theView->width;
+//    if (extCallMode)  info->bufferPtr += align(theLL->elementSize*theView->width);
 }
 
 
 // Next 3 routines:  used by forced-equate.
 // These copy data from a window into a destination memory buffer.
 
-void readView(view *theView, void *bufferPtr, void *sizeofStrings)
-{  doReadWrite(theView, bufferPtr, sizeofStrings, true, false, false, &readView, &readData, &readString);  }
+void readView(view *theView, void *bufferPtr, member *listMember)
+{  doReadWrite(theView, bufferPtr, listMember, true, false, false, &readView, &readData);  }
 
-void readData(view *theView, void *bufferPtr, void *dummy)
+void readData(view *theView, void *bufferPtr, member *dummy)
 {
     linkedlist *theLL = &(theView->windowPtr->variable_ptr->mem.data);
     
@@ -529,55 +574,130 @@ void readData(view *theView, void *bufferPtr, void *dummy)
     if (extCallMode)  *(char **) bufferPtr += align(theLL->elementSize*theView->width);
 }
 
-void readString(view *theView, ccInt stringIndex, void *bufferPtr, void *sizeofStrings)
+
+
+
+// Next 2 routines, along with readString() (above):  used by print_string().
+// These copy data from a window into a buffer, writing out any numeric data in ASCII format (rather than binary)
+
+void printViewString(view *theView, void *theArg, member *listMember)
+{  doReadWrite(theView, theArg, listMember, true, false, false, &printViewString, &printDataString);  }
+
+void printDataString(view *theView, void *theArg, member *listMember)
 {
-    window *stringWindow = LL_member(theView->windowPtr->variable_ptr, stringIndex)->memberWindow;
-    linkedlist *stringLL = &(stringWindow->variable_ptr->mem.data);
+    ccInt idx, numChars, theType = theView->windowPtr->variable_ptr->types[0];
+    printStringInfo *info = (printStringInfo *) theArg;
+    variable *theVar = theView->windowPtr->variable_ptr;
     
-    getElements(stringLL, stringWindow->offset+1, stringWindow->offset+stringWindow->width, *(void **) bufferPtr);
-    *(char **) bufferPtr += stringWindow->width;
+    if (theType == bool_type)  {
+    for (idx = 0; idx < theView->width; idx++)  {
+        loadBoolRegister(theVar, theView->offset+idx);
+        if (boolRegister)  {
+            if (info->stringPtr != NULL)  memcpy(info->stringPtr+info->numChars, "true", 4);
+            info->numChars += 4;
+        }
+        else  {
+            if (info->stringPtr != NULL)  memcpy(info->stringPtr+info->numChars, "false", 5);
+            info->numChars += 5;
+    }}  }
+    
+    else if (theType == char_type)  {
+        if (info->stringPtr != NULL)  getElements(&(theVar->mem.data),
+                    theView->offset+1, theView->offset+theView->width, info->stringPtr+info->numChars);
+        info->numChars += theView->width;
+    }
+    
+    else  {
+    for (idx = 0; idx < theView->width; idx++)  {
+        char *writeTo = info->stringPtr;
+        if (writeTo != NULL)  writeTo += info->numChars;
+        loadDoubleRegister(theVar, theView->offset+idx);
+        printNumber(writeTo, doubleRegister, &numChars, theType, info->maxFloatingDigits);
+        info->numChars += numChars;
+    }}
+}
+
+
+// Next 3 routines:  called by read_string()
+// Copies data from the source string into the destination window.
+// Numbers are parsed and converted from ASCII to binary in the process.
+
+void readViewString(view *theView, void *theArg, member *listMember)
+{  doReadWrite(theView, theArg, listMember, true, false, false, &readViewString, &readDataString);  }
+
+void readDataString(view *theView, void *theArg, member *listMember)
+{
+    readStringInfo *info = (readStringInfo *) theArg;
+    variable *theVar = theView->windowPtr->variable_ptr;
+    ccInt idx, varType = theVar->types[0];
+    
+    
+        // white space in the source string is skipped over
+        // (lettertype[], a_space, etc. are defined in cmpile.c(pp)/h)
+    
+    
+        // numeric types in the destination window are parsed using readNum() (defined in cmpile.c(pp))
+    
+    for (idx = 0; idx < theView->width; idx++)  {
+        
+        ccInt charType = lettertype(info->sourceString);
+        if ((idx == 0) || (varType != char_type))  {
+        while ((charType == a_space) || (charType == a_eol) || (charType == unprintable))  {
+            info->sourceString++;
+            charType = lettertype(info->sourceString);
+        }}
+        
+        if (info->sourceString >= info->stringEnd)  {
+            info->warningMarker = info->sourceString;
+            setWarning(overflow_err, pcCodePtr-1);
+            return;         }
+        
+        if ((varType == int_type) || (varType == double_type))  {
+            int rtrn = readNum(&(info->sourceString), &doubleRegister, NULL);          // deal with overflow
+            if (rtrn != passed)  {  info->warningMarker = info->sourceString;  setError(rtrn, pcCodePtr-1);  return;  }
+            saveDoubleRegister(theVar, theView->offset+idx);       }
+        else if (varType == char_type)  {
+            *LL_Char(&(theVar->mem.data), theView->offset+idx+1) = *info->sourceString;
+            info->sourceString++;        }
+        else if (varType == bool_type)  {
+            if (charsCmp(info->sourceString, "true"))  {
+                *(bool *) element(&(theVar->mem.data), theView->offset+idx+1) = true;
+                info->sourceString+=4;      }
+            else if (charsCmp(info->sourceString, "false"))  {
+                *(bool *) element(&(theVar->mem.data), theView->offset+idx+1) = false;
+                info->sourceString+=5;      }
+            else  info->warningMarker = info->sourceString;
+    }   }
+}
+
+bool charsCmp(const char *s1, const char *s2)
+{
+    while (*s2 != 0)  {
+        if (*s1 != *s2)  return false;
+        s1++;  s2++;
+    }
+    
+    return true;
 }
 
 
 // Next 3 routines:  invoked by C_function()
 // These count the number of seperate arguments that will go into the 'argv' array.
 
-void countDataLists(view *theView, void *windowCount, void *stringCount)
-{  doReadWrite(theView, windowCount, stringCount, false, false, true, &countDataLists, &countDataView, countStringView);  }
+void countDataLists(view *theView, void *windowCount, member *stringCount)
+{  doReadWrite(theView, windowCount, stringCount, false, false, true, &countDataLists, &countDataView);  }
 
-void countDataView(view *theView, void *windowCount, void *dummy)
+void countDataView(view *theView, void *windowCount, member *dummy)
 {  (*(ccInt *) windowCount)++;  }
-
-void countStringView(view *theView, ccInt stringDummyIndex, void *windowCount, void *stringCount)
-{
-/*    ccInt stringIndex, windowCounter;       // catch any window overlaps before we allocate memory, to avoid crashes
-    
-    for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
-        
-        window *theStringWindow = LL_member(theView->windowPtr->variable_ptr, stringIndex)->memberWindow;
-        
-            // make sure the string doesn't have more than one window -- that way the user can modify its size and we can still fix the member
-        
-        for (windowCounter = 1; windowCounter <= theStringWindow->variable_ptr->windows.data.elementNum; windowCounter++)  {
-            window *loopWindow = (window *) element(&(theStringWindow->variable_ptr->windows.data), windowCounter);
-            if ((loopWindow != theStringWindow) && (*(loopWindow->references) > 0))  {
-                if (loopWindow->jamStatus == cannot_jam)  loopWindow->jamStatus = unjammed;
-                else  {
-                    setError(overlapping_window_err, pcCodePtr-1);
-                    return;
-    }   }   }   }*/
-    
-    (*(ccInt *) stringCount)++;
-}
 
 
 // Next 3 routines:  invoked by C_function()
 // These fill the argv array of a C function with the addresses of the data lists.
 
-void argvFillHandles(view *theView, void *argsPtr, void *dummy)
-{  doReadWrite(theView, argsPtr, dummy, false, false, true, &argvFillHandles, &passDataView, &passString);  }
+void argvFillHandles(view *theView, void *argsPtr, member *dummy)
+{  doReadWrite(theView, argsPtr, dummy, false, false, true, &argvFillHandles, &passDataView);  }
 
-void passDataView(view *theView, void *argsPtr, void *dummy)
+void passDataView(view *theView, void *argsPtr, member *dummy)
 {
     variable *theVar = theView->windowPtr->variable_ptr;
     argsType *oneArg = (argsType *) argsPtr;
@@ -589,95 +709,10 @@ void passDataView(view *theView, void *argsPtr, void *dummy)
     if (theView->offset == theVar->mem.data.elementNum)  
         *(oneArg->p) = (void *) (((char *) theVar->mem.data.memory) + sublistHeaderSize);
     else  *(oneArg->p) = element(&(theVar->mem.data), theView->offset+1);
-    *(oneArg->type) = *theVar->types;
+    *(oneArg->type) = theVar->types;
     *(oneArg->indices) = theView->width;
     
     incrementArg(oneArg);
-}
-
-void passString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dummy)
-{
-    argsType *oneArg = (argsType *) argsPtr;
-    ccInt stringIndex, rtrn;
-    
-    linkedlist *stringListCopy = (linkedlist *) malloc((size_t) (theView->width*sizeof(linkedlist)));
-    if (stringListCopy == NULL)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
-    
-    for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
-        
-        window *theStringWindow = LL_member(theView->windowPtr->variable_ptr, stringIndex)->memberWindow;
-        linkedlist *theStringLL = &(theStringWindow->variable_ptr->mem.data);
-        
-        rtrn = defragmentLinkedList(theStringLL);
-        if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
-        
-        if (theStringLL->elementNum != theStringWindow->width)  {  setError(incomplete_variable_err, pcCodePtr-1);  return;  }
-        
-            // make sure the string doesn't have more than one window -- that way the user can modify its size and we can still fix the member
-            // This doesn't work -- doesn't check for overlap based on offset/indices, only whether two windows use the same variable
-        /*
-        for (windowCounter = 1; windowCounter <= theStringWindow->variable_ptr->windows.data.elementNum; windowCounter++)  {
-            window *loopWindow = (window *) element(&(theStringWindow->variable_ptr->windows.data), windowCounter);
-            if ((loopWindow != theStringWindow) && (*(loopWindow->references) > 0))  {
-                if (loopWindow->jamStatus == cannot_jam)  loopWindow->jamStatus = unjammed;
-                else  {
-                    setError(overlapping_window_err, pcCodePtr-1);
-                    return;
-        }   }   }*/
-        
-            // What was this trying to do?  Does not work
-        
-        /*
-        rtrn = addMemory(theStringWindow, 0, -theStringWindow->offset);
-        if (rtrn == passed)
-            rtrn = addMemory(theStringWindow, theStringWindow->width, theStringWindow->width-theStringWindow->variable_ptr->instances);
-        if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
-        */
-        
-        stringListCopy[stringIndex-theView->offset-1] = *theStringLL;
-    }
-    
-    *(oneArg->p) = (void *) stringListCopy;
-    *(oneArg->type) = string_type;
-    *(oneArg->indices) = theView->width;
-    
-    incrementArg(oneArg);
-}
-
-// Next 3 routines:  again, used by C_function()
-// This adjusts the size of our string member windows to match the size of the character arrays (in case the user changed those).
-
-void argvFixStrings(view *theView, void *argsPtr, void *dummy)
-{  doReadWrite(theView, argsPtr, dummy, false, false, true, &argvFixStrings, &fixNothing, &fixString);  }
-
-void fixNothing(view *theView, void *argsPtr, void *dummy)
-{
-    argsType *oneArg = (argsType *) argsPtr;
-    (oneArg->p)++;
-}
-
-void fixString(view *theView, ccInt stringDummyIndex, void *argsPtr, void *dummy)
-{
-    ccInt stringIndex;
-    argsType *oneArg = (argsType *) argsPtr;
-    
-    linkedlist *stringListCopy = (linkedlist *) *(oneArg->p);
-    
-    for (stringIndex = theView->offset+1; stringIndex <= theView->offset+theView->width; stringIndex++)  {
-        
-        member *theStringMember = LL_member(theView->windowPtr->variable_ptr, stringIndex);
-        linkedlist *theStringLL = &(theStringMember->memberWindow->variable_ptr->mem.data);
-        
-        *theStringLL = stringListCopy[stringIndex-theView->offset-1];
-        
-        theStringMember->indices = theStringLL->elementNum;
-        theStringMember->memberWindow->width = theStringLL->elementNum;
-        theStringMember->memberWindow->variable_ptr->instances = theStringLL->elementNum;
-    }
-    
-    free((void *) stringListCopy);
-    
-    (oneArg->p)++;
 }
 
 
@@ -691,25 +726,57 @@ char hexDigit(unsigned char hexNumber)
 }
 
 
+
+// Next 3 routines:  used by print()
+// These output the contents of an object to the screen.
+
+void printView(view *theView, void *bufferPtr, member *sizeofStrings)
+{  doReadWrite(theView, bufferPtr, sizeofStrings, true, false, false, &printView, &printData);  }
+
+void printData(view *theView, void *bufferPtr, member *dummy)
+{
+    ccInt counter, windowOffset = theView->offset, theType = theView->windowPtr->variable_ptr->types[0];
+    variable *theVar = theView->windowPtr->variable_ptr;
+    unsigned char theChar;
+    
+    for (counter = windowOffset; counter < windowOffset+theView->width; counter++)  {
+        
+        if (theType == bool_type)  {
+            loadBoolRegister(theVar, counter);
+            if (boolRegister)  printf("true");
+            else  printf("false");
+        }
+        else if (theType == char_type)  {
+            loadIntRegister(theVar, counter);
+            theChar = (unsigned char) intRegister;
+            if (lettertype(&theChar) != unprintable)  printf("%c", (unsigned char) theChar);
+            else  printf("\\%c%c", hexDigit(theChar/16), hexDigit(theChar % 16));
+        }
+        else if (theType == int_type)  {
+            loadIntRegister(theVar, counter);
+            printf(printIntFormatString, (ccInt) intRegister);
+        }
+        else if (theType == double_type)  {
+            loadDoubleRegister(theVar, counter);
+            printf(printFloatFormatString, (ccFloat) doubleRegister);
+        }
+    }
+}
+
+
+
 // doReadWrite() is used for scanning a single window tree (in comparison to doCopyCompare() which scans two at once).
 // Invoked by size(), feq, read_string(), print_string(), C_function().
 // This routine skips hidden members; so for example size() will not register these.
 
-void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIndexOrder, bool skipBusyMembers, bool bundleStrings,
-        void(*srwComposite)(view *, void *, void *),
-        void(*srwData)(view *, void *, void *),
-        void(*srwString)(view *, ccInt, void *, void *))
+void doReadWrite(view *theView, void *globalPtr, member *memberToVar, bool doInIndexOrder, bool skipBusyMembers, bool bundleStrings,
+        void(*srwComposite)(view *, void *, member *),
+        void(*srwData)(view *, void *, member *))
 {
     view nextView;
-    member *loopMember;
+    member *loopMember, *listMember;
     variable *theVar = theView->windowPtr->variable_ptr;
     ccInt memberCounter, indexCounter, firstMember, lastMember;
-//    bool encompassesLists = false;
-    
-/*    if (theVar->arrayDepth > 0)  {
-    if (theVar->types[1] == list_type)  {
-        encompassesLists = true;
-    }}*/
     
     if (*theVar->types >= composite_type)   {
         
@@ -718,6 +785,8 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIn
         
         for (memberCounter = firstMember; memberCounter <= lastMember; memberCounter++)  {
             loopMember = LL_member(theVar, memberCounter);
+            if (theVar->types[0] == list_type)  listMember = loopMember;
+            else  listMember = NULL;
             
             if (isBusy(loopMember, busy_SRW_flag))  {
                 if (!skipBusyMembers)  {
@@ -729,13 +798,13 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIn
                 setBusy(loopMember, busy_SRW_flag);
                 
                 if ((loopMember->memberWindow != NULL) && (!loopMember->ifHidden))      {
-                    if (doInIndexOrder)  {
-                    for (indexCounter = 0; indexCounter < theView->width*loopMember->indices; indexCounter++)  {
+                    if ((doInIndexOrder) && (loopMember->memberWindow->variable_ptr->types[0] >= composite_type))  {    // cond 2: efficiency, and to
+                    for (indexCounter = 0; indexCounter < theView->width*loopMember->indices; indexCounter++)  {        // allow size-0 list resizes
                         nextView.windowPtr = theView->windowPtr;
                         nextView.offset = theView->offset;
                         nextView.width = 1;
                         stepView(&nextView, loopMember, indexCounter, 1);
-                        if (errCode == passed)  srwComposite(&nextView, globalPtr, secondaryPtr);
+                        if (errCode == passed)  srwComposite(&nextView, globalPtr, listMember);
                         else  errCode = passed;
                     }}
                     
@@ -743,7 +812,7 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIn
                         nextView = *theView;
                         if (*theVar->types == list_type)  {  nextView.offset = 0;  nextView.width = 1;  }
                         stepView(&nextView, loopMember, 0, loopMember->indices);
-                        if (errCode == passed)  srwComposite(&nextView, globalPtr, secondaryPtr);
+                        if (errCode == passed)  srwComposite(&nextView, globalPtr, listMember);
                         else  errCode = passed;
                 }   }
                 
@@ -751,16 +820,7 @@ void doReadWrite(view *theView, void *globalPtr, void *secondaryPtr, bool doInIn
                 if (errCode != passed)  return;
     }   }   }
     
-    else  {        // it's a primitive variable
-        if (*theVar->types == string_type)  {
-            ccInt viewTop = theView->width;
-            if (bundleStrings)  viewTop = 1;  
-            
-            for (indexCounter = 1; indexCounter <= viewTop; indexCounter++)  {
-                srwString(theView, theView->offset+indexCounter, globalPtr, secondaryPtr);
-                if (errCode != passed)  break;
-        }   }
-        else  srwData(theView, globalPtr, secondaryPtr);            }
+    else  srwData(theView, globalPtr, memberToVar);
 }
 
 
@@ -904,7 +964,7 @@ ccInt findMemberIndex(variable *theVariable, ccInt currentOffset, ccInt soughtMe
     
         // if it's an array or string variable, return the Nth index of the first member
     
-    if ((*theVariable->types == string_type) || (*theVariable->types == list_type))  *memberNumber = currentOffset+1;
+    if (*theVariable->types == list_type)  *memberNumber = currentOffset+1;
     else  *memberNumber = 1;
     *soughtMember = LL_member(theVariable, *memberNumber);
     
@@ -944,7 +1004,6 @@ void stepView(view *viewToStep, member *startingMember, ccInt entryOffset, ccInt
 {
     window *memberWindow = startingMember->memberWindow;
     ccInt startingOffset = viewToStep->offset, startingWidth = viewToStep->width;
-    if (*viewToStep->windowPtr->variable_ptr->types == string_type)  startingOffset = 0;
     
     if (*viewToStep->windowPtr->variable_ptr->types == list_type)  {  startingOffset = 0;  startingWidth = 1;  }
     
@@ -1062,7 +1121,7 @@ void derefVariable(variable *theVariable)
     derefPLLPtr(&VariableList, theVariable->PLL_index, theVariable->references);
     if (*(theVariable->references) != 0)  return;
     
-    if (*theVariable->types >= string_type)  {
+    if (*theVariable->types >= composite_type)  {
     for (counter = 1; counter <= theVariable->mem.members.elementNum; counter++)   {
         loopMember = LL_member(theVariable, counter);
         for (codeCounter = 1; codeCounter <= loopMember->codeList.elementNum; codeCounter++)   {
@@ -1295,7 +1354,7 @@ ccInt addMembers(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices
     if (membersToAdd > 0)  {
         rtrn = insertElements(memberLL, newMemberNumber, membersToAdd, false);
         if (rtrn != passed)  return out_of_memory_err;      }
-    else  membersToAdd = 1;
+    else  membersToAdd = 1;                     // the member is already there; just update its record
     
     if (doWrite)  {
     for (cm = 0; cm < membersToAdd; cm++)  {
@@ -1649,7 +1708,7 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
     else  {
         if (newIndices > 0)  {
             
-            if ((*theVariable->types != string_type) && (*theVariable->types != list_type))  {
+            if (*theVariable->types != list_type)  {
                 rtrn = insertElements(&(theVariable->mem.data), fullInsertionOffset+1, newIndices, true);
                 if (rtrn != passed)  return rtrn;       }
             
@@ -1662,10 +1721,8 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
                     variable *oneStringVar;
                     window *oneStringWindow = NULL;
                     member *oneStringMember = NULL;
-                    const static ccInt charType = char_type;
                     
-                    if (*theVariable->types == string_type)  rtrn = addVariable(&oneStringVar, &charType, 0, false);
-                    else  rtrn = addVariable(&oneStringVar, theVariable->types + 1, theVariable->arrayDepth-1, false);
+                    rtrn = addVariable(&oneStringVar, theVariable->types + 1, theVariable->arrayDepth-1, false);
                     if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneStringWindow, true);
                     if (rtrn == passed)  rtrn = addMembers(theVariable, counter, 0, &oneStringMember, false, 0, true);
                     if (rtrn != passed)  return rtrn;
@@ -1674,7 +1731,7 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
                     refWindow(oneStringWindow);
         }   }   }
         else  {
-            if ((*theVariable->types == string_type) || (*theVariable->types == list_type))  {
+            if (*theVariable->types == list_type)  {
             for (counter = fullInsertionOffset+(-newIndices); counter >= fullInsertionOffset+1; counter--)  {
                 removeMember(theVariable, counter);
             }}

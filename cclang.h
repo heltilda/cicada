@@ -54,7 +54,7 @@
 #define step_to_member_ID 11    /*  (.) step to a var with specified ID  */
 #define step_to_index 12        /*  ([]) step to Nth var  */
 #define step_to_indices 13      /*  return a range of variables  */
-#define step_to_all 14          /*  [*]  */
+#define step_to_all 14          /*  []  */
 #define resize_cmd 15           /*  [^#] -- sets a new top  */
 #define insert_index 16         /*  same as step_to_index, but adds a new member (to a composite variable) or index (to an array)  */
 #define insert_indices 17       /*  same as step_to_indices, but create new members/array indices (plural)  */
@@ -94,20 +94,19 @@
 
 #define type_array 46           /*  as in myvar :: [dim] vartype  */
 #define type_lists 47           /*  as in myvar :: [dim] vartype  */
-#define type_string 48          /*  string type  */
-#define type_bool 49            /*  bool type  */
-#define type_char 50            /*  char type  */
-#define type_int 51             /*  int type  */
-#define type_float 52           /*  double type  */
+#define type_bool 48            /*  bool type  */
+#define type_char 49            /*  char type  */
+#define type_int 50             /*  int type  */
+#define type_float 51           /*  double type  */
 
-#define constant_bool 53        /*  a constant integer entered in the code */
-#define constant_char 54        /*  a constant integer entered in the code */
-#define constant_int 55         /*  a constant integer entered in the code */
-#define constant_double 56      /*  a const. float entered in the code */
-#define constant_string 57      /*  contained between double quotes */
-#define code_block 58           /*  a {} */
+#define constant_bool 52        /*  a constant integer entered in the code */
+#define constant_char 53        /*  a constant integer entered in the code */
+#define constant_int 54         /*  a constant integer entered in the code */
+#define constant_double 55      /*  a const. float entered in the code */
+#define constant_string 56      /*  contained between double quotes */
+#define code_block 57           /*  a {} */
 
-#define commands_num 59
+#define commands_num 58
 
 
 
@@ -156,8 +155,9 @@ extern ccInt cicadaNumPrecedenceLevels;
 #define bc_full(arg) #arg
 #define bc(arg) " " bc_full(arg) " "
 #define bc_define(arg) " 8 " bc_full(arg) " "
-#define bc_constant_bool(arg) " 53 " #arg " "
-#define bc_constant_int(arg) " 55 " #arg " "
+#define bc_constant_bool(arg) " 52 " #arg " "
+#define bc_constant_int(arg) " 54 " #arg " " // anonymousmember " "
+#define bc_math_op(op) bcArg(1) bc(C_function) bc_define(defxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script)
 #define bc_jump_always(arg) " 1 j" #arg " "
 #define bc_jump_if_true(arg) " 2 j" #arg " "
 #define bc_jump_if_false(arg) " 3 j" #arg " "

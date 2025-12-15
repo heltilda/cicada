@@ -39,7 +39,7 @@ typedef double ccFloat;
 typedef struct {
     ccInt num;
     void **p;
-    ccInt *type;
+    ccInt **type;
     ccInt *indices;
 } argsType;
 
@@ -48,15 +48,23 @@ typedef struct {
     ccInt(*functionPtr)(argsType);
 } Cfunction;
 
-extern void getArgs(argsType, ...);
-extern ccInt checkArgs(argsType, ...);
+extern ccInt getArgs(argsType, ...);
+extern char *argDummies[5];
 
-#define scalar(t) (-t-1)
-#define vector(t) (t+1)
+#define fromArg(n) NULL,n
+#define endArgs NULL,-1
 
-#define byValue(a) NULL,a
-#define fromArg(n) NULL,NULL,n
-#define endArgs NULL,NULL,-1
+#define byValue(p) &argDummies[0],p
+#define scalarValue(t,p) &argDummies[1],t,p
+#define scalarRef(t,p) &argDummies[2],t,p
+#define arrayValue(t,p) &argDummies[3],t,p
+#define arrayRef(t,p) &argDummies[4],t,p
+
+//#define arrayArg(t) t+1
+#define arrayOf(a) array_type,a
+#define listOf(a) list_type,a
+#define string_type list_type,char_type
+//#define scalarArg(t) 200,t+1
 
 
 
@@ -66,13 +74,11 @@ extern ccInt checkArgs(argsType, ...);
 #define char_type 1
 #define int_type 2
 #define double_type 3
-#define string_type 4
+#define string_const_type 4
 #define composite_type 5
 #define array_type 6
 #define list_type 7
 #define no_type 8
-
-#define numeric_type 10
 
 
 
@@ -83,47 +89,17 @@ extern ccInt runCicadaMain(const Cfunction *, const ccInt, const char *, const b
 #define runCicada(f,s,r) runCicadaMain(f,(f==NULL)?0:sizeof(f)/sizeof(Cfunction),s,r)
 
 
+// For strings
 
-// Linked list prototypes
+typedef struct {            // the first field of the 'window' datatype
+    ccInt PLL_index;
+} arg;
 
-// There is one header for the entire linked list, which is stored in a variable of type linkedlist (below).
-// The header points to the first sublist in the queue; each sublist begins with a 12(?)-byte block of memory
-// of type sublistHeader (also below), which gives information specific to that particular sublist.
-
-typedef struct sH_temp {
-    ccInt numElements;              // number of elements that are officially registered to be in this sublist
-    struct sH_temp *nextSublist;    // link to next sublist (NULL if none)
-    ccInt maxElements;              // number of elements that this sublist can hold in the space that was allocated
-} sublistHeader;
-
-typedef struct {                    // all these have to do with the whole linked list
-    ccInt elementNum;               // number of elements
-    sublistHeader *memory;          // first sublist pointer
-    ccInt elementSize;              // bytes per element
-    ccFloat spareRoom;              // _percentage_ of extra room allocated (for speed if elements are added)
-} linkedlist;
-
-extern ccInt newLinkedList(linkedlist *, ccInt, ccInt, ccFloat, bool);
-extern void deleteLinkedList(linkedlist *);
-extern ccInt insertElements(linkedlist *, ccInt, ccInt, bool);
-extern ccInt addElements(linkedlist *, ccInt, bool);
-extern ccInt deleteElements(linkedlist *, ccInt, ccInt);
-extern ccInt deleteElement(linkedlist *, ccInt);
-extern ccInt resizeLinkedList(linkedlist *, ccInt, bool);
-extern ccInt defragmentLinkedList(linkedlist *);
-extern ccInt copyElements(linkedlist *, ccInt, linkedlist *, ccInt, ccInt);
-extern bool compareElements(linkedlist *, ccInt, linkedlist *, ccInt, ccInt);
-extern ccInt fillElements(linkedlist *, ccInt, ccInt, char);
-extern ccInt clearElements(linkedlist *, ccInt, ccInt);
-extern ccInt setElements(linkedlist *, ccInt, ccInt, void *);
-extern ccInt setElement(linkedlist*, ccInt, void *);
-extern ccInt getElements(linkedlist *, ccInt, ccInt, void *);
-extern ccInt getElement(linkedlist *, ccInt, void *);
-extern ccInt elementExists(linkedlist *, ccInt);
-extern void *findElement(linkedlist *, ccInt);
-extern void *element(linkedlist *, ccInt);
-extern void *skipElements(linkedlist *, sublistHeader **, ccInt *, ccInt);
-
+extern ccInt getArgTop(arg *);
+extern ccInt setMemberTop(arg *, const ccInt, const ccInt, char **);
+extern ccInt setStringSize(arg *, const ccInt, const ccInt, char **);
+extern arg *stepArg(arg *, ccInt, ccInt *);
+extern void *argData(arg *);
 
 
 // Error codes

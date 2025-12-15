@@ -99,7 +99,7 @@ ccInt cicadaMain(const Cfunction *CfunctionsFromUser, const ccInt numUserCfuncti
 {
     compiler_type *baseCompiler = NULL;
     ccInt mainErrorCode = 0, scriptNameLength, scriptLength, loopCompiler, rtrn, cs, firstScriptToRun;
-    ccInt *bytecodePtr = NULL, bytecodeLength = 0, c2, cf, cc;
+    ccInt *bytecodePtr = NULL, bytecodeLength = 0, c2, cf;
     const char *scriptPtr[2], *scriptName[2];
     const Cfunction *functionLists[2] = { inbuiltCfunctions, CfunctionsFromUser };
     const int functionsNum[2] = { inbuiltCfunctionsNum, numUserCfunctions };
@@ -124,13 +124,11 @@ ccInt cicadaMain(const Cfunction *CfunctionsFromUser, const ccInt numUserCfuncti
         *(functionArgs[c2]) = (const char **) malloc(functionsNum[c2]*sizeof(char *));
         if (*(functionArgs[c2]) == NULL)  return out_of_memory_err;
         for (cf = 0; cf < functionsNum[c2]; cf++)  {
-            const char *fName = functionLists[c2][cf].functionName;
-            (*(functionArgs[c2]))[cf] = NULL;
-            for (cc = 0; fName[cc] != 0; cc++)  {
-            if (fName[cc] == ':')  {
-                (*(functionArgs[c2]))[cf] = fName + cc + 1;
-                break;
-    }   }   }}
+            const char **fName = &((*(functionArgs[c2]))[cf]);
+            *fName = functionLists[c2][cf].functionName;
+            while ((**fName != ':') && (**fName != 0))  (*fName)++;
+            if (**fName == ':')  (*fName)++;
+    }   }
     
     userCfunctions = CfunctionsFromUser;
     userCfunctionsNum = numUserCfunctions;
@@ -195,13 +193,15 @@ ccInt cicadaMain(const Cfunction *CfunctionsFromUser, const ccInt numUserCfuncti
         bytecodeLength = baseCompiler->bytecode.elementNum;
         defragmentLinkedList(&(baseCompiler->opCharNum));
         
+        rtrn = attachStartingCode(bytecodePtr, bytecodeLength,
+                scriptName[cs], scriptNameLength, scriptPtr[cs], LL_int(&(baseCompiler->opCharNum), 1), scriptLength);
+        if (rtrn != passed)  {  printf("Error:  code initialization returned \"%s\"\n", (char *) errorStrings[rtrn]);  return 1;  }
+        
         
             // check the bytecode of the script (should be OK if we're using the 'default' Cicada language)
         
-        startCodePtr = bytecodePtr; //PCCodeRef.code_ptr;
+        pcCodePtr = startCodePtr = PCCodeRef.code_ptr;
         endCodePtr = startCodePtr + bytecodeLength;
-        
-        pcCodePtr = startCodePtr;
         checkBytecode();
         
         if ((errCode != passed) || (warningCode != passed))  {
@@ -212,10 +212,6 @@ ccInt cicadaMain(const Cfunction *CfunctionsFromUser, const ccInt numUserCfuncti
         
         
             // run the script
-        
-        rtrn = attachStartingCode(bytecodePtr, bytecodeLength,
-                scriptName[cs], scriptNameLength, scriptPtr[cs], LL_int(&(baseCompiler->opCharNum), 1), scriptLength);
-        if (rtrn != passed)  {  printf("Error:  code initialization returned \"%s\"\n", (char *) errorStrings[rtrn]);  return 1;  }
         
         beginExecution(&PCCodeRef, false, 0, 1, 0);
         if (errCode == return_flag)  errCode = passed;
@@ -260,7 +256,7 @@ ccInt initCicada()
 {
     variable *varZero;
     ccInt rtrn;
-    const static ccInt compositeType = composite_type;
+    const static ccInt compositeTypeInt = composite_type;
     
     baseView.windowPtr = searchView.windowPtr = topView.windowPtr = NULL;   // these can confuse addMemory if not initialized to NULL first
     
@@ -271,7 +267,7 @@ ccInt initCicada()
     rtrn = newStack(&PCStack, sizeof(view), 100, LLFreeSpace);
     if (rtrn != passed)  return rtrn;
     
-    rtrn = addVariable(&varZero, &compositeType, 0, true);
+    rtrn = addVariable(&varZero, &compositeTypeInt, 0, true);
     if (rtrn != passed)  return rtrn;
     rtrn = addWindow(varZero, 0, 1, &Zero, true);
     if (rtrn != passed)  return rtrn;
@@ -322,8 +318,6 @@ ccInt attachStartingCode(ccInt *zeroCode, ccInt zeroCodeLength,
     if (varZero->codeList.elementNum == 1)  {
         refWindow(Zero);
         refPath(ZeroSuspensor);     }
-    
-    pcCodePtr = zeroCodeEntryPtr;        // should immediately call checkBytecode()
     
     return passed;
 }

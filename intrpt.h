@@ -145,7 +145,7 @@ typedef struct {
     window *windowPtr;      // window that the view is taken from
     ccInt offset;           // additional offset (starting at 0) on top of the window offset
     ccInt width;            // number of the window's elements being viewed
-    bool multipleIndices; // true if and only if a [*] or [<..>] operator was used (even if width == 1)
+    bool multipleIndices;   // true if and only if a [] or [<..>] operator was used (even if width == 1)
 } view;
 
 
@@ -167,6 +167,29 @@ typedef struct {
     ccInt compilerID;
 } storedCodeType;
 
+typedef struct {
+    ccInt dataSize;
+    ccInt listElSize;
+    bool includeDataLists;
+} sizeViewInfo;
+
+typedef struct {
+    char *bufferPtr;
+    ccInt extraIndicesNeeded;
+    ccInt listElSize;
+} writeViewInfo;
+
+typedef struct {
+    char *stringPtr;
+    ccInt numChars;
+    ccInt maxFloatingDigits;
+} printStringInfo;
+
+typedef struct {
+    const char *sourceString;
+    const char *stringEnd;
+    const char *warningMarker;
+} readStringInfo;
 
 
 // Globals
@@ -199,6 +222,7 @@ extern const ccFloat LLFreeSpace;
 
 extern void copyWindowData(view *, view *);
 extern void copyData(linkedlist *, ccInt, linkedlist *, ccInt, ccInt);
+extern void preCopyResizeList(member *, ccInt *, ccInt);
 extern void copyString(window *, member *);
 extern void copyBoolToBool(void *, void *);
 extern void copyCharToChar(void *, void *);
@@ -214,7 +238,7 @@ extern void copyStringToString(void *, void *);
 extern void(*copyJumpTable[])(void *, void *);
 extern void compareWindowData(view *, view *);
 extern void compareData(linkedlist *, ccInt, linkedlist *, ccInt, ccInt);
-extern void compareString(window *, member *);
+extern void setCompareToFalse(member *, ccInt *, ccInt);
 extern void compareBoolToBool(void *, void *);
 extern void compareCharToChar(void *, void *);
 extern void compareCharToInt(void *, void *);
@@ -228,51 +252,41 @@ extern void compareDoubleToDouble(void *, void *);
 extern void compareStringToString(void *, void *);
 extern void setTMerror(void *, void *);
 extern void(*compareJumpTable[])(void *, void *);
-extern void doCopyCompare(view *, view *,
+extern void doCopyCompare(view *, view *, bool,
     void(*)(view *, view *),
     void(*)(linkedlist *, ccInt, linkedlist *, ccInt, ccInt),
-    void(*)(window *, member *),
+    void(*ccList)(member *, ccInt *, ccInt),
     void(**)(void *, void *));
 extern bool isVarString(variable *);
+extern void getMemberLimits(variable *, view *, ccInt *, ccInt *, ccInt *);
 extern void findNextVisibleMember(variable *, member **, ccInt *);
 extern void copyCompareVarToList(void *, ccInt, view *, void(**)(void *, void *));
 
-extern void sizeView(view *, void *, void *);
-extern void sizeData(view *, void *, void *);
-extern void sizeString(view *, ccInt, void *, void *);
-extern void storageSizeView(view *, void *, void *);
-extern void storageSizeData(view *, void *, void *);
-extern void storageSize_String(view *, ccInt, void *, void *);
-extern void writeView(view *, void *, void *);
-extern void writeData(view *, void *, void *);
-extern void writeString(view *, ccInt, void *, void *);
-extern void readView(view *, void *, void *);
-extern void readData(view *, void *, void *);
-extern void readString(view *, ccInt, void *, void *);
-extern void printViewString(view *, void *, void *);
-extern void printDataString(view *, void *, void *);
-extern void sizeViewString(view *, void *, void *);
-extern void sizeDataString(view *, void *, void *);
-extern void readViewString(view *, void *, void *);
-extern void readDataString(view *, void *, void *);
-extern void readStringFromString(view *, ccInt, void *, void *);
-extern void countDataLists(view *, void *, void *);
-extern void countDataView(view *, void *, void *);
-extern void countStringView(view *, ccInt, void *, void *);
-extern void argvFillHandles(view *, void *, void *);
-extern void passDataView(view *, void *, void *);
-extern void passString(view *, ccInt, void *, void *);
-extern void argvFixStrings(view *, void *, void *);
-extern void fixNothing(view *, void *, void *);
-extern void fixString(view *, ccInt, void *, void *);
-extern void printView(view *, void *, void *);
-extern void printData(view *, void *, void *);
-extern void printString(view *, ccInt, void *, void *);
+extern void sizeView(view *, void *, member *);
+extern void sizeData(view *, void *, member *);
+extern void storageSizeView(view *, void *, member *);
+extern void storageSizeData(view *, void *, member *);
+extern void writeView(view *, void *, member *);
+extern void writeData(view *, void *, member *);
+extern void readView(view *, void *, member *);
+extern void readData(view *, void *, member *);
+extern void printViewString(view *, void *, member *);
+extern void printDataString(view *, void *, member *);
+//extern void sizeViewString(view *, void *, void *);
+//extern void sizeDataString(view *, void *, void *);
+extern void readViewString(view *, void *, member *);
+extern void readDataString(view *, void *, member *);
+extern bool charsCmp(const char *, const char *);
+extern void countDataLists(view *, void *, member *);
+extern void countDataView(view *, void *, member *);
+extern void argvFillHandles(view *, void *, member *);
+extern void passDataView(view *, void *, member *);
+extern void printView(view *, void *, member *);
+extern void printData(view *, void *, member *);
 extern char hexDigit(unsigned char);
-extern void doReadWrite(view *, void *, void *, bool, bool, bool,
-    void(*)(view *, void *, void *),
-    void(*)(view *, void *, void *),
-    void(*)(view *, ccInt, void *, void *));
+extern void doReadWrite(view *, void *, member *, bool, bool, bool,
+    void(*)(view *, void *, member *),
+    void(*)(view *, void *, member *));
 extern void printNumber(char *, const ccFloat, ccInt *, const ccInt, const ccInt);
 
 extern void searchMember(ccInt, member **, ccInt *, bool, bool);

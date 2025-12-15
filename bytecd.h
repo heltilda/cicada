@@ -55,16 +55,6 @@ typedef struct {
 } step_params;
 
 
-typedef struct {
-    bool doEquate;
-    bool updateMembers;
-    bool addNewMembers;
-    bool newTarget;
-    bool doRelink;
-    bool runConstructor;
-    bool hiddenMember;
-    bool isUnjammable;
-} deFlags;
 
 // *** Famous & global variables ***
 
@@ -195,14 +185,14 @@ extern void _code_marker(void);
 extern void _func_return(void);
 extern void _user_function(void);
 extern void _C_function(void);
-extern const char CargType(const char *, ccInt);
+extern const char CargType(const char *);
 extern void incrementArg(argsType *);
 extern window *getViewMember(ccInt);
 
 extern void _def_general(void);
-extern ccInt buildOneVarLayer(const ccInt *, const ccInt, const ccInt, ccInt *, view *, view *, const deFlags *, const bool);
+extern ccInt buildOneVarLayer(const ccInt *, const ccInt, const ccInt, ccInt *, view *, view *, const ccInt, const bool, const void *);
 extern void copyCompareMultiView(void(*)(view *, view *), view *, view *);
-extern void encompassMultiView(view *, window *, window *, variable *, bool);
+extern void encompassMultiView(view *, window *, window *, variable *);
 extern ccInt relinkGLStemMember(view *, bool, bool, bool);
 extern void newStringLL(view *);
 extern ccInt checkType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, view *, bool, bool);
@@ -314,7 +304,6 @@ extern void _bool_cmd(void);
 extern void _char_cmd(void);
 extern void _int_cmd(void);
 extern void _double_cmd(void);
-extern void _string_cmd(void);
 
 extern void _constant_bool(void);
 extern void _constant_char(void);
@@ -322,6 +311,7 @@ extern void _constant_int(void);
 extern void _constant_double(void);
 extern void _constant_string(void);
 extern void _code_block(void);
+extern void getConstVar(const ccInt, const ccInt, const bool, const void *);
 
 extern void _illegal(void);
 
@@ -337,6 +327,7 @@ extern void skipOneArg(void);
 extern void skipTwoArgs(void);
 extern void skipThreeArgs(void);
 extern void skipInt(void);
+extern void skipTwoInts(void);
 extern void skipDouble(void);
 extern void skipString(void);
 extern void skipIntAndOneArg(void);
@@ -351,8 +342,9 @@ extern void checkCommand(ccInt);
 extern void checkBackCommand(ccInt);
 extern void checkFunction(ccInt);
 extern void checkInteger(ccInt);
-extern void checkDouble(ccInt);
-extern void checkString(ccInt);
+extern void checkIntegerConst(ccInt);
+extern void checkDoubleConst(ccInt);
+extern void checkStringConst(ccInt);
 extern void checkCode(ccInt);
 extern void checkJump(ccInt);
 extern void checkIndices(ccInt);
@@ -407,7 +399,6 @@ extern void(*saveDPRegJumpTable[])(void *);
 // misc
 
 #define var_type -1
-#define no_string -1
 
 #define getFlag(a,b) ((a&b)!=0)
 

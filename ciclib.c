@@ -40,23 +40,23 @@
 // **********************************************
 
 // inbuiltCfunctions[] and userCfunctions[] define the { names, function addresses } of user's C routines.
-// Each routine must be of the form:  ccInt RoutineName(argType args)
+// Each routine must be of the form:  ccInt RoutineName(argsType args)
 
 
 
 #define CCname(n) {#n,&cc_n}
 
 const Cfunction inbuiltCfunctions[] = {
-    { "newCompiler", &cc_newCompiler }, { "compile", &cc_compile }, { "getMemberNames", &cc_getMemberNames },
-    { "transform:dwwddd", &cc_transform }, { "trap:a", &cc_trap }, { "throw:ddwdd", &cc_throw },
-    { "top:wd", &cc_top }, { "size:wdd", &cc_size }, { "type:wdd", &cc_type }, { "member_ID:wdd", &cc_member_ID }, { "bytecode:wdd", &cc_bytecode },
-    { "load", &cc_load }, { "save", &cc_save }, { "input", &cc_input }, { "print", &cc_print },
-    { "read_string", &cc_read_string}, { "print_string", &cc_print_string }, { "find", &cc_find }, { "random", &cc_random },
+    { "newCompiler:adaadd", &cc_newCompiler }, { "compile:dddaaa", &cc_compile },// { "getMemberNames:dad", &cc_getMemberNames },
+    { "transform:daaddd", &cc_transform }, { "trap:A", &cc_trap }, { "throw:ddadd", &cc_throw },
+    { "top:ad", &cc_top }, { "size:add", &cc_size }, { "type:add", &cc_type }, { "member_ID:add", &cc_member_ID }, { "bytecode:ada", &cc_bytecode },
+    { "load:da", &cc_load }, { "save", &cc_save }, { "input:a", &cc_input }, { "print:A", &cc_print },
+    { "read_string:da", &cc_read_string}, { "print_string:ada", &cc_print_string }, { "find", &cc_find }, { "random", &cc_random },
     { "abs", &cc_abs }, { "floor", &cc_floor }, { "ceil", &cc_ceil }, { "round", &cc_round }, { "exp", &cc_exp }, { "log", &cc_log },
     { "cos", &cc_cos }, { "sin", &cc_sin }, { "tan", &cc_tan }, { "acos", &cc_acos }, { "asin", &cc_asin }, { "atan", &cc_atan },
     { "add", &cc_add }, { "subtract", &cc_subtract }, { "multiply", &cc_multiply }, { "divide", &cc_divide }, { "pow", &cc_pow },
     { "minmax", &cc_minmax }, { "sum", &cc_sum }, { "makeLinkList", &cc_makeLinkList }, { "sort", &cc_sort },
-    { "springCleaning:w", &cc_springCleaning }
+    { "springCleaning:a", &cc_springCleaning }
 };
 const ccInt inbuiltCfunctionsNum = (ccInt) (sizeof(inbuiltCfunctions)/sizeof(Cfunction));
 const char **inbuiltCfunctionArgs;
@@ -76,28 +76,32 @@ ccInt cc_newCompiler(argsType args)
 {
     compiler_type *tempCompiler = NULL;
     commandTokenType *cmdTokens;
-    linkedlist *cmdStrings, *cmdReturnTypes, *cmdTranslations;
+    arg *cmdStrings, *cmdReturnTypes, *cmdTranslations;
     ccInt *cmdPrecedences, *precedenceLevelAssociativity, *compilerID;
-    ccInt numCommands, numPrecedenceLevels, cmdNum, rtrn = passed;
+    ccInt numCommands, nC2, nC3, numPrecedenceLevels, cmdNum, rtrn = passed;
     
     if (args.num != 6)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, vector(string_type), vector(int_type), vector(string_type),
-                    vector(string_type), vector(int_type), scalar(int_type)))
-    getArgs(args, &cmdStrings, &cmdPrecedences, &cmdReturnTypes, &cmdTranslations, &precedenceLevelAssociativity, &compilerID);
+    returnOnErr(getArgs(args, scalarRef(arrayOf(string_type), &cmdStrings), arrayRef(int_type, &cmdPrecedences),
+                scalarRef(arrayOf(string_type), &cmdReturnTypes), scalarRef(arrayOf(string_type), &cmdTranslations),
+                arrayRef(int_type, &precedenceLevelAssociativity), scalarRef(int_type, &compilerID)))
     
-    numCommands = args.indices[0];
-    if ((args.indices[1] != numCommands) || (args.indices[2] != numCommands) || (args.indices[3] != numCommands))  return library_argument_err;
+    numCommands = nC2 = nC3 = 1;
+    cmdStrings = stepArg(cmdStrings, 1, &numCommands);
+    cmdReturnTypes = stepArg(cmdReturnTypes, 1, &nC2);
+    cmdTranslations = stepArg(cmdTranslations, 1, &nC3);
+    
+    if ((args.indices[1] != numCommands) || (nC2 != numCommands) || (nC3 != numCommands))  return library_argument_err;
     numPrecedenceLevels = args.indices[4];
     
     cmdTokens = (commandTokenType *) malloc(numCommands*sizeof(commandTokenType));
     if (cmdTokens == NULL)  return out_of_memory_err;
-      
+    
     for (cmdNum = 0; cmdNum < numCommands; cmdNum++)  {
-        cmdTokens[cmdNum].cmdString = LL2Cstr(cmdStrings + cmdNum);
+        cmdTokens[cmdNum].cmdString = argData(stepArg(cmdStrings, cmdNum+1, NULL));
         cmdTokens[cmdNum].precedence = cmdPrecedences[cmdNum];
-        cmdTokens[cmdNum].rtrnTypeString = LL2Cstr(cmdReturnTypes + cmdNum);
-        cmdTokens[cmdNum].translation = LL2Cstr(cmdTranslations + cmdNum);
+        cmdTokens[cmdNum].rtrnTypeString = argData(stepArg(cmdReturnTypes, cmdNum+1, NULL));
+        cmdTokens[cmdNum].translation = argData(stepArg(cmdTranslations, cmdNum+1, NULL));
         if ((cmdTokens[cmdNum].cmdString == NULL) || (cmdTokens[cmdNum].rtrnTypeString == NULL) || (cmdTokens[cmdNum].translation == NULL))  {
             return out_of_memory_err;
     }   }
@@ -109,10 +113,6 @@ ccInt cc_newCompiler(argsType args)
         *(compiler_type **) element(&allCompilers, *compilerID) = tempCompiler;
     }
     
-    for (cmdNum = 0; cmdNum < numCommands; cmdNum++)  {
-        free((void *) cmdTokens[cmdNum].cmdString);
-        free((void *) cmdTokens[cmdNum].rtrnTypeString);
-        free((void *) cmdTokens[cmdNum].translation);        }
     free((void *) cmdTokens);
     
     return rtrn;
@@ -126,78 +126,55 @@ ccInt cc_newCompiler(argsType args)
 ccInt cc_compile(argsType args)
 {
     compiler_type *theCompiler;
-    linkedlist *scriptString, *fileName, *characterPositions, *scriptBytecode;
-    ccInt *numMemberNames, compilerID, rtrn;
-    char *scriptCopy;
+    arg *characterPositionsArg, *scriptBytecodeArg, *memberNameArray, *memberNameStrings;
+    ccInt compilerID, nameID, prevNumNames, rtrn;
+    char *scriptString, *fileName, *characterPositions, *scriptBytecode, *oneName;
     
     if (args.num != 6)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, scalar(int_type), scalar(string_type), scalar(string_type),
-                scalar(string_type), scalar(int_type), scalar(string_type)))
-    getArgs(args, byValue(&compilerID), &scriptString, &fileName, &characterPositions, &numMemberNames, &scriptBytecode);
+    returnOnErr(getArgs(args, scalarValue(int_type, &compilerID), arrayRef(char_type, &scriptString), arrayRef(char_type, &fileName),
+                scalarRef(listOf(int_type), &scriptBytecodeArg), scalarRef(listOf(int_type), &characterPositionsArg), endArgs))
+    if (args.p[5] != NULL)  {  returnOnErr(getArgs(args, fromArg(5), scalarRef(arrayOf(string_type), &memberNameArray)))  }
+    else  memberNameArray = NULL;
     
     theCompiler = *(compiler_type **) element(&allCompilers, compilerID);
-    
-    scriptCopy = LL2Cstr(scriptString);
     
     
         // Run the compiler.  Store the error code/index (which may be zero -- no error).
     
-    rtrn = compile(theCompiler, (const char *) scriptCopy);
+    rtrn = compile(theCompiler, (const char *) scriptString);
     
     if (((rtrn != passed) || (compilerWarning != passed)) && (doPrintError))  {
-        
-        const char *fileNamePtr = NULL;
-        
-        if (fileName->elementNum > 0)  {
-            returnOnErr(defragmentLinkedList(fileName))
-            fileNamePtr = (const char *) element(fileName, 1);      }
         
         if (rtrn != passed)  setError(rtrn, pcCodePtr-1);
         else  setWarning(compilerWarning, pcCodePtr-1);
         
-        printError(fileNamePtr, fileName->elementNum, (const char *) scriptCopy, errPosition-1, false, compilerID, false);
+        printError(fileName, args.indices[2], (const char *) scriptString, errPosition-1, false, compilerID, false);
         doPrintError = false;             }
-    
-    free((void *) scriptCopy);
     
     if (rtrn != passed)  return rtrn;
     
     
-        // store the bytecode string
+        // store the bytecode string, op character positions, and member names
     
-    returnOnErr(resizeLinkedList(scriptBytecode, theCompiler->bytecode.elementNum * sizeof(ccInt), false))
-    returnOnErr(defragmentLinkedList(scriptBytecode))
+    returnOnErr(setMemberTop(scriptBytecodeArg, 1, theCompiler->opCharNum.elementNum, &scriptBytecode))
+    getElements(&(theCompiler->bytecode), 1, theCompiler->bytecode.elementNum, scriptBytecode);
     
-    getElements(&(theCompiler->bytecode), 1, theCompiler->bytecode.elementNum, element(scriptBytecode, 1));
+    returnOnErr(setMemberTop(characterPositionsArg, 1, theCompiler->opCharNum.elementNum, &characterPositions))
+    getElements(&(theCompiler->opCharNum), 1, theCompiler->opCharNum.elementNum, characterPositions);
     
-    returnOnErr(resizeLinkedList(characterPositions, theCompiler->opCharNum.elementNum*sizeof(ccInt), false))
-    returnOnErr(defragmentLinkedList(characterPositions))
-    getElements(&(theCompiler->opCharNum), 1, theCompiler->opCharNum.elementNum, (void *) element(characterPositions, 1));
+    if (memberNameArray == NULL)  return passed;
     
-    *numMemberNames = theCompiler->varNames.elementNum;
+    prevNumNames = getArgTop(memberNameArray); //getArgTop(stepArg(memberNameArray, 1));
+    returnOnErr(setMemberTop(memberNameArray, 1, theCompiler->varNames.elementNum, NULL))
     
-    return passed;
-}
-
-
-ccInt cc_getMemberNames(argsType args)
-{
-    compiler_type *theCompiler;
-    linkedlist *memberNames;
-    ccInt compilerID, nameID, prevNumNames;
+    memberNameStrings = stepArg(memberNameArray, 1, NULL);
+    if (memberNameStrings == NULL)  return void_member_err;
     
-    if (args.num != 3)  return wrong_argument_count_err;
-    
-    returnOnErr(checkArgs(args, scalar(int_type), vector(string_type), scalar(int_type)))
-    getArgs(args, byValue(&compilerID), &memberNames, byValue(&prevNumNames));
-    
-    theCompiler = *(compiler_type **) element(&allCompilers, compilerID);
-    
-    for (nameID = prevNumNames; (nameID < theCompiler->varNames.elementNum) && (nameID < args.indices[1]); nameID++)  {
-        varNameType *compilerVarName = (varNameType *) element(&(theCompiler->varNames), nameID+1);
-        returnOnErr(resizeLinkedList(memberNames + nameID, compilerVarName->nameLength, false))
-        setElements(memberNames + nameID, 1, compilerVarName->nameLength, compilerVarName->theName);
+    for (nameID = prevNumNames+1; nameID <= theCompiler->varNames.elementNum; nameID++)  {
+        varNameType *compilerVarName = (varNameType *) element(&(theCompiler->varNames), nameID);
+        returnOnErr(setStringSize(memberNameStrings, nameID, compilerVarName->nameLength, &oneName))
+        memcpy(oneName, compilerVarName->theName, compilerVarName->nameLength);
     }
     
     return passed;
@@ -205,32 +182,29 @@ ccInt cc_getMemberNames(argsType args)
 
 
 // cc_transform() takes bytecode and stores it in Cicada's code registry.
-// Checks the code first to make sure it won't crash the interpreter.
+// Checks the bytecode first to make sure it won't crash the interpreter.
 
 ccInt cc_transform(argsType args)
 {
-    linkedlist *inputStringLL, *fileNameLL, *sourceCodeLL, *opCharPositionsLL;
-    linkedlist **lastArgLLs[3] = { &fileNameLL, &sourceCodeLL, &opCharPositionsLL };
     member *loopMember;
-    window *compiledCodeWindow, *pathWindow, *drawPathTo;
+    window *bytecodeTargetWindow, *pathWindow, *drawPathTo;
     searchPath *newCodePath, *newCodePathStem = pcSearchPath;
-    ccInt pathVarMemberCounter, firstPathVarMember = 0, counter, loopCodeWord, rtrn, cs;
+    ccInt *bytecodePtr, pathVarMemberCounter, firstPathVarMember = 0, counter, loopCodeWord, rtrn; //, cs;
     ccInt codeIndex, dummy, memberOffset;
     ccInt *holdPCCodePtr, *codeEntryPtr, *holdStartCodePtr, *holdEndCodePtr, *opCharNum = NULL, theOpChar;
     char *fileName = NULL, *sourceCode = NULL;
-    char **lastArgs[3] = { &fileName, &sourceCode, (char **) &opCharNum };
     code_ref holdPCCodeRef;
     
     if (args.num != 6)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, scalar(string_type), scalar(composite_type), endArgs))
-    if (args.p[2] != NULL)  returnOnErr(checkArgs(args, fromArg(2), scalar(composite_type), endArgs))
-    returnOnErr(checkArgs(args, fromArg(3), scalar(string_type), scalar(string_type), scalar(string_type)))
-    getArgs(args, &inputStringLL, &compiledCodeWindow, &pathWindow, &fileNameLL, &sourceCodeLL, &opCharPositionsLL);
+    if ((args.p[2] != NULL) && (args.type[2][0] != composite_type))  return not_composite_err;
+    returnOnErr(getArgs(args, arrayRef(int_type, &bytecodePtr), scalarRef(composite_type, &bytecodeTargetWindow), &pathWindow,
+                arrayRef(char_type, &fileName), arrayRef(char_type, &sourceCode), arrayRef(int_type, &opCharNum)))
     
-    returnOnErr(defragmentLinkedList(inputStringLL))
-    if (inputStringLL->elementNum == 0)  return passed;
-    if (inputStringLL->elementNum % sizeof(ccInt) != 0)  return library_argument_err;
+    if (args.indices[0] == 0)  return passed;
+    if (args.indices[3] == 0)  fileName = NULL;     // the last three optional arguments help to flag transform/runtime errors in the code
+    if (args.indices[4] == 0)  sourceCode = NULL;
+    if (args.indices[5] == 0)  opCharNum = NULL;
     
     if (pathWindow != NULL)  {
         newCodePathStem = NULL;
@@ -245,21 +219,12 @@ ccInt cc_transform(argsType args)
     }   }   }
     
     
-        // the last three optional arguments help to flag transform/runtime errors in the code
-    
-    for (cs = 0; cs < 3; cs++)  {
-        if ((*(lastArgLLs[cs]))->elementNum == 0)  *lastArgs[cs] = NULL; //(char *) element(tempString, 0);     }
-        else  {
-            returnOnErr(defragmentLinkedList(*(lastArgLLs[cs])))
-            *lastArgs[cs] = (char *) element(*(lastArgLLs[cs]), 1);
-    }   }
-    
     if ((opCharNum != NULL) && (sourceCode != NULL))  {
-        if (inputStringLL->elementNum != opCharPositionsLL->elementNum)  return out_of_range_err;
+        if (args.indices[0] != args.indices[5])  return out_of_range_err;
         
-        if (sourceCodeLL->elementNum > 0)  {            // even a blank script has an end-of-file token --> char #1 
-        for (loopCodeWord = 0; loopCodeWord < opCharPositionsLL->elementNum/sizeof(ccInt); loopCodeWord++)  {
-        if ((opCharNum[loopCodeWord] < 1) || (opCharNum[loopCodeWord] > sourceCodeLL->elementNum))  {
+        if (sourceCode != NULL)  {            // even a blank script has an end-of-file token --> char #1 
+        for (loopCodeWord = 0; loopCodeWord < args.indices[5]; loopCodeWord++)  {
+        if ((opCharNum[loopCodeWord] < 1) || (opCharNum[loopCodeWord] > args.indices[4]))  {
             return out_of_range_err;
     }   }}}
     
@@ -274,8 +239,8 @@ ccInt cc_transform(argsType args)
     
         // set the PC at the beginning of the bytecode, and run it in 'check' mode
     
-    startCodePtr = LL_int(inputStringLL, 1);
-    endCodePtr = startCodePtr + inputStringLL->elementNum/sizeof(ccInt);
+    startCodePtr = bytecodePtr;
+    endCodePtr = startCodePtr + args.indices[0]; // inputStringLL->elementNum/sizeof(ccInt);
     pcCodePtr = startCodePtr;
     PCCodeRef.anchor = NULL;
     PCCodeRef.code_ptr = startCodePtr;
@@ -286,7 +251,8 @@ ccInt cc_transform(argsType args)
     if ((errCode != passed) && (doPrintError))  {
         if (opCharNum == NULL)  theOpChar = 0;
         else  theOpChar = opCharNum[errIndex-1]-1;
-        printError(fileName, fileNameLL->elementNum, sourceCode, theOpChar, false, 1, false);
+//        printError(fileName, fileNameLL->elementNum, sourceCode, theOpChar, false, 1, false);
+        printError(fileName, args.indices[3], sourceCode, theOpChar, false, 1, false);
         
         doPrintError = false;        }
     
@@ -318,7 +284,7 @@ ccInt cc_transform(argsType args)
                 newCodePathStem = newCodePath;
     }   }   }
     
-    if (compiledCodeWindow != NULL)  drawPathTo = compiledCodeWindow;
+    if (bytecodeTargetWindow != NULL)  drawPathTo = bytecodeTargetWindow;
     else  drawPathTo = PCCodeRef.anchor->jamb;
     
     returnOnErr(drawPath(&newCodePath, drawPathTo, newCodePathStem, 1, PCCodeRef.PLL_index))
@@ -328,22 +294,22 @@ ccInt cc_transform(argsType args)
     
         // wipe up any existing codes in our function
     
-    if (compiledCodeWindow != NULL)  {
-        for (counter = 1; counter <= compiledCodeWindow->variable_ptr->codeList.elementNum; counter++)
-            derefCodeRef((code_ref *) element(&(compiledCodeWindow->variable_ptr->codeList), counter));
-        deleteElements(&(compiledCodeWindow->variable_ptr->codeList), 1, compiledCodeWindow->variable_ptr->codeList.elementNum);    }
+    if (bytecodeTargetWindow != NULL)  {
+        for (counter = 1; counter <= bytecodeTargetWindow->variable_ptr->codeList.elementNum; counter++)
+            derefCodeRef((code_ref *) element(&(bytecodeTargetWindow->variable_ptr->codeList), counter));
+        deleteElements(&(bytecodeTargetWindow->variable_ptr->codeList), 1, bytecodeTargetWindow->variable_ptr->codeList.elementNum);    }
     
     
         // add our new code to the Registry..
     
-    returnOnErr(addCode(LL_int(inputStringLL, 1), &codeEntryPtr, &codeIndex, inputStringLL->elementNum/sizeof(ccInt),
-            fileName, fileNameLL->elementNum, sourceCode, opCharNum, sourceCodeLL->elementNum, 1))
+    returnOnErr(addCode(bytecodePtr, &codeEntryPtr, &codeIndex, args.indices[0],
+            fileName, args.indices[3], sourceCode, opCharNum, args.indices[4], 1))
     
     
         // .. and to the code list of the function
     
-    if (compiledCodeWindow != NULL)  {
-        returnOnErr(addCodeRef(&(compiledCodeWindow->variable_ptr->codeList), newCodePath, codeEntryPtr, codeIndex))    }
+    if (bytecodeTargetWindow != NULL)  {
+        returnOnErr(addCodeRef(&(bytecodeTargetWindow->variable_ptr->codeList), newCodePath, codeEntryPtr, codeIndex))    }
     
     derefCodeList(&codeRegister);
     
@@ -508,8 +474,8 @@ ccInt cc_throw(argsType args)
     
     if (args.num != 5)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, scalar(int_type), scalar(bool_type), vector(composite_type), scalar(int_type), scalar(int_type)))
-    getArgs(args, byValue(&eCode), byValue(&doWarning), &eWindow, byValue(&eCodeNumber), byValue(&eIndex));
+    returnOnErr(getArgs(args, scalarValue(int_type, &eCode), scalarValue(bool_type, &doWarning), arrayRef(composite_type, &eWindow),
+                scalarValue(int_type, &eCodeNumber), scalarValue(int_type, &eIndex)))
 
     if ((eCodeNumber < 1) || (eCodeNumber > eWindow->variable_ptr->codeList.elementNum))  return index_argument_err;
     targetCodeRef = (code_ref *) element(&(eWindow->variable_ptr->codeList), eCodeNumber);
@@ -552,11 +518,10 @@ ccInt cc_top(argsType args)
     
     if (args.num != 1)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, fromArg(1)))
     getArgs(args, &(viewToTop.windowPtr));
     
     if (viewToTop.windowPtr == NULL)  {  setError(void_member_err, pcCodePtr-1);  return 0;  }
-    if (*viewToTop.windowPtr->variable_ptr->types < string_type)  {  setError(not_composite_err, pcCodePtr-1);  return 0;  }
+    if (*viewToTop.windowPtr->variable_ptr->types <= double_type)  {  setError(not_composite_err, pcCodePtr-1);  return 0;  }
     viewToTop.offset = viewToTop.windowPtr->offset;
     
     return numMemberIndices(&viewToTop);
@@ -568,25 +533,31 @@ ccInt cc_top(argsType args)
 ccInt cc_size(argsType args)
 {
     view viewToSize;
-    ccInt dataSize = 0, sizeofStrings = 0, ssMode, *sizeRtrn;
+    ccInt dataSize[2], *ssMode = &(dataSize[1]), sizeofStrings = 0, *sizeRtrn;
     bool storageSize;
     
     if (args.num != 3)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, fromArg(1), scalar(bool_type), scalar(int_type)))
-    getArgs(args, &(viewToSize.windowPtr), byValue(&storageSize), &sizeRtrn);
+    returnOnErr(getArgs(args, &(viewToSize.windowPtr), scalarValue(bool_type, &storageSize), scalarRef(int_type, &sizeRtrn)))
     
+    *dataSize = 0;
     if (viewToSize.windowPtr != NULL)  {
         viewToSize.offset = viewToSize.windowPtr->offset;
         viewToSize.width = viewToSize.windowPtr->width;
         
-        if (!storageSize)  sizeView(&viewToSize, &dataSize, &sizeofStrings);
+        if (!storageSize)  {
+            sizeViewInfo SVinfo;
+            SVinfo.dataSize = SVinfo.listElSize = 0;
+            SVinfo.includeDataLists = true;
+            sizeView(&viewToSize, &SVinfo, NULL);
+            *dataSize = SVinfo.dataSize;
+        }
         else  {
-        for (ssMode = 1; ssMode <= 3; ssMode++)  {
-            storageSizeView(&viewToSize, (void *) &dataSize, (void *) &ssMode);
+        for (*ssMode = 1; *ssMode <= 3; (*ssMode)++)  {
+            storageSizeView(&viewToSize, (void *) dataSize, NULL);
         }}
         
-        *sizeRtrn = dataSize+sizeofStrings;       }
+        *sizeRtrn = (*dataSize)+sizeofStrings;       }
     
     else  *sizeRtrn = 0;
     
@@ -604,8 +575,7 @@ ccInt cc_type(argsType args)
     
     if (args.num != 3)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, fromArg(1), scalar(int_type), scalar(int_type)))
-    getArgs(args, &hostWindow, byValue(&whichMember), &theType);
+    returnOnErr(getArgs(args, &hostWindow, scalarValue(int_type, &whichMember), scalarRef(int_type, &theType)))
     
     if (whichMember <= 0)  *theType = *hostWindow->variable_ptr->types;
     
@@ -631,8 +601,7 @@ ccInt cc_member_ID(argsType args)
     
     if (args.num != 3)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, vector(composite_type), scalar(int_type), scalar(int_type)))
-    getArgs(args, &hostWindow, byValue(&memberIndex), &theID);
+    returnOnErr(getArgs(args, arrayRef(composite_type, &hostWindow), scalarValue(int_type, &memberIndex), scalarRef(int_type, &theID)))
     
     returnOnErr(findMemberIndex(hostWindow->variable_ptr, 0, memberIndex, &soughtMember, &memberNumber, &entryOffset, false))
     
@@ -648,13 +617,14 @@ ccInt cc_member_ID(argsType args)
 ccInt cc_bytecode(argsType args)
 {
     window *hostWindow;
-    linkedlist *codeRefsList = NULL, *bytecodeString;
-    ccInt memberNumber, loopCode, *holdPC;
+    linkedlist *codeRefsList = NULL;
+    arg *bytecodeString;
+    ccInt memberNumber, loopCode, *holdPC, numBytecodeWords = 0, numNewWords, *newBytecodeWords;
     
     if (args.num != 3)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, vector(composite_type), scalar(int_type), scalar(string_type)))
-    getArgs(args, &hostWindow, byValue(&memberNumber), &bytecodeString);
+    returnOnErr(getArgs(args, arrayRef(composite_type, &hostWindow),
+                    scalarValue(int_type, &memberNumber), scalarRef(listOf(int_type), &bytecodeString)))
     
     if (memberNumber <= 0)  {
         codeRefsList = (linkedlist *) &(hostWindow->variable_ptr->codeList);    }
@@ -662,7 +632,8 @@ ccInt cc_bytecode(argsType args)
         if (memberNumber > hostWindow->variable_ptr->mem.members.elementNum)  return invalid_index_err;
         codeRefsList = (linkedlist *) &(LL_member(hostWindow->variable_ptr, memberNumber)->codeList);       }
     
-    returnOnErr(resizeLinkedList(bytecodeString, 0, false))
+    returnOnErr(setMemberTop(bytecodeString, 1, 0, NULL))
+//    returnOnErr(resizeLinkedList(bytecodeString, 0, false))
     
     
         // copy the bytecode of each code block into a string (including the final 0)
@@ -670,7 +641,7 @@ ccInt cc_bytecode(argsType args)
     for (loopCode = 1; loopCode <= codeRefsList->elementNum; loopCode++)  {
         
         code_ref *soughtCodeRef = (code_ref *) element(codeRefsList, loopCode);
-        ccInt oldTop = bytecodeString->elementNum;
+        //ccInt oldTop = bytecodeString->elementNum;
         
         holdPC = pcCodePtr;
         pcCodePtr = soughtCodeRef->code_ptr;
@@ -678,10 +649,14 @@ ccInt cc_bytecode(argsType args)
         if (errCode != passed)  {  pcCodePtr = holdPC;  return errCode;  }
         pcCodePtr++;
         
-        returnOnErr(addElements(bytecodeString, (ccInt) (pcCodePtr-soughtCodeRef->code_ptr)*sizeof(ccInt), false))
+        numNewWords = (ccInt) (pcCodePtr-soughtCodeRef->code_ptr);
+        returnOnErr(setMemberTop(bytecodeString, 1, numBytecodeWords+numNewWords, (char **) &newBytecodeWords))
+        memmove(newBytecodeWords+numBytecodeWords, (void *) soughtCodeRef->code_ptr, numNewWords*sizeof(ccInt));
+        numBytecodeWords += numNewWords;
+/*        returnOnErr(addElements(bytecodeString, (ccInt) (pcCodePtr-soughtCodeRef->code_ptr)*sizeof(ccInt), false))
         pcCodePtr = holdPC;
         
-        setElements(bytecodeString, oldTop+1, oldTop+bytecodeString->elementNum, (void *) soughtCodeRef->code_ptr);
+        setElements(bytecodeString, oldTop+1, oldTop+bytecodeString->elementNum, (void *) soughtCodeRef->code_ptr);*/
     }
     
     return passed;
@@ -694,7 +669,7 @@ ccInt cc_minmax(argsType args)
     ccInt c1, listTop, *bestIdx, mult;
     ccFloat *theList, *bestValue;
     
-    getArgs(args, &theList, byValue(&mult), &bestIdx, &bestValue);
+    returnOnErr(getArgs(args, &theList, scalarValue(int_type, &mult), scalarRef(int_type, &bestIdx), scalarRef(double_type, &bestValue)))
     listTop = args.indices[0];
     
     *bestIdx = 1;
@@ -716,7 +691,7 @@ ccInt cc_sum(argsType args)
     ccInt c1;
     ccFloat *theList, *theSum;
     
-    getArgs(args, &theList, &theSum);
+    returnOnErr(getArgs(args, arrayRef(double_type, &theList), scalarRef(double_type, &theSum)))
     
     *theSum = 0.;
     for (c1 = 0; c1 < args.indices[0]; c1++)  *theSum += theList[c1];
@@ -731,7 +706,8 @@ ccInt cc_makeLinkList(argsType args)
     ccInt *linkList, *firstIndex, direction, cl;
     ccFloat *sortingList;
     
-    getArgs(args, &sortingList, &linkList, byValue(&direction), &firstIndex);
+    returnOnErr(getArgs(args, arrayRef(double_type, &sortingList),
+            arrayRef(int_type, &linkList), scalarValue(int_type, &direction), scalarRef(int_type, &firstIndex)))
     
     for (cl = 0; cl < args.indices[0]; cl++)  linkList[cl] = -1;
     
@@ -781,14 +757,14 @@ ccInt cc_sort(argsType args)
 {
     ccInt numIndices, cl, ci, idx, *linkList, numLists, firstIndex, rtrn = passed;
     
-    getArgs(args, &linkList, byValue(&firstIndex), endArgs);
+    returnOnErr(getArgs(args, arrayRef(int_type, &linkList), scalarValue(int_type, &firstIndex), endArgs))
     numIndices = args.indices[0];
     numLists = (args.num-2)/2;
     
     for (cl = 0; cl < numLists; cl++)  {
         if (args.type[cl+2] != args.type[cl+2+numLists])  rtrn = 1;
         else if (args.indices[cl+2] != numIndices)  rtrn = 2;
-        else if ((args.type[cl+2] != int_type) && (args.type[cl+2] != double_type))  rtrn = 3;
+        else if ((args.type[cl+2][0] != int_type) && (args.type[cl+2][0] != double_type))  rtrn = 3;
         if (rtrn != passed)  break;         }
     
     if (rtrn != passed)  {
@@ -799,13 +775,13 @@ ccInt cc_sort(argsType args)
     else  {
     for (cl = 0; cl < numLists; cl++)  {
         idx = firstIndex;
-        if (args.type[cl+2] == int_type)  {
+        if (args.type[cl+2][0] == int_type)  {
             ccInt *list = (ccInt *) (args.p[cl+2]), *sortedList = (ccInt *) (args.p[cl+2+numLists]);
             for (ci = 0; ci < numIndices; ci++)  {
                 sortedList[ci] = list[idx];
                 idx = linkList[idx];
         }   }
-        else if (args.type[cl+2] == double_type)  {
+        else if (args.type[cl+2][0] == double_type)  {
             ccFloat *list = (ccFloat *) (args.p[cl+2]), *sortedList = (ccFloat *) (args.p[cl+2+numLists]);
             for (ci = 0; ci < numIndices; ci++)  {
                 sortedList[ci] = list[idx];
@@ -824,10 +800,10 @@ ccInt cc_sort(argsType args)
 
 ccInt cc_load(argsType args)
 {
-    linkedlist *fileName, *fileContents;
     ccInt scriptNo, rtrn;
     size_t scriptSize;
-    char *fileNameC;
+    arg *fileContentsArg;
+    char *fileName, *fileContents;
     const char *scriptString;
     
     
@@ -835,9 +811,8 @@ ccInt cc_load(argsType args)
     
     if (args.num != 2)  return wrong_argument_count_err;
     
-    if (args.type[0] == int_type)  {
-        returnOnErr(checkArgs(args, scalar(int_type), scalar(string_type)))
-        getArgs(args, byValue(&scriptNo), &fileContents);
+    if (args.type[0][0] == int_type)  {
+        returnOnErr(getArgs(args, scalarValue(int_type, &scriptNo), scalarRef(string_type, &fileContentsArg)))
         
         if (scriptNo == 1)  scriptString = defsScript;
         else if (scriptNo == 2)  scriptString = terminalScript;
@@ -846,21 +821,17 @@ ccInt cc_load(argsType args)
         if (scriptString == NULL)  return library_argument_err;
         
         scriptSize = strlen(scriptString);
-        returnOnErr(resizeLinkedList(fileContents, (ccInt) scriptSize, false))
-        setElements(fileContents, 1, (ccInt) scriptSize, (void *) scriptString);
+        returnOnErr(setStringSize(fileContentsArg, 1, (ccInt) scriptSize, &fileContents))
+        memcpy(fileContents, scriptString, scriptSize);
         
         return passed;
     }
     
     else  {
-        returnOnErr(checkArgs(args, scalar(string_type), scalar(string_type)))
-        getArgs(args, &fileName, &fileContents);
+        returnOnErr(getArgs(args, arrayRef(char_type, &fileName), scalarRef(string_type, &fileContentsArg)))
         
-        fileNameC = LL2Cstr(fileName);
+        rtrn = loadFile(fileName, fileContentsArg, false);
         
-        rtrn = loadFile(fileNameC, fileContents, false);
-        
-        free((void *) fileNameC);
         return rtrn;
     }
 }
@@ -868,9 +839,10 @@ ccInt cc_load(argsType args)
 
 // loadFile():  a routine to load a text file into a linked list
 
-ccInt loadFile(const char *fileNameC, linkedlist *textString, bool addFinalNull)
+ccInt loadFile(const char *fileNameC, arg *textStringArg, bool addFinalNull)
 {
     ccInt fileSize, LLsize, bytesRead = 0;
+    char *textString;
     FILE *fileToRead;
     
     if ((fileToRead = fopen(fileNameC, "rb")) == NULL)  return IO_error;
@@ -881,12 +853,11 @@ ccInt loadFile(const char *fileNameC, linkedlist *textString, bool addFinalNull)
     
     LLsize = fileSize;
     if (addFinalNull)  LLsize++;
-    returnOnErr(resizeLinkedList(textString, LLsize, false))
-    returnOnErr(defragmentLinkedList(textString))
+    returnOnErr(setStringSize(textStringArg, 1, fileSize, &textString))
     
-    if (fileSize > 0)  bytesRead = (ccInt) fread(element(textString, 1), 1, (size_t) fileSize, fileToRead);
+    if (fileSize > 0)  bytesRead = (ccInt) fread(textString, 1, (size_t) fileSize, fileToRead);
     
-    if (addFinalNull)  *LL_Char(textString, LLsize) = 0;
+    if (addFinalNull)  textString[LLsize] = 0;
     
     if (fclose(fileToRead) != 0)  return IO_error;
     if (bytesRead != fileSize)  return IO_error;
@@ -901,48 +872,30 @@ ccInt loadFile(const char *fileNameC, linkedlist *textString, bool addFinalNull)
 ccInt cc_save(argsType args)
 {
     FILE *fileToWrite;
-    linkedlist *fileName, *stringLL;
+    const char *fileName, *fileString;
     ccInt bytesWritten;
-    char *fileNameC;
     
     if (args.num != 2)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, scalar(string_type), scalar(string_type)))
-    getArgs(args, &fileName, &stringLL);
-    
-    returnOnErr(defragmentLinkedList(stringLL))
-    fileNameC = LL2Cstr(fileName);
+    returnOnErr(getArgs(args, arrayRef(char_type, &fileName), arrayRef(char_type, &fileString)))
     
     
         // try to open the file; throw error if unsuccessful
     
-    fileToWrite = fopen(fileNameC, "wb");
-    free((void *) fileNameC);
+    fileToWrite = fopen(fileName, "wb");
     
     if (fileToWrite == NULL)  return IO_error;
     
     
         // write the string to the file
     
-    if (stringLL->elementNum == 0)  bytesWritten = 0;
-    else  bytesWritten = (ccInt) fwrite(element(stringLL, 1), 1, stringLL->elementNum, fileToWrite);
+    if (args.indices[1] == 0)  bytesWritten = 0;
+    else  bytesWritten = (ccInt) fwrite(fileString, 1, args.indices[1], fileToWrite);
     
     if (fclose(fileToWrite) != 0)  return IO_error;
-    if (bytesWritten != stringLL->elementNum)  return IO_error;
+    if (bytesWritten != args.indices[1])  return IO_error;
     
     return passed;
-}
-
-
-char *LL2Cstr(linkedlist *LL)
-{
-    char *Cstring = (char *) malloc(LL->elementNum+1);
-    if (Cstring == NULL)  return NULL;
-    
-    getElements(LL, 1, LL->elementNum, (void *) Cstring);
-    Cstring[LL->elementNum] = 0;
-    
-    return Cstring;
 }
 
 
@@ -950,19 +903,17 @@ char *LL2Cstr(linkedlist *LL)
 
 ccInt cc_input(argsType args)
 {
-    ccInt counter, bytesRead;
+    ccInt counter, bytesRead, totalBytesRead = 0;
     const ccInt fileReadBufferSize = 1000;
-    char charBuffer[1001], *readRetrn;
-    linkedlist *LL;
+    char charBuffer[1001], *readRetrn, *newChars;
+    arg *inputString;
     bool done;
     
-    if (args.num == 0)  return wrong_argument_count_err;
-    if (args.num > 1)  {  args.num--;  cc_print(args);  args.num++;  }
+    if (args.num != 1)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, fromArg(args.num-1), scalar(string_type)))
-    getArgs(args, fromArg(args.num-1), &LL);
+    returnOnErr(getArgs(args, scalarRef(string_type, &inputString)))
     
-    returnOnErr(resizeLinkedList(LL, 0, false))
+    returnOnErr(setStringSize(inputString, 1, 0, NULL))
     
     
         // loop until all of the data has been read
@@ -985,65 +936,21 @@ ccInt cc_input(argsType args)
         
             // copy from the buffer into the string register
         
-        returnOnErr(addElements(LL, bytesRead, false))           // will be contiguous if spareRoom = 0
-        setElements(LL, LL->elementNum-bytesRead+1, LL->elementNum, charBuffer);
+        returnOnErr(setStringSize(inputString, 1, totalBytesRead+bytesRead, &newChars))
+        memcpy(newChars + totalBytesRead, charBuffer, bytesRead);
+        totalBytesRead += bytesRead;
     }  while (!done);
     
-    return defragmentLinkedList(LL);
-}
-
-
-ccInt cc_print(argsType args)  {
-    
-    ccInt a, idx, idx2;
-    
-    for (a = 0; a < args.num; a++)  {
-        
-        if (args.type[a] == bool_type)  {
-            bool *p = (bool *) args.p[a];
-            for (idx = 0; idx < args.indices[a]; idx++)  {
-                if (!p[idx])  printf("false");
-                else  printf("true");
-        }   }
-        
-        else if (args.type[a] == char_type)  {
-            unsigned char *p = (unsigned char *) args.p[a];
-            for (idx = 0; idx < args.indices[a]; idx++)  {
-                printChar(p+idx);
-        }   }
-        
-        else if (args.type[a] == int_type)  {
-            ccInt *p = (ccInt *) args.p[a];
-            for (idx = 0; idx < args.indices[a]; idx++)  {
-                printf(printIntFormatString, p[idx]);
-        }   }
-        
-        else if (args.type[a] == double_type)  {
-            ccFloat *p = (ccFloat *) args.p[a];
-            for (idx = 0; idx < args.indices[a]; idx++)  {
-                printf(printFloatFormatString, p[idx]);
-        }   }
-        
-        else if (args.type[a] == string_type)  {
-            linkedlist *strs = (linkedlist *) args.p[a];
-            for (idx = 0; idx < args.indices[a]; idx++)  {
-                linkedlist *L = strs + idx;
-                if (L->elementNum > 0)  {
-                    sublistHeader *LLsublist = L->memory;
-                    ccInt localIndex = 0;
-                    printChar((const unsigned char *) skipElements(L, &LLsublist, &localIndex, 0));        // trick to get the first sublist
-                    for (idx2 = 1; idx2 < L->elementNum; idx2++)  {
-                        printChar((const unsigned char *) skipElements(L, &LLsublist, &localIndex, 1));
-    }   }   }   }   }
-    
-    if (fflush(stdout) != passed)  return IO_error;
     return passed;
 }
 
-void printChar(const unsigned char *c)
+
+ccInt cc_print(argsType args)
 {
-    if (lettertype(c) != unprintable)  printf("%c", *c);
-    else  printf("\\%c%c", hexDigit((*c)/16), hexDigit((*c) % 16));
+    printView((view *) args.p[0], NULL, NULL);
+    if (fflush(stdout) != passed)  return IO_error;
+    
+    return passed;
 }
 
 
@@ -1055,63 +962,43 @@ void printChar(const unsigned char *c)
 
 ccInt cc_read_string(argsType args)
 {
-    linkedlist *theString;
-    ccInt a, idx;
-    ccFloat oneNum;
-    char *holdString;
+    ccInt a;
+    view windowView;
+    readStringInfo RSinfo;
+    char *theString; //holdString;
     const char *c, *warningChar = NULL;
     
     if (args.num < 1)  return wrong_argument_count_err;
-    returnOnErr(checkArgs(args, scalar(string_type), endArgs))
-    getArgs(args, &theString, endArgs);
-    
-    returnOnErr(defragmentLinkedList(theString))
-    
-    c = holdString = (char *) malloc(theString->elementNum+1);
-    if (holdString == NULL)  return out_of_memory_err;
-    getElements(theString, 1, theString->elementNum, (void *) holdString);
-    holdString[theString->elementNum] = 0;
+    returnOnErr(getArgs(args, arrayRef(char_type, &theString), endArgs))
     
     
         // Read the string into the subsequent argument variables.  String variables are read up through the next space.
     
+    RSinfo.sourceString = theString;
+    RSinfo.stringEnd = theString + args.indices[0];
+    RSinfo.warningMarker = NULL;
     for (a = 1; a < args.num; a++)   {
-        void *oneArg = args.p[a];
-        for (idx = 0; idx < args.indices[a]; idx++)  {
-            
-            while ((!isWordChar(c)) && (lettertype(c) != a_null))  c++;
-            if (lettertype(c) == a_null)  {  if (warningChar == NULL)  warningChar = c;  break;  }
-            
-            if ((args.type[a] == int_type) || (args.type[a] == double_type))  {
-                returnOnErr(readNum(&c, &oneNum, NULL));          // deal with overflow
-                if (args.type[a] == int_type)  ((ccInt *) oneArg)[idx] = (ccInt) oneNum;
-                else  ((ccFloat *) oneArg)[idx] = oneNum;       }
-            else if (args.type[a] == char_type)  {
-                ((char *) oneArg)[idx] = *c;
-                c++;        }
-            else if (args.type[a] == bool_type)  {
-                if (strcmp(c, "true") == 0)  {  ((bool *) oneArg)[idx] = true;  c+=4;  }
-                else if (strcmp(c, "false") == 0)  {  ((bool *) oneArg)[idx] = false;  c+=5;  }
-                else  warningChar = c;          }
-            else if (args.type[a] == string_type)  {
-                linkedlist *destStr = (linkedlist *) args.p[a];
-                const char *strStart = c;
-                while (isWordChar(c))  c++;
-                returnOnErr(resizeLinkedList(destStr, (ccInt) (c-strStart), false))
-                setElements(destStr, 1, destStr->elementNum, (void *) strStart);
-    }   }   }
+        arg *oneArg = args.p[a];
+        windowView.windowPtr = (window *) oneArg;
+        if (oneArg != NULL)  {
+            windowView.offset = windowView.windowPtr->offset;
+            windowView.width = windowView.windowPtr->width;
+            readViewString(&windowView, &RSinfo, NULL);
+    }   }
     
         // Finally, check to see if there seem to be any left-over useful fields in the string -- if so, set a warning.
     
-    while ((!isWordChar(c)) && (lettertype(c) != a_null))  c++;
-    
-    if ((lettertype(c) != a_null) && (warningChar == NULL))  warningChar = c;
+    if (RSinfo.warningMarker != NULL)  warningChar = RSinfo.warningMarker;
+    else  {
+        c = RSinfo.sourceString;
+        while ((!isWordChar(c)) && (lettertype(c) != a_null))  c++;
+        if ((lettertype(c) != a_null) && (warningChar == NULL))  warningChar = c;
+    }
     
     if (warningChar != NULL)  {
         setWarning(string_read_err, pcCodePtr-1);
-        if (doPrintError)  printError(NULL, -1, holdString, (ccInt) (warningChar-holdString), true, 1, false);      }
+        if (doPrintError)  printError(NULL, -1, theString, (ccInt) (warningChar-theString), true, 1, false);      }
     
-    free(holdString);
     return passed;
 }
 
@@ -1128,57 +1015,35 @@ bool isWordChar(const char *c)  {
 
 ccInt cc_print_string(argsType args)
 {
-    char *strPtr = NULL, *toWritePtr = NULL;
-    ccInt a, idx, c2, n, numChars, maxFloatingDigits;
-    ccFloat oneNum;
-    linkedlist *theString;
+    printStringInfo PSinfo;
+    view windowView;
+    ccInt c2, a;
+    arg *theString;
     
-    returnOnErr(checkArgs(args, scalar(string_type), scalar(numeric_type), endArgs))
-    getArgs(args, &theString, byValue(&maxFloatingDigits), endArgs);
+    if (args.num < 2)  return wrong_argument_count_err;
+    if ((args.type[1][0] != int_type) && (args.type[1][0] != double_type))  return type_mismatch_err;
     
-    if (maxFloatingDigits < 0)  return out_of_range_err;
-    if (maxFloatingDigits > maxPrintableDigits)  maxFloatingDigits = maxPrintableDigits;
+    returnOnErr(getArgs(args, scalarRef(string_type, &theString), byValue(&(PSinfo.maxFloatingDigits)), endArgs))
+    
+    if (PSinfo.maxFloatingDigits < 0)  return out_of_range_err;
+    if (PSinfo.maxFloatingDigits > maxPrintableDigits)  PSinfo.maxFloatingDigits = maxPrintableDigits;
     
     
         // compute the byte size of the final string / print it
     
+    PSinfo.stringPtr = NULL;
     for (c2 = 0; c2 < 2; c2++)  {
-        n = 0;
+        PSinfo.numChars = 0;
         for (a = 2; a < args.num; a++)  {
-            if (args.type[a] == bool_type)  {
-                bool *p = (bool *) args.p[a];
-                for (idx = 0; idx < args.indices[a]; idx++)  {
-                    if (c2 == 1)  toWritePtr = strPtr+n;
-                    if (!p[idx])  n += copyStr("false", toWritePtr);
-                    else  n += copyStr("true", toWritePtr);
-            }   }
-            
-            else if (args.type[a] == char_type)  {
-                if (c2 == 1)  memcpy(strPtr+n, args.p[a], args.indices[a]);
-                n += args.indices[a];        }
-            
-            else if (args.type[a] == string_type)  {
-                linkedlist *strs = (linkedlist *) args.p[a];
-                for (idx = 0; idx < args.indices[a]; idx++)  {
-                    if (c2 == 1)  getElements(strs+idx, 1, strs[idx].elementNum, strPtr+n);
-                    n += strs[idx].elementNum;
-            }   }
-            
-            else  {
-                void *p = args.p[a];
-                for (idx = 0; idx < args.indices[a]; idx++)  {
-                    if (c2 == 1)  toWritePtr = strPtr+n;
-                    if (args.type[a] == int_type)  oneNum = ((ccInt *) p)[idx];
-                    else  oneNum = ((ccFloat *) p)[idx];
-                    printNumber(toWritePtr, oneNum, &numChars, args.type[a], maxFloatingDigits);
-                    n += numChars;
-        }   }   }
-        
+            windowView.windowPtr = (window *) args.p[a];
+            if (windowView.windowPtr != NULL)  {
+                windowView.offset = windowView.windowPtr->offset;
+                windowView.width = windowView.windowPtr->width;
+                printViewString(&windowView, &PSinfo, NULL);
+        }   }
         if (c2 == 0)  {
-            if (n == 0)  return passed;
-            returnOnErr(resizeLinkedList(theString, n, false))
-            returnOnErr(defragmentLinkedList(theString))
-            strPtr = (char *) element(theString, 1);
+            if (PSinfo.numChars == 0)  return passed;
+            returnOnErr(setStringSize(theString, 1, PSinfo.numChars, &(PSinfo.stringPtr))) //&strPtr))
     }   }
     
     return passed;
@@ -1200,16 +1065,15 @@ ccInt copyStr(const char *source, char *dest)
 
 ccInt cc_find(argsType args)
 {
-    linkedlist *str, *substr;
-    char *strPtrToSearch, *soughtStrPtr;
+    char *str, *substr;
     ccInt strLen, substrLen, startingPosition, numMatches, charCounter, mode, matchStart, *position;
     
     if (args.num != 5)  return wrong_argument_count_err;
-    returnOnErr(checkArgs(args, scalar(string_type), scalar(string_type), scalar(int_type), scalar(int_type), scalar(int_type)))
-    getArgs(args, &str, &substr, byValue(&mode), byValue(&startingPosition), &position);
+    returnOnErr(getArgs(args, arrayRef(char_type, &str), arrayRef(char_type, &substr), scalarValue(int_type, &mode),
+            scalarValue(int_type, &startingPosition), scalarRef(int_type, &position)))
     
-    strLen = str->elementNum;
-    substrLen = substr->elementNum;
+    strLen = args.indices[0];
+    substrLen = args.indices[1];
     
     *position = 0;
     if (strLen == 0)  return passed;
@@ -1218,17 +1082,12 @@ ccInt cc_find(argsType args)
         else  *position = startingPosition;
         return passed;     }
     
-    soughtStrPtr = (char *) element(substr, 1);
-    strPtrToSearch = (char *) element(str, 1);
-    returnOnErr(defragmentLinkedList(str))
-    returnOnErr(defragmentLinkedList(substr))
-    
     numMatches = 0;
     if (mode > -1)  {               // search forwards
     for (matchStart = startingPosition-1; matchStart <= strLen-substrLen; matchStart++)  {
         
         for (charCounter = 0; charCounter < substrLen; charCounter++)  {
-        if (strPtrToSearch[matchStart+charCounter] != soughtStrPtr[charCounter])   {
+        if (str[matchStart+charCounter] != substr[charCounter])   {
             break;
         }}
         
@@ -1241,7 +1100,7 @@ ccInt cc_find(argsType args)
     for (matchStart = startingPosition-1; matchStart >= 0; matchStart--)  {
         
         for (charCounter = 0; charCounter < substrLen; charCounter++)  {
-        if (strPtrToSearch[matchStart+charCounter] != soughtStrPtr[charCounter])   {
+        if (str[matchStart+charCounter] != substr[charCounter])   {
             break;
         }}
         
@@ -1265,8 +1124,7 @@ ccInt cc_random(argsType args)
     
     if (args.num != 1)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, vector(double_type)))
-    getArgs(args, &array);
+    returnOnErr(getArgs(args, arrayRef(double_type, &array)))
     
     for (el = 0; el < args.indices[0]; el++)  array[el] = ((ccFloat) rand())/RAND_MAX + ((ccFloat) rand())/RAND_MAX/RAND_MAX;
     
@@ -1322,9 +1180,8 @@ ccInt mathUnaryOp(argsType args, ccFloat(f)(ccFloat x))
     
     if (args.num != 2)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, vector(double_type), vector(double_type)))
     if (args.indices[1] != args.indices[0])  return mismatched_indices_err;
-    getArgs(args, &source, &dest);
+    returnOnErr(getArgs(args, arrayRef(double_type, &source), arrayRef(double_type, &dest)))
     
     for (el = 0; el < args.indices[0]; el++)  dest[el] = f(source[el]);
     
@@ -1354,8 +1211,7 @@ ccInt mathBinaryOp(argsType args, ccFloat(f)(ccFloat x, ccFloat y))
     
     if (args.num != 3)  return wrong_argument_count_err;
     
-    returnOnErr(checkArgs(args, vector(double_type), vector(double_type), vector(double_type)))
-    getArgs(args, &source1, &source2, &dest);
+    returnOnErr(getArgs(args, arrayRef(double_type, &source1), arrayRef(double_type, &source2), arrayRef(double_type, &dest)))
     
     if (args.indices[1] > args.indices[0])  vectorLen = args.indices[1];
     else  vectorLen = args.indices[0];
@@ -1383,8 +1239,7 @@ ccInt cc_springCleaning(argsType args)
         window *theWindow;
         ccInt loopMember;
         
-        returnOnErr(checkArgs(args, vector(composite_type)));
-        getArgs(args, &theWindow);
+        returnOnErr(getArgs(args, arrayRef(composite_type, &theWindow)))
         
         for (loopMember = theWindow->variable_ptr->mem.members.elementNum; loopMember >= 1; loopMember--)  {
         if (LL_member(theWindow->variable_ptr, loopMember)->ifHidden)  {
@@ -1399,57 +1254,124 @@ ccInt cc_springCleaning(argsType args)
 
 
 
+// Functions for arg-type variables
+
+ccInt getArgTop(arg *theArg)
+{
+    window *argWindow = (window *) theArg;
+    variable *argVar = argWindow->variable_ptr;
+    
+    if (argVar->types[0] == array_type)  {
+        member *argMember = LL_member(argVar, 1);
+        return argMember->indices;
+    }
+    
+    else if (argVar->types[0] == list_type)  {
+        member *argMember = LL_member(argVar, argWindow->width);
+        return argMember->indices;
+    }
+    
+    return argVar->mem.members.elementNum;
+}
+
+ccInt setMemberTop(arg *theArg, const ccInt memberNumber, const ccInt listSize, char **listData)
+{
+    window *argWindow = (window *) theArg;
+    member *theArgMember;
+    ccInt *varTypes = argWindow->variable_ptr->types, width = 1;
+    
+    if (varTypes[0] != list_type)  width = argWindow->width;
+    
+    if (varTypes[0] == composite_type)  theArgMember = LL_member(argWindow->variable_ptr, memberNumber);
+    else if (varTypes[0] == array_type)  theArgMember = LL_member(argWindow->variable_ptr, 1);
+    else  theArgMember = LL_member(argWindow->variable_ptr, argWindow->offset+memberNumber);
+    
+    resizeMember(theArgMember, width, (ccInt) listSize);
+    if (errCode != passed)  return errCode;
+    
+    if ((varTypes[1] < composite_type) && (listData != NULL) && (listSize > 0))  {
+        linkedlist *listLL = &(theArgMember->memberWindow->variable_ptr->mem.data);
+        returnOnErr(defragmentLinkedList(listLL));
+        *listData = (char *) element(listLL, theArgMember->memberWindow->offset+1);
+    }
+    
+    return passed;
+}
+
+
+ccInt setStringSize(arg *theString, const ccInt stringNumber, const ccInt stringSize, char **stringData)
+{
+    return setMemberTop(theString, stringNumber, stringSize, stringData);
+}
+
+
+arg *stepArg(arg *theArg, ccInt memberNumber, ccInt *numIndices)
+{
+    variable *argVar = ((window *) theArg)->variable_ptr;
+    member *argMember;
+    
+    if ((memberNumber < 1) || (memberNumber > argVar->mem.members.elementNum))  return NULL;
+    
+    argMember = LL_member(argVar, memberNumber);
+    if (numIndices != NULL)  *numIndices *= argMember->indices;
+    
+    return (arg *) argMember->memberWindow;
+}
+
+void *argData(arg *theArg)
+{
+    window *argWindow = (window *) theArg;
+    linkedlist *argDataLL = &(argWindow->variable_ptr->mem.data);
+    
+    if (defragmentLinkedList(argDataLL) != passed)  {
+        setError(out_of_memory_err, pcCodePtr-1);
+        return NULL;        }
+    
+    return element(argDataLL, argWindow->offset+1);
+}
+
+
+
 
 // Misc -- useful for loading arguments into the user's C routines.
 
-void getArgs(argsType args, ...)
+#define brk(e) {rtrn=e;break;}
+ccInt getArgs(argsType args, ...)
 {
-    ccInt a;
+    ccInt a, mode, expectedType, *argType, rtrn = passed;
     va_list theArgs;
     char **nextarg;
+    const static bool checkArgType[6] = { false, false, true, true, true, true };
+    const static bool expectScalar[6] = { false, false, true, true, false, false };
+    const static bool copyValue[6] = { false, true, true, false, true, false };
     
     va_start(theArgs, args);
     for (a = 0; a < args.num; a++)  {
         nextarg = va_arg(theArgs, char **);
-        if (nextarg != NULL)
-            *nextarg = (char *) args.p[a];
-        else  {
-            nextarg = va_arg(theArgs, char **);
-            if (nextarg == NULL)  {
-                a = ((ccInt) va_arg(theArgs, int)) - 1;
-                if (a < -1)  break;       }
-            else  {
-                size_t numBytes = (size_t) args.indices[a]*typeSizes[args.type[a]];
-                if (numBytes > 0)  memcpy((void *) nextarg, (void *) args.p[a], numBytes);
-    }   }   }
-    va_end(theArgs);
-    
-    return;
-}
-
-
-#define brk(e) {rtrn=e;break;}
-ccInt checkArgs(argsType args, ...)
-{
-    ccInt a, nextarg, rtrn = passed;
-    va_list theArgs;
-    
-    va_start(theArgs, args);
-    for (a = 0; a < args.num; a++)  {
-        nextarg = (ccInt) va_arg(theArgs, int);
-        if (nextarg != 0)  {
-            ccInt expectedType = nextarg;
-            bool expectScalar = (expectedType < 0);
-            if (expectScalar)  expectedType *= -1;
-            expectedType--;
+        if (nextarg != NULL)  {
+            if ((nextarg < &argDummies[0]) || (nextarg > &argDummies[4]))  mode = 0;
+            else  mode = (ccInt) (nextarg-&argDummies[0])+1;
             
-            if (expectedType == numeric_type)  {
-                if ((args.type[a] != int_type) && (args.type[a] != double_type))  brk(type_mismatch_err)        }
-            else if (expectedType != args.type[a])  brk(type_mismatch_err)
-            if ((expectScalar) && (args.indices[a] != 1))  brk(multiple_indices_not_allowed_err)
-        }
+            if (checkArgType[mode])  {
+                if (args.p[a] == NULL)  brk(void_member_err)
+                if ((expectScalar[mode]) && (args.indices[a] != 1))  brk(multiple_indices_not_allowed_err)
+                argType = args.type[a];
+                do  {
+                    expectedType = va_arg(theArgs, int);
+                    if (expectedType != argType[0])  brk(type_mismatch_err)
+                    argType++;
+                }  while (expectedType > composite_type);
+                if (rtrn != passed)  break;
+            }
+            
+            if (mode > 0)  nextarg = va_arg(theArgs, char **);
+            if (!copyValue[mode])  *nextarg = (char *) args.p[a];
+            else  {
+                size_t numBytes = (size_t) args.indices[a]*typeSizes[args.type[a][0]];
+                if (numBytes > 0)  memcpy((void *) nextarg, (void *) args.p[a], numBytes);
+        }   }
+        
         else  {
-            nextarg = va_arg(theArgs, int);         // get past the NULL
             a = ((ccInt) va_arg(theArgs, int)) - 1;
             if (a < -1)  break;
     }   }
@@ -1457,3 +1379,5 @@ ccInt checkArgs(argsType args, ...)
     
     return rtrn;
 }
+
+char *argDummies[5];
