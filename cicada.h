@@ -17,6 +17,11 @@
 // These can be changed (e.g. int --> long if we need to work with large numbers);
 // just remember to also change the 4 read/printXXXFormatStrings variables
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 typedef int ccInt;
 #define ccIntMax INT_MAX
 #define ccIntMin INT_MIN
@@ -170,5 +175,9 @@ extern void *argData(arg *);
 #define return_flag 50
 #define finished_signal 51
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* cicada_h */
