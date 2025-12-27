@@ -23,14 +23,10 @@
  *  SOFTWARE.
  */
 
-#include <stddef.h>
-#include <stdio.h>
-#include "lnklst.h"
-#include "ccmain.h"
-#include "main.h"
+#include <cicada.h>
 
-ccInt runNetwork(argsType args)  {  return 0;  }
-const Cfunction fs[] = { { "runNetwork", &runNetwork } };
+ccInt myF(argsType args)  {  return 0;  }        // example function
+const Cfunction fs[] = { { "myF", &myF } };
 
 
 int main(int argc, char **argv)
