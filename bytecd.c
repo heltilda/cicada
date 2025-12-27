@@ -390,7 +390,7 @@ void _def_general()
     ccInt counter, rtrn, flags, sourceType, sourceDataType, arrayDimsToConstruct, dimCounter, arrayDepth, ca;
     ccInt *dgCommandPtr, *subjectCommand, *objectCommand, holdCodeNumber, holdMemberID, firstToCustomize = 0, *types;
     unsigned char charRegister;
-    bool canResizeDestination, errorInConstructor, isVoid, sourceIsScalar, varIsString, useVarCode, newTarget;
+    bool canResizeDestination, errorInConstructor, isVoid, sourceIsScalar, varIsString, useVarCode, newTarget, builtFinalVar;
     window fauxStringWindow;
     variable fauxStringVariable;
     member *sourceMember;
@@ -608,7 +608,8 @@ void _def_general()
                 if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
         }   }
         
-        rtrn = buildOneVarLayer(types, 1, arrayDimsToConstruct, &firstToCustomize, &sourceView, &searchViewToReturn, flags, isVoid, NULL);
+        builtFinalVar = false;
+        rtrn = buildOneVarLayer(types, 1, arrayDimsToConstruct, &builtFinalVar, &firstToCustomize, &sourceView, &searchViewToReturn, flags, isVoid, NULL);
         free(types);
         if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
         
@@ -618,7 +619,7 @@ void _def_general()
             // At last, check/update the variable code list, and run the constructors of the new object, if that is allowed.
         
         errorInConstructor = false;
-        if ((!isVoid) && (errCode == passed) && ((newTarget) || (getFlag(flags, relink_target_flag))))  {
+        if ((!isVoid) && (errCode == passed) && ((newTarget) || (getFlag(flags, relink_target_flag))) && (builtFinalVar))  {
             
             
                 // First customize the codes:  i.e. make them new anchors if we just defined a composite object (function)
@@ -830,9 +831,9 @@ void _def_general()
 
 // buildOneVarLayer() builds one array variable, composite variable, or primitive variable, calling itself recursively
 // e.g. lists :: [[m]] [n] int --> one iteration builds composite variable with 'm' indices,
-// then m array variables with 'n' indices, then int variables  
+// then m array variables with 'n' indices, then int variables
 
-ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt arrayDimsToConstruct,
+ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt arrayDimsToConstruct, bool *builtFinalVar,
         ccInt *firstToCustomize, view *sourceView, view *searchViewToReturn, const ccInt flags, const bool isVoid, const void *sourceData)
 {
     ccInt oneDimSize, arrayDepth = GL_Object.arrayDimList.elementNum - loopArrayDim + 1, rtrn, ci, numIndices, numLists;
@@ -912,6 +913,7 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
         for (ci = 1; ci <= searchView.width; ci++)  {
             setElement(&(searchView.windowPtr->variable_ptr->mem.data), searchView.offset+ci, sourceData);
         }}
+        *builtFinalVar = true;
         return passed;
     }
     
@@ -944,7 +946,8 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     for (ci = 0; ci < numLists; ci++)  {
         GL_Path.offset = ci;
         GL_Path.indices = numIndices;
-        rtrn = buildOneVarLayer(types+1, loopArrayDim+1, arrayDimsToConstruct, firstToCustomize, sourceView, searchViewToReturn, flags, isVoid, sourceData);
+        rtrn = buildOneVarLayer(types+1, loopArrayDim+1, arrayDimsToConstruct, builtFinalVar,
+                    firstToCustomize, sourceView, searchViewToReturn, flags, isVoid, sourceData);
         if (rtrn != passed)  return rtrn;
     }
     
@@ -2579,6 +2582,7 @@ void getConstVar(const ccInt varType, const ccInt numIndices, const bool makeLis
     
     if (GL_Path.stemMember->memberWindow == NULL)  {
         ccInt numArrayDims, types[2], firstToCustomize, rtrn;
+        bool builtFinalVar = false;
         
         if (makeList)  {
             types[0] = list_type;  types[1] = varType;  numArrayDims = 1;
@@ -2587,7 +2591,7 @@ void getConstVar(const ccInt varType, const ccInt numIndices, const bool makeLis
         }
         else  {  types[0] = varType;  numArrayDims = 0;  }
         
-        rtrn = buildOneVarLayer(types, 1, numArrayDims, &firstToCustomize, &searchView, NULL, def_flags, false, sourceData);
+        rtrn = buildOneVarLayer(types, 1, numArrayDims, &builtFinalVar, &firstToCustomize, &searchView, NULL, def_flags, false, sourceData);
         if (rtrn != passed)  setError(rtrn, pcCodePtr);
     }
     else  {

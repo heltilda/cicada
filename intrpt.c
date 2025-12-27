@@ -1005,7 +1005,10 @@ void stepView(view *viewToStep, member *startingMember, ccInt entryOffset, ccInt
     window *memberWindow = startingMember->memberWindow;
     ccInt startingOffset = viewToStep->offset, startingWidth = viewToStep->width;
     
-    if (*viewToStep->windowPtr->variable_ptr->types == list_type)  {  startingOffset = 0;  startingWidth = 1;  }
+    if (*viewToStep->windowPtr->variable_ptr->types == list_type)  {
+        startingOffset = 0;
+        if (startingWidth > 1)  startingWidth = 1;
+    }
     
     if (memberWindow == NULL)  {  viewToStep->windowPtr = NULL;  setError(void_member_err, pcCodePtr-1);  return;  };
     
