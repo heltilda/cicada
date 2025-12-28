@@ -387,16 +387,14 @@ window *getViewMember(ccInt soughtMemberIndex)
 
 void _def_general()
 {
-    ccInt counter, rtrn, flags, sourceType, sourceDataType, arrayDimsToConstruct, dimCounter, arrayDepth, ca;
-    ccInt *dgCommandPtr, *subjectCommand, *objectCommand, holdCodeNumber, holdMemberID, firstToCustomize = 0, *types;
+    ccInt rtrn, flags, sourceType, sourceDataType, arrayDimsToConstruct, dimCounter, arrayDepth, ca;
+    ccInt *dgCommandPtr, *subjectCommand, *objectCommand, holdCodeNumber, holdMemberID, *types;
     unsigned char charRegister;
-    bool canResizeDestination, errorInConstructor, isVoid, sourceIsScalar, varIsString, useVarCode, newTarget, builtFinalVar;
+    bool canResizeDestination, isVoid, sourceIsScalar, varIsString, useVarCode, newTarget;
     window fauxStringWindow;
     variable fauxStringVariable;
     member *sourceMember;
     view sourceView, destView, holdThatView, holdDestView, searchViewToReturn;
-    code_ref *loopCodeRef;
-    linkedlist *theCodeList = NULL;
     step_params destPath;
     void *toCopy = NULL;
     
@@ -608,64 +606,10 @@ void _def_general()
                 if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
         }   }
         
-        builtFinalVar = false;
-        rtrn = buildOneVarLayer(types, 1, arrayDimsToConstruct, &builtFinalVar, &firstToCustomize, &sourceView, &searchViewToReturn, flags, isVoid, NULL);
+        buildVar(types, arrayDimsToConstruct, sourceDataType, flags, isVoid, &sourceView, &searchViewToReturn, subjectCommand);
+        
         free(types);
-        if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
-        
-        searchView.multipleIndices = (searchView.multipleIndices | (arrayDimsToConstruct > 0));
-        
-        
-            // At last, check/update the variable code list, and run the constructors of the new object, if that is allowed.
-        
-        errorInConstructor = false;
-        if ((!isVoid) && (errCode == passed) && ((newTarget) || (getFlag(flags, relink_target_flag))) && (builtFinalVar))  {
-            
-            
-                // First customize the codes:  i.e. make them new anchors if we just defined a composite object (function)
-            
-            if ((errCode == passed) && (newTarget) && (sourceDataType == composite_type))  {
-                theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
-                for (counter = firstToCustomize; counter <= theCodeList->elementNum; counter++)   {
-                    
-                    window *pathWindow = GL_Path.stemMember->memberWindow;
-                    searchPath *stemPath;
-                    
-                    loopCodeRef = (code_ref *) element(theCodeList, counter);
-                    
-                    
-                        // if a new code (f :: {}), then link it to pcSearchPath
-                    
-                    if (loopCodeRef->anchor == NULL)  stemPath = pcSearchPath;
-                    else  stemPath = loopCodeRef->anchor->stem;
-                    
-                    rtrn = drawPath(&(loopCodeRef->anchor), pathWindow, stemPath, GL_Path.indices, pcSearchPath->sourceCode);
-                    if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
-                    
-                    refCodeRef(loopCodeRef);
-            }   }
-            else if (getFlag(flags, run_constructor_flag))
-                theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
-            
-            
-                // Run all codes.  Don't start at firstToCustomize (some may not have properly initialized the first time
-                // (if run in constructor mode, it doesn't know if there have been errors, which are tolerated))
-            
-            if ((getFlag(flags, run_constructor_flag)) && (errCode == passed) && (sourceDataType == composite_type))  {
-            for (counter = 1; counter <= theCodeList->elementNum; counter++)   {
-                beginExecution((code_ref *) element(theCodeList, counter), true, searchView.offset, searchView.width, 0);
-                if (errCode == return_flag)  errCode = passed;
-                if (errCode != passed)  {  errorInConstructor = true;  break;  }
-        }   }}
-        
-        if (isVoid)  searchView.windowPtr = NULL;       // if we ended up nowhere, make sure Cicada knows that
-        
-        if (errCode != passed)  {        // handle any lingering errors (e.g. from construction)
-            if (!errorInConstructor)  setError(errCode, dgCommandPtr);
-            
-            if (searchView.windowPtr != NULL)  relinkGLStemMember(&sourceView, false, newTarget, getFlag(flags, unjammable_flag));
-            searchView.windowPtr = NULL;
-            return;      }
+        if (errCode != passed)  return;
         
         if ((GL_Object.type == var_type) && (searchView.windowPtr != NULL))
             GL_Object.codeList = &(searchView.windowPtr->variable_ptr->codeList);
@@ -794,10 +738,9 @@ void _def_general()
                 if (GL_Path.stemMember->memberWindow == sourceView.windowPtr)  {
                     GL_Path.stemMember->indices = sourceWidth/GL_Path.stemView.width;
                     
-                    rtrn = addMemory(sourceView.windowPtr, 0, -sourceView.offset);
-                    if (rtrn == passed)
-                        rtrn = addMemory(sourceView.windowPtr, sourceView.width, sourceView.width-sourceView.windowPtr->width);
-                    if (rtrn != passed)  setError(rtrn, dgCommandPtr);
+                    addMemory(sourceView.windowPtr, 0, -sourceView.offset, false, dgCommandPtr);
+                    if (errCode == passed)
+                        addMemory(sourceView.windowPtr, sourceView.width, sourceView.width-sourceView.windowPtr->width, false, dgCommandPtr);
                     
                     if ((flags != equ_flags) && (searchViewToReturn.windowPtr != NULL))  {
                         searchView = searchViewToReturn;
@@ -825,6 +768,72 @@ void _def_general()
     if ((flags != equ_flags) && (searchViewToReturn.windowPtr != NULL))  {
         searchView = searchViewToReturn;
         resizeLinkedList(&(GL_Object.arrayDimList), 0, false);        }
+}
+
+
+
+void buildVar(ccInt *types, const ccInt arrayDimsToConstruct, const ccInt sourceDataType, const ccInt flags, const bool isVoid,
+            view *sourceView, view *searchViewToReturn, ccInt *errCmdPtr)
+{
+    ccInt counter, rtrn, firstToCustomize = 0;
+    bool errorInConstructor, builtFinalVar = false, newTarget = getFlag(flags, new_target_flag);
+    linkedlist *theCodeList = NULL;
+    
+    rtrn = buildOneVarLayer(types, 1, arrayDimsToConstruct, &builtFinalVar, &firstToCustomize, sourceView, searchViewToReturn, flags, isVoid, NULL);
+    if (rtrn != passed)  {  setError(rtrn, errCmdPtr);  return;  }
+    
+    searchView.multipleIndices = ((searchView.multipleIndices) || (arrayDimsToConstruct > 0));
+    
+    
+        // At last, update the variable code list, and run the constructors of the new object, if that is allowed.
+    
+    errorInConstructor = false;
+    if ((!isVoid) && (errCode == passed) && ((newTarget) || (getFlag(flags, relink_target_flag))) && (builtFinalVar))  {
+        
+        
+            // First customize the codes:  i.e. make them new anchors if we just defined a composite object (function)
+        
+        if ((errCode == passed) && (newTarget) && (sourceDataType == composite_type))  {
+            theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
+            for (counter = firstToCustomize; counter <= theCodeList->elementNum; counter++)   {
+                
+                window *pathWindow = GL_Path.stemMember->memberWindow;
+                searchPath *stemPath;
+                code_ref *loopCodeRef = (code_ref *) element(theCodeList, counter);
+                
+                
+                    // if a new code (f :: {}), then link it to pcSearchPath
+                
+                if (loopCodeRef->anchor == NULL)  stemPath = pcSearchPath;
+                else  stemPath = loopCodeRef->anchor->stem;
+                
+                rtrn = drawPath(&(loopCodeRef->anchor), pathWindow, stemPath, GL_Path.indices, pcSearchPath->sourceCode);
+                if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
+                
+                refCodeRef(loopCodeRef);
+        }   }
+        else if (getFlag(flags, run_constructor_flag))
+            theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
+        
+        
+            // Run all codes.  Don't start at firstToCustomize (some may not have properly initialized the first time
+            // (if run in constructor mode, it doesn't know if there have been errors, which are tolerated))
+        
+        if ((getFlag(flags, run_constructor_flag)) && (errCode == passed) && (sourceDataType == composite_type))  {
+        for (counter = 1; counter <= theCodeList->elementNum; counter++)   {
+            beginExecution((code_ref *) element(theCodeList, counter), true, searchView.offset, searchView.width, 0);
+            if (errCode == return_flag)  errCode = passed;
+            if (errCode != passed)  {  errorInConstructor = true;  break;  }
+    }   }}
+    
+    if (isVoid)  searchView.windowPtr = NULL;       // if we ended up nowhere, make sure Cicada knows that
+    
+    if (errCode != passed)  {        // handle any lingering errors (e.g. from construction)
+        if (!errorInConstructor)  setError(errCode, errCmdPtr);
+        
+        if (searchView.windowPtr != NULL)  relinkGLStemMember(sourceView, false, newTarget, getFlag(flags, unjammable_flag));
+        searchView.windowPtr = NULL;
+        return;      }
 }
 
 
@@ -1827,9 +1836,9 @@ void resizeIndices(member *stemMember, ccInt stemWidth, ccInt insertionOffset, c
             // (element numbers above the deletion point will change when we delete).
         
         for (counter = stemWidth-1; counter >= 0; counter--)  {                            // stemMember should never be 'unjammed'?
-            rtrn = addMemory(stemMember->memberWindow, counter*stemMember->indices + insertionOffset, newIndices);
+            addMemory(stemMember->memberWindow, counter*stemMember->indices + insertionOffset, newIndices, true, pcCodePtr-1);
             unflagVariables(stemMember->memberWindow->variable_ptr, busy_add_flag);
-            if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }        }
+            if (errCode != passed)  return;        }
         
         GL_Path.stemMember = holdGLMember;      }
     

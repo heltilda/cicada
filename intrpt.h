@@ -320,7 +320,7 @@ extern ccInt addCodeRef(linkedlist *, searchPath *, ccInt *, ccInt);
 extern void refCodeRef(code_ref *);
 extern void derefCodeRef(code_ref *);
 extern ccInt checkMemberOverlap(window *, ccInt, ccInt, ccInt);
-extern ccInt addMemory(window *, ccInt, ccInt);
+extern void addMemory(window *, ccInt, ccInt, const bool, ccInt *);
 extern void adjustOffsetAndIW(bool, ccInt *, ccInt *, ccInt, ccInt);
 extern void unflagVariables(variable *, unsigned char);
 extern void unflagWindow(window *, unsigned char);

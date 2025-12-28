@@ -190,6 +190,7 @@ extern void incrementArg(argsType *);
 extern window *getViewMember(ccInt);
 
 extern void _def_general(void);
+extern void buildVar(ccInt *, const ccInt, const ccInt, const ccInt, const bool, view *, view *, ccInt *);
 extern ccInt buildOneVarLayer(const ccInt *, const ccInt, const ccInt, bool *, ccInt *, view *, view *, const ccInt, const bool, const void *);
 extern void copyCompareMultiView(void(*)(view *, view *), view *, view *);
 extern void encompassMultiView(view *, window *, window *, variable *);

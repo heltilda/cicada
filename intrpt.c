@@ -1149,7 +1149,7 @@ void derefVariable(variable *theVariable)
 // If windowOffset is greater than any possible offset (given by hostVariable->instances), this routine creates new space in the variable;
 // otherwise, it is construed as an alias at windowOffset.
 
-ccInt addWindow(variable *hostVariable, ccInt windowOffset, ccInt addedInstances, window **newWindow, bool ifCanJam)
+ccInt addWindow(variable *hostVariable, ccInt windowOffset, ccInt windowWidth, window **newWindow, bool ifCanJam)
 {
     ccInt newIndex, rtrn;
     
@@ -1167,11 +1167,12 @@ ccInt addWindow(variable *hostVariable, ccInt windowOffset, ccInt addedInstances
     *((*newWindow)->references) = 0;
     
     if (windowOffset == hostVariable->instances)   {
-        (*newWindow)->width = 0;                            // the 'starting width' before addMemory() adds to it
-        rtrn = addMemory(*newWindow, 0, addedInstances);    // no need to check overlap
+        (*newWindow)->width = 0;                                        // the 'starting width' before addMemory() adds to it
+        addMemory(*newWindow, 0, windowWidth, false, pcCodePtr-1);      // no need to check overlap
         unflagVariables(hostVariable, busy_add_flag);
-        return rtrn;       }
-    else  (*newWindow)->width = addedInstances;
+        errCode = passed;
+        return errCode;       }
+    else  (*newWindow)->width = windowWidth;
     
     return passed;
 }
@@ -1641,7 +1642,7 @@ ccInt checkMemberOverlap(window *theWindow, ccInt newOffset, ccInt newWidth, ccI
 // Calls itself recursively for the members of the window's variable if it is composite.
 // Outermost invocation:  use offset for insertionOffset, and # of elements of the member pointing to currentWindow to add for newIndices.
 
-ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
+void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const bool buildLists, ccInt *errPtr)
 {
     member *loopMember;
     window *loopWindow;
@@ -1649,7 +1650,7 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
     variable *theVariable = theWindow->variable_ptr;
     ccInt counter, rtrn, fullInsertionOffset = insertionOffset + theWindow->offset;
     
-    if (newIndices == 0)  return passed;
+    if (newIndices == 0)  return;
     
     theVariable->instances += newIndices;
     
@@ -1686,16 +1687,16 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
         // recursively call addMemory() for each member, if it is a composite or array variable
     
     if ((*theVariable->types >= composite_type) && (*theVariable->types != list_type))  {
-        if (isBusy(theVariable, busy_add_flag))  return passed;
+        if (isBusy(theVariable, busy_add_flag))  return;
         setBusy(theVariable, busy_add_flag);
         
         for (counter = 1; counter <= theVariable->mem.members.elementNum; counter++)  {
             loopMember = LL_member(theVariable, counter);
             if ((loopMember->memberWindow != NULL) && (loopMember->memberWindow->jamStatus != unjammed))  {
-                if (((ccFloat) newIndices)*loopMember->indices > (ccFloat) ccIntMax)  return index_argument_err;
-                rtrn = addMemory(loopMember->memberWindow,
-                        insertionOffset*(loopMember->indices)+loopMember->memberWindow->offset, newIndices*loopMember->indices);
-                if (rtrn != passed)  return rtrn;
+                if (((ccFloat) newIndices)*loopMember->indices > (ccFloat) ccIntMax)  {  setError(index_argument_err, errPtr);  return;  }
+                addMemory(loopMember->memberWindow, insertionOffset*(loopMember->indices)+loopMember->memberWindow->offset,
+                        newIndices*loopMember->indices, buildLists, errPtr);
+                if (errCode != passed)  return;
         }   }
         
         if (GL_Path.stemView.windowPtr != NULL)  {
@@ -1713,25 +1714,39 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
             
             if (*theVariable->types != list_type)  {
                 rtrn = insertElements(&(theVariable->mem.data), fullInsertionOffset+1, newIndices, true);
-                if (rtrn != passed)  return rtrn;       }
+                if (rtrn != passed)  {  setError(rtrn, errPtr);  return;  }
+            }
             
             else  {         // allocate one big sublist in case the members LL isn't set up with spare room
                 rtrn = addMembers(theVariable, fullInsertionOffset+1, 0, NULL, false, newIndices, false);
-                if (rtrn != passed)  return rtrn;
+                if (rtrn != passed)  {  setError(rtrn, errPtr);  return;  }
                 
                 for (counter = fullInsertionOffset+1; counter <= fullInsertionOffset+newIndices; counter++)  {
                     
-                    variable *oneStringVar;
-                    window *oneStringWindow = NULL;
-                    member *oneStringMember = NULL;
+                    member *oneListMember = NULL;
                     
-                    rtrn = addVariable(&oneStringVar, theVariable->types + 1, theVariable->arrayDepth-1, false);
-                    if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneStringWindow, true);
-                    if (rtrn == passed)  rtrn = addMembers(theVariable, counter, 0, &oneStringMember, false, 0, true);
-                    if (rtrn != passed)  return rtrn;
-                    
-                    oneStringMember->memberWindow = oneStringWindow;
-                    refWindow(oneStringWindow);
+                    rtrn = addMembers(theVariable, counter, 0, &oneListMember, false, 0, true);
+                    if (rtrn == passed)  {
+                        if (buildLists)  {
+                            bool builtFinalVar;
+                            ccInt firstToCustomize, cAD;
+                            view dummyView;
+                            resizeLinkedList(&(GL_Object.arrayDimList), theVariable->arrayDepth-1, false);
+                            for (cAD = 1; cAD <= theVariable->arrayDepth-1; cAD++)  *LL_int(&(GL_Object.arrayDimList), cAD) = 0;
+                            GL_Path.stemMember = oneListMember;
+                            GL_Path.stemMemberNumber = counter;
+                            GL_Path.offset = 0;
+                            GL_Path.indices = 0;
+                            rtrn = buildOneVarLayer(theVariable->types+1, 1, theVariable->arrayDepth-1, &builtFinalVar, &firstToCustomize,
+                                        NULL, &dummyView, def_flags, theVariable->types[1] == no_type, NULL);
+                        }
+                        else  {
+                            variable *oneStringVar = NULL;
+                            if (rtrn == passed)  rtrn = addVariable(&oneStringVar, theVariable->types + 1, theVariable->arrayDepth-1, false);
+                            if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneListMember->memberWindow, true);
+                            if (rtrn != passed)  {  setError(rtrn, errPtr);  return;  }
+                            refWindow(oneListMember->memberWindow);
+                    }   }
         }   }   }
         else  {
             if (*theVariable->types == list_type)  {
@@ -1740,8 +1755,6 @@ ccInt addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices)
             }}
             else  deleteElements(&(theVariable->mem.data), fullInsertionOffset+1, fullInsertionOffset+(-newIndices));
     }   }
-    
-    return passed;
 }
 
 
