@@ -1737,8 +1737,10 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                             GL_Path.stemMemberNumber = counter;
                             GL_Path.offset = 0;
                             GL_Path.indices = 0;
-                            rtrn = buildOneVarLayer(theVariable->types+1, 1, theVariable->arrayDepth-1, &builtFinalVar, &firstToCustomize,
-                                        NULL, &dummyView, def_flags, theVariable->types[1] == no_type, NULL);
+                            buildVar(theVariable->types+1, theVariable->arrayDepth-1, theVariable->types[theVariable->arrayDepth],
+                                        def_flags, theVariable->types[1] == no_type, NULL, &dummyView, pcCodePtr-1);
+//                            rtrn = buildOneVarLayer(theVariable->types+1, 1, theVariable->arrayDepth-1, &builtFinalVar, &firstToCustomize,
+  //                                      NULL, &dummyView, def_flags, theVariable->types[1] == no_type, NULL);
                         }
                         else  {
                             variable *oneStringVar = NULL;
