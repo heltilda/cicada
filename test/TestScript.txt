@@ -57,6 +57,12 @@ if trap(a1[2][] = a3[]) /= 29  then throw(-1)
 
 s :: { type :: int }, if type(int) /= 2  then throw(-1)
 
+[][[]]{}
+
+st1 :: { 1, 2 }, st2 :: [] int
+st2[] =! st1
+if st1 /= st2  then throw(-1)
+
 
 
 | aliasing tests
