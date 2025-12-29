@@ -1880,14 +1880,15 @@ void _remove()
         // case 1:  remove a member
     
     searchVar = searchView.windowPtr->variable_ptr;
-    if ((*searchVar->types == composite_type) || (*searchVar->types == list_type))   {
+//    if ((*searchVar->types == composite_type) || (*searchVar->types == list_type))   {
+    if (*searchVar->types == composite_type)   {
     for (loopMember = 1; loopMember <= GL_Path.indices; loopMember++)  {     // we don't take the last step, so sV points to stem window.
         removeMember(searchVar, GL_Path.stemMemberNumber);    }}
     
     
         // case 2:  delete indices
     
-    else if (*searchVar->types == array_type)  {
+    else if ((*searchVar->types == array_type) || (*searchVar->types == list_type))  {
         resizeIndices(GL_Path.stemMember, GL_Path.stemView.width, GL_Path.offset, -GL_Path.indices);  }
     
     GL_Path.stemMember = NULL;          // clean our knives & go
