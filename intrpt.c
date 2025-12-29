@@ -1728,19 +1728,17 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                     rtrn = addMembers(theVariable, counter, 0, &oneListMember, false, 0, true);
                     if (rtrn == passed)  {
                         if (buildLists)  {
-                            bool builtFinalVar;
-                            ccInt firstToCustomize, cAD;
+                            ccInt cAD;
                             view dummyView;
                             resizeLinkedList(&(GL_Object.arrayDimList), theVariable->arrayDepth-1, false);
                             for (cAD = 1; cAD <= theVariable->arrayDepth-1; cAD++)  *LL_int(&(GL_Object.arrayDimList), cAD) = 0;
+                            GL_Object.codeList = &(theVariable->codeList);
                             GL_Path.stemMember = oneListMember;
                             GL_Path.stemMemberNumber = counter;
                             GL_Path.offset = 0;
                             GL_Path.indices = 0;
                             buildVar(theVariable->types+1, theVariable->arrayDepth-1, theVariable->types[theVariable->arrayDepth],
                                         def_flags, theVariable->types[1] == no_type, NULL, &dummyView, pcCodePtr-1);
-//                            rtrn = buildOneVarLayer(theVariable->types+1, 1, theVariable->arrayDepth-1, &builtFinalVar, &firstToCustomize,
-  //                                      NULL, &dummyView, def_flags, theVariable->types[1] == no_type, NULL);
                         }
                         else  {
                             variable *oneStringVar = NULL;
