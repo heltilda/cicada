@@ -1806,7 +1806,8 @@ void resizeMember(member *stemMember, ccInt stemWidth, ccInt newTop)
 
 void resizeIndices(member *stemMember, ccInt stemWidth, ccInt insertionOffset, ccInt newIndices)
 {
-    member *holdGLMember;
+    step_params holdGLPath;
+    view holdSearchView;
     ccInt counter, count_to_four, c2, cboIndices, rtrn = passed;
     
     
@@ -1829,8 +1830,8 @@ void resizeIndices(member *stemMember, ccInt stemWidth, ccInt insertionOffset, c
                 if (onePassRtrn != passed)  {  rtrn = onePassRtrn;  count_to_four = 3;  }     }
             if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }    }
         
-        holdGLMember = GL_Path.stemMember;   // delete GLPath.stemMember for safety (AddMem() won't know it stores correct value after resize)
-        
+        holdGLPath = GL_Path;
+        holdSearchView = searchView;
         
             // Start from the highest index and work backwards, so we don't delete from under our own feet
             // (element numbers above the deletion point will change when we delete).
@@ -1840,7 +1841,8 @@ void resizeIndices(member *stemMember, ccInt stemWidth, ccInt insertionOffset, c
             unflagVariables(stemMember->memberWindow->variable_ptr, busy_add_flag);
             if (errCode != passed)  return;        }
         
-        GL_Path.stemMember = holdGLMember;      }
+        searchView = holdSearchView;
+        GL_Path = holdGLPath;      }
     
     
         // lastly, update the member indices
