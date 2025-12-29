@@ -623,8 +623,9 @@ ccInt cc_bytecode(argsType args)
     
     if (args.num != 3)  return wrong_argument_count_err;
     
-    returnOnErr(getArgs(args, arrayRef(composite_type, &hostWindow),
-                    scalarValue(int_type, &memberNumber), scalarRef(listOf(int_type), &bytecodeString)))
+    returnOnErr(getArgs(args, &hostWindow, scalarValue(int_type, &memberNumber), scalarRef(listOf(int_type), &bytecodeString)))
+    
+    if (args.type[0][0] < composite_type)  return type_mismatch_err;
     
     if (memberNumber <= 0)  {
         codeRefsList = (linkedlist *) &(hostWindow->variable_ptr->codeList);    }
