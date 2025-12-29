@@ -1300,6 +1300,8 @@ void _forced_equate()
                 // either we can't resize, or we tried and the dest. variable is still size-0 so there's no hope
             
             else if (resizedFromZero)  resizeMember(destPath.stemMember, destPath.stemView.width, 0);
+            
+            searchView.width = destPath.stemMember->indices;
     }   }}
     
     WVinfo.bufferPtr = bufferPtr;
