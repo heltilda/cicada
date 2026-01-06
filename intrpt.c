@@ -1729,16 +1729,21 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                     if (rtrn == passed)  {
                         if (buildLists)  {
                             ccInt cAD;
-                            view dummyView;
+                            view varView, dummyView;
+                            step_params varPath;
                             resizeLinkedList(&(GL_Object.arrayDimList), theVariable->arrayDepth-1, false);
                             for (cAD = 1; cAD <= theVariable->arrayDepth-1; cAD++)  *LL_int(&(GL_Object.arrayDimList), cAD) = 0;
                             GL_Object.codeList = &(theVariable->codeList);
-                            GL_Path.stemMember = oneListMember;
-                            GL_Path.stemMemberNumber = counter;
-                            GL_Path.offset = 0;
-                            GL_Path.indices = 0;
-                            buildVar(theVariable->types+1, theVariable->arrayDepth-1, theVariable->types[theVariable->arrayDepth],
-                                        def_flags, theVariable->types[1] == no_type, NULL, &dummyView, pcCodePtr-1);
+                            varView.windowPtr = theWindow;
+                            varView.offset = insertionOffset;
+                            varView.width = newIndices;
+                            GL_Path.stemMember = varPath.stemMember = oneListMember;
+                            GL_Path.stemMemberNumber = varPath.stemMemberNumber = counter;
+                            GL_Path.offset = varPath.offset = 0;
+                            GL_Path.indices = varPath.indices = 0;
+                            buildVar(&varView, &varPath, theVariable->types+1, theVariable->arrayDepth-1,
+                                        theVariable->types[theVariable->arrayDepth], def_flags,
+                                        theVariable->types[1] == no_type, NULL, &dummyView, pcCodePtr-1);
                         }
                         else  {
                             variable *oneStringVar = NULL;

@@ -606,10 +606,18 @@ void _def_general()
                 if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
         }   }
         
-        buildVar(types, arrayDimsToConstruct, sourceDataType, flags, isVoid, &sourceView, &searchViewToReturn, subjectCommand);
+        buildVar(&searchView, &GL_Path, types, arrayDimsToConstruct, sourceDataType,
+                    flags, isVoid, &sourceView, &searchViewToReturn, subjectCommand);
         
         free(types);
-        if (errCode != passed)  return;
+        
+        if (errCode != passed)  {        // handle any lingering errors (e.g. from construction)
+            if (searchView.windowPtr != NULL)  relinkGLStemMember(&sourceView, false, newTarget, getFlag(flags, unjammable_flag));
+            searchView.windowPtr = NULL;
+            return;      }
+        
+        if (isVoid)  searchView.windowPtr = NULL;       // if we ended up nowhere, make sure Cicada knows that
+        searchView.multipleIndices = ((searchView.multipleIndices) || (arrayDimsToConstruct > 0));
         
         if ((GL_Object.type == var_type) && (searchView.windowPtr != NULL))
             GL_Object.codeList = &(searchView.windowPtr->variable_ptr->codeList);
@@ -772,17 +780,15 @@ void _def_general()
 
 
 
-void buildVar(ccInt *types, const ccInt arrayDimsToConstruct, const ccInt sourceDataType, const ccInt flags, const bool isVoid,
-            view *sourceView, view *searchViewToReturn, ccInt *errCmdPtr)
+void buildVar(view *varView, step_params *varPath, ccInt *types, const ccInt arrayDimsToConstruct,
+            const ccInt sourceDataType, const ccInt flags, const bool isVoid, view *sourceView, view *searchViewToReturn, ccInt *errCmdPtr)
 {
     ccInt counter, rtrn, firstToCustomize = 0;
     bool errorInConstructor, builtFinalVar = false, newTarget = getFlag(flags, new_target_flag);
     linkedlist *theCodeList = NULL;
     
-    rtrn = buildOneVarLayer(types, 1, arrayDimsToConstruct, &builtFinalVar, &firstToCustomize, sourceView, searchViewToReturn, flags, isVoid, NULL);
+    rtrn = buildOneVarLayer(varView, varPath, types, 1, arrayDimsToConstruct, &builtFinalVar, &firstToCustomize, sourceView, searchViewToReturn, flags, isVoid, NULL);
     if (rtrn != passed)  {  setError(rtrn, errCmdPtr);  return;  }
-    
-    searchView.multipleIndices = ((searchView.multipleIndices) || (arrayDimsToConstruct > 0));
     
     
         // At last, update the variable code list, and run the constructors of the new object, if that is allowed.
@@ -794,10 +800,10 @@ void buildVar(ccInt *types, const ccInt arrayDimsToConstruct, const ccInt source
             // First customize the codes:  i.e. make them new anchors if we just defined a composite object (function)
         
         if ((errCode == passed) && (newTarget) && (sourceDataType == composite_type))  {
-            theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
+            theCodeList = &(varView->windowPtr->variable_ptr->codeList);
             for (counter = firstToCustomize; counter <= theCodeList->elementNum; counter++)   {
                 
-                window *pathWindow = GL_Path.stemMember->memberWindow;
+                window *pathWindow = varPath->stemMember->memberWindow;
                 searchPath *stemPath;
                 code_ref *loopCodeRef = (code_ref *) element(theCodeList, counter);
                 
@@ -807,13 +813,13 @@ void buildVar(ccInt *types, const ccInt arrayDimsToConstruct, const ccInt source
                 if (loopCodeRef->anchor == NULL)  stemPath = pcSearchPath;
                 else  stemPath = loopCodeRef->anchor->stem;
                 
-                rtrn = drawPath(&(loopCodeRef->anchor), pathWindow, stemPath, GL_Path.indices, pcSearchPath->sourceCode);
+                rtrn = drawPath(&(loopCodeRef->anchor), pathWindow, stemPath, varPath->indices, pcSearchPath->sourceCode);
                 if (rtrn != passed)  {  setError(rtrn, pcCodePtr-1);  return;  }
                 
                 refCodeRef(loopCodeRef);
         }   }
         else if (getFlag(flags, run_constructor_flag))
-            theCodeList = &(searchView.windowPtr->variable_ptr->codeList);
+            theCodeList = &(varView->windowPtr->variable_ptr->codeList);
         
         
             // Run all codes.  Don't start at firstToCustomize (some may not have properly initialized the first time
@@ -821,19 +827,12 @@ void buildVar(ccInt *types, const ccInt arrayDimsToConstruct, const ccInt source
         
         if ((getFlag(flags, run_constructor_flag)) && (errCode == passed) && (sourceDataType == composite_type))  {
         for (counter = 1; counter <= theCodeList->elementNum; counter++)   {
-            beginExecution((code_ref *) element(theCodeList, counter), true, searchView.offset, searchView.width, 0);
+            beginExecution((code_ref *) element(theCodeList, counter), true, varView->offset, varView->width, 0);
             if (errCode == return_flag)  errCode = passed;
             if (errCode != passed)  {  errorInConstructor = true;  break;  }
     }   }}
     
-    if (isVoid)  searchView.windowPtr = NULL;       // if we ended up nowhere, make sure Cicada knows that
-    
-    if (errCode != passed)  {        // handle any lingering errors (e.g. from construction)
-        if (!errorInConstructor)  setError(errCode, errCmdPtr);
-        
-        if (searchView.windowPtr != NULL)  relinkGLStemMember(sourceView, false, newTarget, getFlag(flags, unjammable_flag));
-        searchView.windowPtr = NULL;
-        return;      }
+    if ((errCode != passed) && (!errorInConstructor))  setError(errCode, errCmdPtr);
 }
 
 
@@ -842,7 +841,7 @@ void buildVar(ccInt *types, const ccInt arrayDimsToConstruct, const ccInt source
 // e.g. lists :: [[m]] [n] int --> one iteration builds composite variable with 'm' indices,
 // then m array variables with 'n' indices, then int variables
 
-ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt arrayDimsToConstruct, bool *builtFinalVar,
+ccInt buildOneVarLayer(view *varView, step_params *varPath, const ccInt *types, const ccInt loopArrayDim, const ccInt arrayDimsToConstruct, bool *builtFinalVar,
         ccInt *firstToCustomize, view *sourceView, view *searchViewToReturn, const ccInt flags, const bool isVoid, const void *sourceData)
 {
     ccInt oneDimSize, arrayDepth = GL_Object.arrayDimList.elementNum - loopArrayDim + 1, rtrn, ci, numIndices, numLists;
@@ -855,26 +854,27 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
         // update the type specification of the member
     
     if (getFlag(flags, update_members_flag))  {
-        if (GL_Path.indices != GL_Path.stemMember->indices)  return incomplete_member_err;
-            updateType(&(GL_Path.stemMember->codeList), &(GL_Path.stemMember->type), &(GL_Path.stemMember->eventualType),
-                    &(GL_Path.stemMember->arrayDepth), *types, types[arrayDepth], arrayDepth, true);
+        if (varPath->indices != varPath->stemMember->indices)  return incomplete_member_err;
+            updateType(&(varPath->stemMember->codeList), &(varPath->stemMember->type), &(varPath->stemMember->eventualType),
+                    &(varPath->stemMember->arrayDepth), *types, types[arrayDepth], arrayDepth, true);
     }
     
     
         // add a new variable if there isn't currently one here (i.e. the member is void)
     
     if (expectNewVar)  {
-        if (searchView.width != searchView.windowPtr->variable_ptr->instances)  return incomplete_variable_err;
-        if ((GL_Path.stemMember->memberWindow == NULL) && ((!getFlag(flags, relink_target_flag)) || (loopArrayDim <= arrayDimsToConstruct)))  {
-            ccInt stepWidth = searchView.width*GL_Path.indices;
+        if ((varView->width != varView->windowPtr->variable_ptr->instances) && (varView->windowPtr->variable_ptr->types[0] != list_type))
+            return incomplete_variable_err;
+        if ((varPath->stemMember->memberWindow == NULL) && ((!getFlag(flags, relink_target_flag)) || (loopArrayDim <= arrayDimsToConstruct)))  {
+            ccInt stepWidth = varView->width*varPath->indices;
             rtrn = addVariable(&theNewVariable, types, arrayDepth,
                     ((*types == composite_type) || (*types == list_type) || ((*types < composite_type) && (stepWidth == 0)) ));
             if (rtrn == passed)
-                rtrn = addWindow(theNewVariable, 0, stepWidth, &(GL_Path.stemMember->memberWindow),
+                rtrn = addWindow(theNewVariable, 0, stepWidth, &(varPath->stemMember->memberWindow),
                         (loopArrayDim <= arrayDimsToConstruct) || (!getFlag(flags, unjammable_flag)));
             if (rtrn != passed)  return rtrn;
             
-            refWindow(GL_Path.stemMember->memberWindow);       // OK, since newWindow is always a member
+            refWindow(varPath->stemMember->memberWindow);       // OK, since newWindow is always a member
     }   }
     
     
@@ -883,9 +883,9 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     if (loopArrayDim > arrayDimsToConstruct)  {
         
         wasUnjammed = false;
-        if (GL_Path.stemMember != NULL)   {
-        if (GL_Path.stemMember->memberWindow != NULL)  {
-        if (GL_Path.stemMember->memberWindow->jamStatus == unjammed)  {
+        if (varPath->stemMember != NULL)   {
+        if (varPath->stemMember->memberWindow != NULL)  {
+        if (varPath->stemMember->memberWindow->jamStatus == unjammed)  {
             wasUnjammed = true;
         }}}
         
@@ -898,10 +898,10 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     
         // step into the next variable
     
-    stepView(&searchView, GL_Path.stemMember, GL_Path.offset, GL_Path.indices);
+    stepView(varView, varPath->stemMember, varPath->offset, varPath->indices);
     if (errCode == void_member_err)  errCode = passed;
     if ((loopArrayDim == 1) && (searchViewToReturn != NULL))  {
-        *searchViewToReturn = searchView;
+        *searchViewToReturn = *varView;
     }
     
     
@@ -909,7 +909,7 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     
     if (expectNewVar)  {
         
-        searchVar = searchView.windowPtr->variable_ptr;
+        searchVar = varView->windowPtr->variable_ptr;
         
         *firstToCustomize = searchVar->codeList.elementNum+1;
         
@@ -919,8 +919,8 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
     
     if (loopArrayDim > arrayDimsToConstruct)  {
         if (sourceData != NULL)  {
-        for (ci = 1; ci <= searchView.width; ci++)  {
-            setElement(&(searchView.windowPtr->variable_ptr->mem.data), searchView.offset+ci, sourceData);
+        for (ci = 1; ci <= varView->width; ci++)  {
+            setElement(&(varView->windowPtr->variable_ptr->mem.data), varView->offset+ci, sourceData);
         }}
         *builtFinalVar = true;
         return passed;
@@ -930,32 +930,32 @@ ccInt buildOneVarLayer(const ccInt *types, const ccInt loopArrayDim, const ccInt
         // each array/list variable should have a single member
     
     if (*types == array_type)  {  numIndices = oneDimSize;  numLists = 1;  }
-    else  {  numIndices = 0;  numLists = searchView.width;  }
+    else  {  numIndices = 0;  numLists = varView->width;  }
     
     if ((searchVar->mem.members.elementNum == 0) && (*searchVar->types != list_type))  {
-        GL_Path.stemMemberNumber = 1;
-        rtrn = addMembers(searchVar, GL_Path.stemMemberNumber, numIndices, &(GL_Path.stemMember), false, numLists, true);
+        varPath->stemMemberNumber = 1;
+        rtrn = addMembers(searchVar, varPath->stemMemberNumber, numIndices, &(varPath->stemMember), false, numLists, true);
         if (rtrn != passed)  return rtrn;
-        GL_Path.stemMember->type = no_type;
+        varPath->stemMember->type = no_type;
     }
     
     else  {
     for (ci = 0; ci < numLists; ci++)  {
-        GL_Path.stemMemberNumber = ci+1;
-        GL_Path.stemMember = LL_member(searchVar, ci+1);
-        if (GL_Path.stemMember->indices != numIndices)  {
+        varPath->stemMemberNumber = ci+1;
+        varPath->stemMember = LL_member(searchVar, ci+1);
+        if (varPath->stemMember->indices != numIndices)  {
             if (!getFlag(flags, can_add_members_flag))  return mismatched_indices_err;
-            if (getFlag(flags, relink_target_flag))  GL_Path.stemMember->indices = numIndices;
+            if (getFlag(flags, relink_target_flag))  varPath->stemMember->indices = numIndices;
             else if (getFlag(flags, new_target_flag))  {
-                resizeMember(GL_Path.stemMember, searchView.width, numIndices);
+                resizeMember(varPath->stemMember, varView->width, numIndices);
                 if (errCode != passed)  return errCode;
     }}  }   }
     
-    GL_Path.stemView = searchView;
+    varPath->stemView = *varView;
     for (ci = 0; ci < numLists; ci++)  {
-        GL_Path.offset = ci;
-        GL_Path.indices = numIndices;
-        rtrn = buildOneVarLayer(types+1, loopArrayDim+1, arrayDimsToConstruct, builtFinalVar,
+        varPath->offset = ci;
+        varPath->indices = numIndices;
+        rtrn = buildOneVarLayer(varView, varPath, types+1, loopArrayDim+1, arrayDimsToConstruct, builtFinalVar,
                     firstToCustomize, sourceView, searchViewToReturn, flags, isVoid, sourceData);
         if (rtrn != passed)  return rtrn;
     }
@@ -2605,7 +2605,7 @@ void getConstVar(const ccInt varType, const ccInt numIndices, const bool makeLis
         }
         else  {  types[0] = varType;  numArrayDims = 0;  }
         
-        rtrn = buildOneVarLayer(types, 1, numArrayDims, &builtFinalVar, &firstToCustomize, &searchView, NULL, def_flags, false, sourceData);
+        rtrn = buildOneVarLayer(&searchView, &GL_Path, types, 1, numArrayDims, &builtFinalVar, &firstToCustomize, &searchView, NULL, def_flags, false, sourceData);
         if (rtrn != passed)  setError(rtrn, pcCodePtr);
     }
     else  {
