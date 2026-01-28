@@ -1516,8 +1516,9 @@ void staiStep(bool allowAddMember)
     
         // set all the path params
     
-    GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, 1);
     GL_Path.stemMemberNumber = 1;
+    if (searchView.windowPtr->variable_ptr->types[0] == list_type)  GL_Path.stemMemberNumber += searchView.offset;
+    GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, GL_Path.stemMemberNumber);
     GL_Path.offset = 0;
     GL_Path.indices = GL_Path.stemMember->indices;
 }
