@@ -551,9 +551,9 @@ void _def_general()
         else if ((sourceType != no_type) && (getFlag(flags, relink_target_flag)))  {  setError(illegal_target_err, subjectCommand);  return;  }
         
         if (!useVarCode)  {
-            sourceDataType = sourceMember->eventualType;
+            sourceDataType = sourceMember->types[sourceMember->arrayDepth];
             if (newTarget)  isVoid = (sourceDataType == no_type);
-            if ((sourceMember->type == array_type) || (sourceMember->type == list_type))  {
+            if ((sourceMember->types[0] == array_type) || (sourceMember->types[0] == list_type))  {
                 dimCounter = GL_Object.arrayDimList.elementNum;
                 rtrn = addElements(&(GL_Object.arrayDimList), sourceMember->arrayDepth, false);
                 if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
@@ -577,7 +577,7 @@ void _def_general()
         arrayDepth = GL_Object.arrayDimList.elementNum;
         
         
-            // build our each of our array variables, followed by the variable having the given eventualType 
+            // build our each of our array variables, followed by the primitive/composite variable at the end 
         
         types = malloc((arrayDepth+1)*sizeof(ccInt));
         if (types == NULL)  {  setError(out_of_memory_err, subjectCommand);  return;  }
@@ -595,14 +595,23 @@ void _def_general()
         
         if (GL_Path.stemMember != NULL)   {
             
-            rtrn = checkType(&(GL_Path.stemMember->codeList), &(GL_Path.stemMember->type), &(GL_Path.stemMember->eventualType),
-                        &(GL_Path.stemMember->arrayDepth), types[arrayDepth], arrayDepth, &(GL_Path.stemView), true, getFlag(flags, update_members_flag));
+            ccInt lastType;
+            
+            rtrn = checkType(&(GL_Path.stemMember->codeList), GL_Path.stemMember->types,
+                        &(GL_Path.stemMember->arrayDepth), types, arrayDepth, &lastType, getFlag(flags, update_members_flag));
             if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
+            
+            
+                // Make sure that we're changing the whole member and/or variable, then update the type field.
+            
+            if ((GL_Path.stemMember->types[GL_Path.stemMember->arrayDepth] != types[arrayDepth]) || (lastType == composite_type) || (lastType == list_type))  {
+                if (GL_Path.indices != GL_Path.stemMember->indices)  {  setError( incomplete_member_err, dgCommandPtr);  return;  }
+                if (GL_Path.stemView.width != GL_Path.stemView.windowPtr->variable_ptr->instances)  {  setError( incomplete_variable_err, dgCommandPtr);  return;  }     }
             
             if ((!getFlag(flags, relink_target_flag)) && (GL_Path.stemMember->memberWindow != NULL))  {
                 variable *stemVar = GL_Path.stemMember->memberWindow->variable_ptr;
-                rtrn = checkType(&(stemVar->codeList), stemVar->types, stemVar->types + stemVar->arrayDepth,
-                                 &(stemVar->arrayDepth), types[arrayDepth], arrayDepth, &searchView, false, newTarget);
+                rtrn = checkType(&(stemVar->codeList), stemVar->types,
+                                 &(stemVar->arrayDepth), types, arrayDepth, &lastType, newTarget);
                 if (rtrn != passed)  {  setError(rtrn, dgCommandPtr);  return;  }
         }   }
         
@@ -623,15 +632,15 @@ void _def_general()
             GL_Object.codeList = &(searchView.windowPtr->variable_ptr->codeList);
         
         if ((!getFlag(flags, post_equate_flag)) || (searchView.windowPtr == NULL))  {   // if no data copy, exit here
-            if (searchViewToReturn.windowPtr != NULL)  {
-                searchView = searchViewToReturn;
-                resizeLinkedList(&(GL_Object.arrayDimList), 0, false);        }
-            return;     }
-        
+            if (searchViewToReturn.windowPtr != NULL)  searchView = searchViewToReturn;
+            resizeLinkedList(&(GL_Object.arrayDimList), 0, false);
+            return;
+        }
         
             // OK, we need to do something more elaborate, so we'll fall through to the bottom after the setup for equate
         
-        destView = searchView;     }
+        destView = searchView;
+    }
     
     
         // Everything afterwards is for copying data.
@@ -855,8 +864,8 @@ ccInt buildOneVarLayer(view *varView, step_params *varPath, const ccInt *types, 
     
     if (getFlag(flags, update_members_flag))  {
         if (varPath->indices != varPath->stemMember->indices)  return incomplete_member_err;
-            updateType(&(varPath->stemMember->codeList), &(varPath->stemMember->type), &(varPath->stemMember->eventualType),
-                    &(varPath->stemMember->arrayDepth), *types, types[arrayDepth], arrayDepth, true);
+            updateType(&(varPath->stemMember->codeList), &(varPath->stemMember->types),
+                    &(varPath->stemMember->arrayDepth), types, types[arrayDepth], arrayDepth, true);
     }
     
     
@@ -913,8 +922,8 @@ ccInt buildOneVarLayer(view *varView, step_params *varPath, const ccInt *types, 
         
         *firstToCustomize = searchVar->codeList.elementNum+1;
         
-        updateType(&(searchVar->codeList), searchVar->types, &(searchVar->types[searchVar->arrayDepth]),
-                    &(searchVar->arrayDepth), *types, types[arrayDepth], arrayDepth, false);
+        updateType(&(searchVar->codeList), &(searchVar->types),
+                    &(searchVar->arrayDepth), types, types[arrayDepth], arrayDepth, false);
     }
     
     if (loopArrayDim > arrayDimsToConstruct)  {
@@ -936,7 +945,6 @@ ccInt buildOneVarLayer(view *varView, step_params *varPath, const ccInt *types, 
         varPath->stemMemberNumber = 1;
         rtrn = addMembers(searchVar, varPath->stemMemberNumber, numIndices, &(varPath->stemMember), false, numLists, true);
         if (rtrn != passed)  return rtrn;
-        varPath->stemMember->type = no_type;
     }
     
     else  {
@@ -1080,51 +1088,38 @@ void newStringLL(view *destView)
 // checkType() ensures that the type of a member or variable matches, or is compatible with, the given expected type.
 // No return value; just throws an error if there is a type mismatch.
 
-ccInt checkType(linkedlist *destLL, ccInt *sourceType, ccInt *eventualSourceType, ccInt *sourceArrayDepth,
-            ccInt expectedEventualSourceType, ccInt expectedArrayDepth, view *theView, bool isMember, bool ifUpdate)
+ccInt checkType(linkedlist *codeLL, ccInt *oldTypes, ccInt *oldArrayDepth,
+            ccInt *newTypes, ccInt newArrayDepth, ccInt *lastType, bool ifUpdate)
 {
-    ccInt counter, expectedSourceType = expectedEventualSourceType;
+    ccInt ct, counter;
     
-    if (expectedArrayDepth > 0)  {
-        if (*sourceType == list_type)  expectedSourceType = list_type;
-        else  expectedSourceType = array_type;      }
+    *lastType = newTypes[newArrayDepth];
+    if ((*lastType == no_type) && (!ifUpdate))  return passed;     // we're always allowed to unlink a variable
     
-    if ((expectedEventualSourceType == no_type) && (!ifUpdate))  return passed;     // we're always allowed to unlink a variable
+    if (newArrayDepth < *oldArrayDepth)  return type_mismatch_err;
+    else if ((newArrayDepth > *oldArrayDepth) && (oldTypes[*oldArrayDepth] != no_type))  return type_mismatch_err;
+    for (ct = 0; ct <= *oldArrayDepth; ct++)  {
+        if ((oldTypes[ct] != newTypes[ct]) && (oldTypes[ct] != no_type))  {
+            return type_mismatch_err;       }
+        else if (newTypes[ct] == list_type)  {
+            *lastType = list_type;
+    }   }
     
-    
-        // check: non-void type which explicitly doesn't match the expected type
-    
-    if ((*sourceType != no_type) && ((expectedSourceType != *sourceType)
-                || (expectedEventualSourceType != *eventualSourceType) || (expectedArrayDepth != *sourceArrayDepth)))
-        return type_mismatch_err;
-    
-    
-        // make sure we're not copying primitive <-- composite
-    
-    if (*sourceType < composite_type)  {   // so it's a primitive type
-        if (destLL->elementNum != 0)  return type_mismatch_err;
-        else  return passed;            }
+    if (newTypes[newArrayDepth] < composite_type)  return passed;
     
     
         // composite:  we need all the codes currently in our list to also be present in the expected type
     
     if (GL_Object.codeList == NULL)   {
-        if (destLL->elementNum != 0)  return type_mismatch_err;
+        if (codeLL->elementNum != 0)  return type_mismatch_err;
         else  return passed;            }
     
-    if (destLL->elementNum > GL_Object.codeList->elementNum)  return type_mismatch_err;
+    if (codeLL->elementNum > GL_Object.codeList->elementNum)  return type_mismatch_err;
     
-    for (counter = 1; counter <= destLL->elementNum; counter++)  {
-    if (((code_ref *) element(destLL, counter))->code_ptr != ((code_ref *) element(GL_Object.codeList, counter))->code_ptr)  {
+    for (counter = 1; counter <= codeLL->elementNum; counter++)  {
+    if (((code_ref *) element(codeLL, counter))->code_ptr != ((code_ref *) element(GL_Object.codeList, counter))->code_ptr)  {
         return type_mismatch_err;
     }}
-    
-    
-        // Make sure that we're changing the whole member and/or variable, then update the type field.
-    
-    if ((isMember) && ((*sourceType != expectedSourceType) || (expectedSourceType == composite_type) || (expectedSourceType == list_type)))  {
-        if (GL_Path.indices != GL_Path.stemMember->indices)  return incomplete_member_err;
-        if (theView->width != theView->windowPtr->variable_ptr->instances)  return incomplete_variable_err;     }
     
     return passed;
 }
@@ -1133,14 +1128,23 @@ ccInt checkType(linkedlist *destLL, ccInt *sourceType, ccInt *eventualSourceType
 // updateType() changes the type of a member or variable to match what is given.
 // Only partial type-checking:  it is assumed that checkType() was already run.
 
-void updateType(linkedlist *destLL, ccInt *sourceType, ccInt *eventualSourceType, ccInt *arrayDepth,
-                ccInt newSourceType, ccInt newEventualSourceType, ccInt newArrayDepth, bool isMember)
+void updateType(linkedlist *codeLL, ccInt **types, ccInt *arrayDepth,
+                const ccInt *newTypes, ccInt newEventualSourceType, ccInt newArrayDepth, bool isMember)
 {
     code_ref *loopCodeRef;
-    ccInt counter, copyBottom, rtrn;
+    ccInt counter, copyBottom, rtrn, typesSize = (newArrayDepth+1)*sizeof(ccInt);
     
-    *sourceType = newSourceType;
-    *eventualSourceType = newEventualSourceType;
+//    *sourceType = newSourceType;
+    
+    if (*arrayDepth != newArrayDepth)  {
+        free(*types);
+        *types = (ccInt *) malloc(typesSize);
+        if (*types == NULL)  {
+            setError(out_of_memory_err, pcCodePtr-1);
+            return;
+    }   }
+    memcpy(*types, newTypes, typesSize);
+    
     *arrayDepth = newArrayDepth;
     
     
@@ -1148,14 +1152,14 @@ void updateType(linkedlist *destLL, ccInt *sourceType, ccInt *eventualSourceType
     
     if (newEventualSourceType == composite_type)  {
         
-        copyBottom = destLL->elementNum+1;
-        rtrn = addElements(destLL, GL_Object.codeList->elementNum-copyBottom+1, false);
+        copyBottom = codeLL->elementNum+1;
+        rtrn = addElements(codeLL, GL_Object.codeList->elementNum-copyBottom+1, false);
         if (rtrn != passed)  {  setError(out_of_memory_err, pcCodePtr-1);  return;  }
-        copyElements(GL_Object.codeList, copyBottom, destLL, copyBottom, GL_Object.codeList->elementNum-copyBottom+1);
+        copyElements(GL_Object.codeList, copyBottom, codeLL, copyBottom, GL_Object.codeList->elementNum-copyBottom+1);
         
         if ((isMember) || (newArrayDepth > 0))  {     // reference the new code refs if we're not going to 'customize' the code later
-        for (counter = copyBottom; counter <= destLL->elementNum; counter++)  {
-            loopCodeRef = (code_ref *) element(destLL, counter);
+        for (counter = copyBottom; counter <= codeLL->elementNum; counter++)  {
+            loopCodeRef = (code_ref *) element(codeLL, counter);
             loopCodeRef->anchor = NULL;     // since anchors will be 'customized' later, don't assign anchors just yet
             refCodeRef(loopCodeRef);
     }   }}
@@ -2346,7 +2350,7 @@ void getCurrentCodeList(linkedlist *theList)
                 listToCopy = GL_Object.codeList;
         }   }
         else if ((searchView.windowPtr == NULL) && (GL_Path.stemMember != NULL))  {
-            if (GL_Path.stemMember->eventualType == composite_type)  {
+            if (GL_Path.stemMember->types[GL_Path.stemMember->arrayDepth] == composite_type)  {
                 listToCopy = &GL_Path.stemMember->codeList;
         }   }
         else if (GL_Object.type == var_type)  {  setError(void_member_err, pcCodePtr-1);  return;  }
@@ -2588,30 +2592,50 @@ void _constant_string()
 }
 
 
-void getConstVar(const ccInt varType, const ccInt numIndices, const bool makeList, const void *sourceData)
+void getConstVar(const ccInt *types, const ccInt numArrayDims)
 {
-    GL_Path.offset = 0;
-    GL_Path.indices = 1;
-    searchMember((ccInt) *pcCodePtr, &GL_Path.stemMember, &GL_Path.stemMemberNumber, true, true);
+    window **constVarWindow = (window **) (PCCodeRef.ptrs_ptr + (pcCodePtr-PCCodeRef.code_ptr));
     
-    if (GL_Path.stemMember->memberWindow == NULL)  {
-        ccInt numArrayDims, types[2], firstToCustomize, rtrn;
+    if (*constVarWindow == NULL)  {
+        view dummyView;
+        window dummyWindow;
+        variable dummyVar;
+        ccInt dummyTypes[1] = { composite_type };
+        step_params dummyStep;
+        member dummyMember;
+        ccInt firstToCustomize, rtrn;
         bool builtFinalVar = false;
         
-        if (makeList)  {
-            types[0] = list_type;  types[1] = varType;  numArrayDims = 1;
+        if (types[0] > composite_type)  {
             resizeLinkedList(&(GL_Object.arrayDimList), 1, false);
             *LL_int(&GL_Object.arrayDimList, 1) = 1;
         }
-        else  {  types[0] = varType;  numArrayDims = 0;  }
         
-        rtrn = buildOneVarLayer(&searchView, &GL_Path, types, 1, numArrayDims, &builtFinalVar, &firstToCustomize, &searchView, NULL, def_flags, false, sourceData);
+        dummyView.windowPtr = &dummyWindow;
+        dummyWindow.variable_ptr = &dummyVar;
+        dummyVar.instances = 1;
+        dummyVar.types = dummyTypes;
+        dummyView.width = 1;
+        dummyStep.stemMember = &dummyMember;
+        dummyStep.offset = 0;
+        dummyStep.indices = dummyMember.indices = 1;
+        dummyMember.memberWindow = NULL;
+        
+        rtrn = buildOneVarLayer(&dummyView, &GL_Path, types, 1, numArrayDims, &builtFinalVar,
+                    &firstToCustomize, &searchView, NULL, vdf_flags, false, (const void *) pcCodePtr);
         if (rtrn != passed)  setError(rtrn, pcCodePtr);
+        
+        *constVarWindow = dummyMember.memberWindow;
     }
-    else  {
-        if (searchView.width > 1)  searchView.width = 1;
-        stepView(&searchView, GL_Path.stemMember, GL_Path.offset, GL_Path.indices);
-    }
+    
+    GL_Path.stemMember = NULL;
+    GL_Path.offset = 0;
+    GL_Path.indices = 1;
+    
+    searchView.windowPtr = *constVarWindow;
+    searchView.offset = 0;
+    searchView.width = 1;
+    searchView.multipleIndices = false;
     
     pcCodePtr++;
 }
@@ -2634,6 +2658,7 @@ void _code_block()
     oneCodeRef->PLL_index = PCCodeRef.PLL_index;
     oneCodeRef->references = PCCodeRef.references;
     oneCodeRef->code_ptr = pcCodePtr;
+    oneCodeRef->ptrs_ptr = storedCode(PCCodeRef.PLL_index)->bytecodePtrs + (pcCodePtr-startCodePtr);
     oneCodeRef->anchor = NULL;          // will be 'customized' later
     
     refCodeList(&codeRegister);

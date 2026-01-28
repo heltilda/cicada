@@ -1365,11 +1365,13 @@ ccInt addMembers(variable *hostVariable, ccInt newMemberNumber, ccInt newIndices
         *newMember = (member *) element(memberLL, newMemberNumber+cm);
         (*newMember)->indices = newIndices;
         (*newMember)->memberWindow = NULL;
-        (*newMember)->type = no_type;
-        (*newMember)->eventualType = no_type;
         (*newMember)->arrayDepth = 0;
         (*newMember)->ifHidden = ifHidden;
         (*newMember)->business = 0;
+        
+        (*newMember)->types = malloc(sizeof(ccInt));
+        if ((*newMember)->types == NULL)  return out_of_memory_err;
+        (*newMember)->types[0] = no_type;
         
         rtrn = newLinkedList(&((*newMember)->codeList), 0, sizeof(code_ref), 0., false);
         if (rtrn != passed)  return out_of_memory_err;
@@ -1398,6 +1400,8 @@ void removeMember(variable *theVariable, ccInt doomedMemberNumber)
     for (counter = 1; counter <= doomedMember->codeList.elementNum; counter++)  {
         derefCodeRef((code_ref *) element(&(doomedMember->codeList), counter));   }
     deleteLinkedList(&(doomedMember->codeList));
+    
+    free(doomedMember->types);
     
     deleteElement(&(theVariable->mem.members), doomedMemberNumber);
     
@@ -1474,7 +1478,7 @@ ccInt drawPath(searchPath **newPath, window *destWindow, searchPath *newPathStem
 ccInt addCode(ccInt *codeSource, ccInt **newCodePtr, ccInt *newCodeElement, ccInt codeLength, const char *fileName,
         ccInt fileNameLength, const char *sourceCode, ccInt *opCharNum, ccInt sourceCodeLength, const ccInt compilerID)
 {
-    ccInt rtrn;
+    ccInt rtrn, cb;
     storedCodeType *newCodeEntry;
     
     rtrn = addPLLElement(&MasterCodeList, (void **) &newCodeEntry, newCodeElement);
@@ -1492,6 +1496,10 @@ ccInt addCode(ccInt *codeSource, ccInt **newCodePtr, ccInt *newCodeElement, ccIn
     newCodeEntry->bytecode = *newCodePtr;
     memcpy((void *) *newCodePtr, codeSource, codeLength*sizeof(ccInt));
     (*newCodePtr)[codeLength] = 0;
+    
+    newCodeEntry->bytecodePtrs = (ccInt **) malloc(codeLength*sizeof(ccInt *));
+    if (newCodeEntry->bytecodePtrs == NULL)  return out_of_memory_err;
+    for (cb = 0; cb < codeLength; cb++)  newCodeEntry->bytecodePtrs[cb] = NULL;
     
     if (fileName != NULL)  {
         newCodeEntry->fileName = (char *) malloc((size_t) fileNameLength+1);
@@ -1528,7 +1536,9 @@ void derefCode(ccInt *refsPtr, ccInt refsID)
         if (storedCode(refsID)->fileName != NULL)  free((void *) storedCode(refsID)->fileName);
         if (storedCode(refsID)->sourceCode != NULL)  free((void *) storedCode(refsID)->sourceCode);
         if (storedCode(refsID)->opCharNum != NULL)  free((void *) storedCode(refsID)->opCharNum);
-        free((void *) storedCode(refsID)->bytecode);        }
+        free((void *) storedCode(refsID)->bytecode);
+        free((void *) storedCode(refsID)->bytecodePtrs);
+    }
 }
 
 
@@ -1537,6 +1547,7 @@ void derefCode(ccInt *refsPtr, ccInt refsID)
 ccInt addCodeRef(linkedlist *destCodeLL, searchPath *newAnchor, ccInt *codePtr, ccInt codeID)
 {
     code_ref *newCodeRef;
+    storedCodeType *baseCode = storedCode(codeID);
     ccInt rtrn;
     
     rtrn = addElements(destCodeLL, 1, false);
@@ -1546,6 +1557,7 @@ ccInt addCodeRef(linkedlist *destCodeLL, searchPath *newAnchor, ccInt *codePtr, 
     newCodeRef->PLL_index = codeID;
     newCodeRef->references = (ccInt *) element(&(MasterCodeList.references), codeID);
     newCodeRef->code_ptr = codePtr;
+    newCodeRef->ptrs_ptr = baseCode->bytecodePtrs + (codePtr-baseCode->bytecode);
     newCodeRef->anchor = newAnchor;
     
     refCodeRef(newCodeRef);

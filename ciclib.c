@@ -577,11 +577,13 @@ ccInt cc_type(argsType args)
     
     returnOnErr(getArgs(args, &hostWindow, scalarValue(int_type, &whichMember), scalarRef(int_type, &theType)))
     
+    if (hostWindow == NULL)  return void_member_err;
+    
     if (whichMember <= 0)  *theType = *hostWindow->variable_ptr->types;
     
     else if (*hostWindow->variable_ptr->types == composite_type)  {
         if (whichMember > hostWindow->variable_ptr->mem.members.elementNum)  return invalid_index_err;
-        *theType = LL_member(hostWindow->variable_ptr, whichMember)->type;  }
+        *theType = LL_member(hostWindow->variable_ptr, whichMember)->types[0];  }
     
     else  return not_composite_err;
     

@@ -196,8 +196,8 @@ extern void copyCompareMultiView(void(*)(view *, view *), view *, view *);
 extern void encompassMultiView(view *, window *, window *, variable *);
 extern ccInt relinkGLStemMember(view *, bool, bool, bool);
 extern void newStringLL(view *);
-extern ccInt checkType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, view *, bool, bool);
-extern void updateType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt, ccInt, bool);
+extern ccInt checkType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt *, bool);
+extern void updateType(linkedlist *, ccInt **, ccInt *, const ccInt *, ccInt, ccInt, bool);
 
 extern void _forced_equate(void);
 
@@ -312,7 +312,7 @@ extern void _constant_int(void);
 extern void _constant_double(void);
 extern void _constant_string(void);
 extern void _code_block(void);
-extern void getConstVar(const ccInt, const ccInt, const bool, const void *);
+extern void getConstVar(const ccInt *, const ccInt);
 
 extern void _illegal(void);
 

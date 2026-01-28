@@ -113,8 +113,6 @@ typedef struct {
     ccInt indices;          // 1 unless it's an array member
     
     ccInt *types;           // the type of the variable to target and all following ones (if it's an array or list)
-    ccInt type;             // the requirements for this member, which may be met and exceeded in the variable
-    ccInt eventualType;     // if type is array_type, the type of the object that the array ranges over
     ccInt arrayDepth;       // array dimension spanned by this member (not the whole array) 
     linkedlist codeList;    // parallels the codeList in the targeted variable, but may be less restrictive
     
@@ -155,6 +153,7 @@ typedef struct {
     ccInt PLL_index;        // element_number in code PLL
     ccInt *references;      // repeated here for speed; # of times used by a variable
     ccInt *code_ptr;        // the first code word of this script (which may be in the middle of a bytecode block)
+    ccInt **ptrs_ptr;       // auxiliary pointers used by this script (which may be in the middle of the pointers block)
     searchPath *anchor;     // the first step on the search path from this code
 } code_ref;
 
@@ -163,6 +162,7 @@ typedef struct {
     char *fileName;
     char *sourceCode;
     ccInt *bytecode;
+    ccInt **bytecodePtrs;
     ccInt *opCharNum;
     ccInt compilerID;
 } storedCodeType;
