@@ -20,13 +20,13 @@
 
 <br>&nbsp;&nbsp;&nbsp; counter :: int
 
-<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10-counter&gt;&nbsp;print(counter, &quot; &quot;)
+<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10&gt;&nbsp;print(counter, &quot; &quot;)
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
-<P>  Notice that we had to define the loop variable before the loop, as either an <tt>int</tt> or a <tt>double</tt>.  The loop itself will print the numbers 1 through 5; when <tt>counter</tt> reaches 6 it will be greater than <tt>10-counter</tt> and the loop will stop.
+<P>  Notice that we had to define the loop variable before the loop, as either an <tt>int</tt> or a <tt>double</tt>.
 
 <P> As always, we can break a loop over two lines using a &lsquo;<tt>&amp;</tt>&rsquo;, and we can group several lines of code using parentheses beginning on the line of the <tt>for</tt> command.  So we could have rewritten our code above in several different ways.
 
@@ -38,13 +38,13 @@
 
 <br>&nbsp;&nbsp;&nbsp; 
 
-<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10-counter&gt;&nbsp;&amp;
+<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10&gt;&nbsp;&amp;
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(counter, &quot; &quot;)
 
 <br>&nbsp;&nbsp;&nbsp; 
 
-<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10-counter&gt;&nbsp;(
+<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10&gt;&nbsp;(
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(counter)
 
@@ -56,7 +56,7 @@
 
 <P>
 
-<P>  There is no <tt>step</tt> argument to control the increment of the counter variable, due to limitations of the compiler.  If we need a non-1 step we have to use a <tt>while</tt> loop instead:
+<P>  There is no <tt>step</tt> argument to control the increment of the counter variable, due to limitations of the compiler.  For a step of -1 use <tt>backfor</tt>, otherwise you need a <tt>while</tt> loop.
 
 <P> 
 
@@ -64,7 +64,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; counter := 1
 
-<br>&nbsp;&nbsp;&nbsp; while counter &lt;= 10-counter&nbsp;do (
+<br>&nbsp;&nbsp;&nbsp; while counter &lt;= 10&nbsp;do (
 
 <br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(counter, &quot; &quot;)
 

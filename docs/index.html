@@ -60,10 +60,10 @@
 &emsp;&emsp;<code>fetchData :: { ; return data }</code><br>
 &emsp;&emsp;<code>code, data = args&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;| one way to write a constructor</code><br>
 &emsp;<code>}</code><br>
-&emsp;<code>Cvar :: C, Cvar(2,4,"",'c')</code>
+&emsp;<code>Cinstance :: C, Cinstance(2,4,"",'c')</code>
 
 <p><b>Inheritance</b><br>
-&emsp;<code>Cvar2 :: C : { data2 :: string }</code><br>
+&emsp;<code>C_child :: C : { data2 :: string }</code><br>
 &emsp;<code>f3 :: f1 : f2</code><br>
 &emsp;<code>s2 :: s : { int }&emsp;&emsp;&emsp;| set concatenation</code><br>
 
@@ -76,8 +76,8 @@
 &emsp;<code>exit</code><br>
 
 <p><b>Cicada-specific</b><br>
-&emsp;<code>al1 := @Cvar, sprint(al1.data), al1 =@ *&emsp;&emsp;&emsp;| alias (no pointers in Cicada!)</code><br>
-&emsp;<code>al2 :: *, al2 =@ f1, al2 =@ C, al2 =@ s2&emsp;&emsp;&emsp;| universal alias</code><br>
+&emsp;<code>a := @C, sprint(a.data), a =@ *&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;| alias (no pointers in Cicada!)</code><br>
+&emsp;<code>a2 :: *, a2 = @f1, a2 = @C, a2 = @s&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;| universal alias</code><br>
 &emsp;<code>v3 :: { toAdd := 2.5 }, (v3 &lt;&lt; f1)(4)&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;| code substitution</code><br>
 &emsp;<code>f4 :: {</code><br>
 &emsp;&emsp;<code>params :: { mult::int; mult=2 }&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;| function with optional parameters</code><br>
