@@ -8,7 +8,7 @@ http://heltilda.github.io/cicada<br><br>
 
 `> make`
 
-`> make install`<br><br>
+`> sudo make install`<br><br>
 
 <ins>How to use</ins>: Include the Cicada header file in your C code:
 
