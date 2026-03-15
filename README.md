@@ -1,4 +1,4 @@
-Cicada is a lightweight scripting language that runs inside of C code.  For details, see the website:
+Cicada is a lightweight scripting language that runs inside of C code.  It's imperative, uses strong dynamic typing, and has *minimal formalism*.  For details, see the website:
 
 http://heltilda.github.io/cicada<br><br>
 
