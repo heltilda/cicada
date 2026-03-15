@@ -1586,10 +1586,10 @@ void doResize(bool allowAddMember)
     }   }
 
     else if (searchType == list_type)  {
-        GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, searchView.offset + 1);
         if (searchView.width != 1)
             {  setError(multiple_indices_not_allowed_err, pcCodePtr-1);  return;  }
         
+        GL_Path.stemMember = LL_member(searchView.windowPtr->variable_ptr, searchView.offset + 1);
         resizeMember(GL_Path.stemMember, searchView.width, intRegister);    }
     
     else    {
