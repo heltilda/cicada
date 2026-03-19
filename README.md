@@ -1,6 +1,11 @@
-Cicada is a lightweight scripting language that runs inside of C code.  It's imperative, strongly typed, and has minimal formalism.  For details, see the website:
+Cicada is a **lightweight scripting language** that runs inside of **C programs**.  It's:
 
-http://heltilda.github.io/cicada<br><br>
+* imperative
+* interpreted..
+* .. but strongly typed
+* and has *minimal formalism*.
+
+For details, see the website:  http://heltilda.github.io/cicada<br><br>
 
 <ins>Installation</ins>: From the command prompt go into the Cicada download directory, and type:
 
@@ -8,7 +13,7 @@ http://heltilda.github.io/cicada<br><br>
 
 `> make`
 
-`> sudo make install`<br><br>
+`> sudo make install` &nbsp;&nbsp;&nbsp;&nbsp;(and enter your admin password)<br><br>
 
 <ins>How to use</ins>: Include the Cicada header file in your C code:
 
