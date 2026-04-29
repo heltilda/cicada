@@ -557,9 +557,11 @@ void _def_general()
                 dimCounter = GL_Object.arrayDimList.elementNum;
                 rtrn = addElements(&(GL_Object.arrayDimList), sourceMember->arrayDepth, false);
                 if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
-                while (GL_Object.arrayDimList.elementNum > dimCounter)  {
+                for (ca = 0; ca < sourceMember->arrayDepth; ca++)  {
+                    ccInt aDLsize = 0;
+                    if (sourceMember->types[ca] == list_type)  aDLsize = -1;
                     dimCounter++;
-                    *LL_int(&(GL_Object.arrayDimList), dimCounter) = 0;
+                    *LL_int(&(GL_Object.arrayDimList), dimCounter) = aDLsize;
         }   }   }
         
         
