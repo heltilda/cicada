@@ -1755,9 +1755,9 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                             GL_Path.indices = varPath.indices = 0;
                             buildVar(&varView, &varPath, theVariable->types+1, theVariable->arrayDepth-1,
                                         theVariable->types[theVariable->arrayDepth], def_flags,
-                                        theVariable->types[1] == no_type, NULL, &dummyView, pcCodePtr-1);
+                                        theVariable->types[theVariable->arrayDepth] == no_type, NULL, &dummyView, pcCodePtr-1);
                         }
-                        else  {
+                        else if (theVariable->types[theVariable->arrayDepth] != no_type)  {
                             variable *oneStringVar = NULL;
                             if (rtrn == passed)  rtrn = addVariable(&oneStringVar, theVariable->types + 1, theVariable->arrayDepth-1, false);
                             if (rtrn == passed)  rtrn = addWindow(oneStringVar, 0, 0, &oneListMember->memberWindow, true);

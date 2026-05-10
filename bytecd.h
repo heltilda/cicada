@@ -197,7 +197,7 @@ extern void encompassMultiView(view *, window *, window *, variable *);
 extern ccInt relinkGLStemMember(view *, bool, bool, bool);
 extern void newStringLL(view *);
 extern ccInt checkType(linkedlist *, ccInt *, ccInt *, ccInt *, ccInt, ccInt *, bool);
-extern void updateType(linkedlist *, ccInt **, ccInt *, const ccInt *, ccInt, ccInt, bool);
+extern void updateType(linkedlist *, ccInt **, ccInt *, const ccInt *, ccInt, bool);
 
 extern void _forced_equate(void);
 

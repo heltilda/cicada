@@ -526,6 +526,7 @@ void _def_general()
                 if (useVarCode)  {
                     variable *viewVar = sourceView.windowPtr->variable_ptr;
                     sourceDataType = viewVar->types[viewVar->arrayDepth];
+                    if (newTarget)  isVoid = (sourceDataType == no_type);
                     if ((*viewVar->types == array_type) || (*viewVar->types == list_type))  {
                         rtrn = addElements(&(GL_Object.arrayDimList), sourceView.windowPtr->variable_ptr->arrayDepth, false);
                         if (rtrn != passed)  {  setError(rtrn, subjectCommand);  return;  }
@@ -867,7 +868,7 @@ ccInt buildOneVarLayer(view *varView, step_params *varPath, const ccInt *types, 
     if (getFlag(flags, update_members_flag))  {
         if (varPath->indices != varPath->stemMember->indices)  return incomplete_member_err;
             updateType(&(varPath->stemMember->codeList), &(varPath->stemMember->types),
-                    &(varPath->stemMember->arrayDepth), types, types[arrayDepth], arrayDepth, true);
+                    &(varPath->stemMember->arrayDepth), types, arrayDepth, true);
     }
     
     
@@ -924,8 +925,7 @@ ccInt buildOneVarLayer(view *varView, step_params *varPath, const ccInt *types, 
         
         *firstToCustomize = searchVar->codeList.elementNum+1;
         
-        updateType(&(searchVar->codeList), &(searchVar->types),
-                    &(searchVar->arrayDepth), types, types[arrayDepth], arrayDepth, false);
+        updateType(&(searchVar->codeList), &(searchVar->types), &(searchVar->arrayDepth), types, arrayDepth, false);
     }
     
     if (loopArrayDim > arrayDimsToConstruct)  {
@@ -1130,8 +1130,7 @@ ccInt checkType(linkedlist *codeLL, ccInt *oldTypes, ccInt *oldArrayDepth,
 // updateType() changes the type of a member or variable to match what is given.
 // Only partial type-checking:  it is assumed that checkType() was already run.
 
-void updateType(linkedlist *codeLL, ccInt **types, ccInt *arrayDepth,
-                const ccInt *newTypes, ccInt newEventualSourceType, ccInt newArrayDepth, bool isMember)
+void updateType(linkedlist *codeLL, ccInt **types, ccInt *arrayDepth, const ccInt *newTypes, ccInt newArrayDepth, bool isMember)
 {
     code_ref *loopCodeRef;
     ccInt counter, copyBottom, rtrn, typesSize = (newArrayDepth+1)*sizeof(ccInt);
@@ -1152,7 +1151,7 @@ void updateType(linkedlist *codeLL, ccInt **types, ccInt *arrayDepth,
     
         // If it's composite we have to also update the codes.  (Any changes to the code list are code additions.)
     
-    if (newEventualSourceType == composite_type)  {
+    if (newTypes[newArrayDepth] == composite_type)  {
         
         copyBottom = codeLL->elementNum+1;
         rtrn = addElements(codeLL, GL_Object.codeList->elementNum-copyBottom+1, false);
