@@ -1743,8 +1743,9 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                             ccInt cAD;
                             view varView, dummyView;
                             step_params varPath;
-                            resizeLinkedList(&(GL_Object.arrayDimList), theVariable->arrayDepth-1, false);
-                            for (cAD = 1; cAD <= theVariable->arrayDepth-1; cAD++)  *LL_int(&(GL_Object.arrayDimList), cAD) = 0;
+                            object_params holdGL_Object = GL_Object;
+                            
+                            newLinkedList(&GL_Object.arrayDimList, theVariable->arrayDepth-1, sizeof(ccInt), 0, true);
                             GL_Object.codeList = &(theVariable->codeList);
                             varView.windowPtr = theWindow;
                             varView.offset = insertionOffset;
@@ -1756,6 +1757,9 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                             buildVar(&varView, &varPath, theVariable->types+1, theVariable->arrayDepth-1,
                                         theVariable->types[theVariable->arrayDepth], def_flags,
                                         theVariable->types[theVariable->arrayDepth] == no_type, NULL, &dummyView, pcCodePtr-1);
+                            
+                            deleteLinkedList(&GL_Object.arrayDimList);
+                            GL_Object = holdGL_Object;
                         }
                         else if (theVariable->types[theVariable->arrayDepth] != no_type)  {
                             variable *oneStringVar = NULL;
