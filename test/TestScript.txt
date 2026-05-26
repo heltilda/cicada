@@ -97,4 +97,6 @@ f2 :: { a:=1; a = that + 1; print(a) }
 f2b :: f2 : { ; a = that + 1; print(a) }
 f2b(), if f2b /= { 3 }  then throw(-1)          | make sure code #2 runs when code #1 ends with a code marker
 
+f3 :: { ; return {args[1]} }, { f3(1) }
+
 print("Finished tests!\n")
