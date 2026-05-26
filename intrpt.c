@@ -1740,10 +1740,10 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                     rtrn = addMembers(theVariable, counter, 0, &oneListMember, false, 0, true);
                     if (rtrn == passed)  {
                         if (buildLists)  {
-                            ccInt cAD;
                             view varView, dummyView;
                             step_params varPath;
                             object_params holdGL_Object = GL_Object;
+                            step_params holdGL_Path = GL_Path;
                             
                             newLinkedList(&GL_Object.arrayDimList, theVariable->arrayDepth-1, sizeof(ccInt), 0, true);
                             GL_Object.codeList = &(theVariable->codeList);
@@ -1760,6 +1760,7 @@ void addMemory(window *theWindow, ccInt insertionOffset, ccInt newIndices, const
                             
                             deleteLinkedList(&GL_Object.arrayDimList);
                             GL_Object = holdGL_Object;
+                            GL_Path = holdGL_Path;
                         }
                         else if (theVariable->types[theVariable->arrayDepth] != no_type)  {
                             variable *oneStringVar = NULL;

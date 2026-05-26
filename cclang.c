@@ -268,7 +268,7 @@ commandTokenType cicadaLanguage[] = {
     { noarg_adapter, 0, "1", inbytecode },
     { noarg_adapter, 0, "4", inbytecode bc(no_variable) },
     
-    { type2arg_adapter, 0, "1", inbytecode bc_define(deqxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { type2arg_adapter, 0, "1", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bcArg(1) },
     { type3arg_adapter, 0, "1", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bcArg(1) },
     { type6arg_adapter, 0, "1", inbytecode bc_define(deqxFlags) bc(search_member) anonymousmember bcArg(1) },
     { type7arg_adapter, 0, "1", inbytecode bc_define(defxFlags) bc(search_member) anonymousmember bcArg(1) },
