@@ -1877,7 +1877,8 @@ void _remove()
     
     if ((GL_Object.type != var_type) || (searchView.windowPtr == NULL))
         {  setError(not_a_variable_err, pcCodePtr-1);  return;  }
-    if ((searchView.windowPtr != NULL) && (searchView.width != searchView.windowPtr->variable_ptr->instances))
+    if ((searchView.windowPtr != NULL) && (searchView.windowPtr->variable_ptr->types[0] != list_type)
+                && (searchView.width != searchView.windowPtr->variable_ptr->instances))
         {  setError(incomplete_variable_err, pcCodePtr-1);  return;  }
     
     if (GL_Path.stemMember == NULL)  {  setError(undefined_member_err, pcCodePtr-1);  return;  }
