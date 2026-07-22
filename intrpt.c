@@ -31,6 +31,7 @@
 #include <time.h>
 #include "intrpt.h"
 #include "bytecd.h"
+#include "cmpile.h"
 #include "cclang.h"
 
 
@@ -765,6 +766,41 @@ void printData(view *theView, void *bufferPtr, member *dummy)
 
 
 
+// Next 3 routines:  used by hash()
+// These return the DJB2 hash of an object.
+
+void hashView(view *theView, void *dummy1, member *dummy2)
+{  doReadWrite(theView, dummy1, dummy2, true, false, false, &hashView, &hashData);  }
+
+void hashData(view *theView, void *dummy1, member *dummy2)
+{
+    ccInt firstEl, elTop, lastEl, sublistBottom, sublistTop;
+    linkedlist *theLL = &(theView->windowPtr->variable_ptr->mem.data);
+    sublistHeader *currentSublist;
+    
+    if (theView->width == 0)  return;
+    
+    firstEl = theView->offset+1;
+    elTop = firstEl + theView->width;
+    
+    currentSublist = findSublist(theLL, firstEl, &sublistBottom);
+    
+    while (firstEl < elTop)
+    {
+        sublistTop = sublistBottom + currentSublist->numElements;
+        lastEl = elTop;
+        if (sublistTop < elTop) lastEl = sublistTop;
+        
+        evolveHash(((char *) currentSublist) + sublistHeaderSize + (firstEl-sublistBottom)*theLL->elementSize,
+                    theLL->elementSize*(lastEl - firstEl));
+        
+        sublistBottom = firstEl = sublistTop;
+        currentSublist = currentSublist->nextSublist;
+    }
+}
+
+
+
 // doReadWrite() is used for scanning a single window tree (in comparison to doCopyCompare() which scans two at once).
 // Invoked by size(), feq, read_string(), print_string(), C_function().
 // This routine skips hidden members; so for example size() will not register these.
@@ -798,8 +834,8 @@ void doReadWrite(view *theView, void *globalPtr, member *memberToVar, bool doInI
                 setBusy(loopMember, busy_SRW_flag);
                 
                 if ((loopMember->memberWindow != NULL) && (!loopMember->ifHidden))      {
-                    if ((doInIndexOrder) && (loopMember->memberWindow->variable_ptr->types[0] >= composite_type))  {    // cond 2: efficiency, and to
-                    for (indexCounter = 0; indexCounter < theView->width*loopMember->indices; indexCounter++)  {        // allow size-0 list resizes
+                    if ((doInIndexOrder) && (loopMember->memberWindow->variable_ptr->types[0] >= composite_type))  {    // cond 2: efficiency,
+                    for (indexCounter = 0; indexCounter < theView->width*loopMember->indices; indexCounter++)  {        // allows size-0 list resizes
                         nextView.windowPtr = theView->windowPtr;
                         nextView.offset = theView->offset;
                         nextView.width = 1;

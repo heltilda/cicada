@@ -1207,6 +1207,21 @@ void nextChar(const char **charPtr)
 }
 
 
+// Hash functions used for assigning member IDs from member names
+
+unsigned long hashState;
+
+void initHash()  { hashState = 5381; }
+
+void evolveHash(char *toHash, ccInt numChars)
+{
+    for (ccInt cc = 0; cc < numChars; cc++)  
+    hashState = ((hashState<<5) + hashState + toHash[cc]) & 0xFFFFFFFF;
+}
+
+ccInt getHash() { unsigned int hash = (unsigned int) hashState; return *(ccInt *) &hash; }     // use only if sizeof(ccInt) == sizeof(int)
+
+
 // reorderTokens() puts the tokens into expressions by writing the loosest-bound tokens first
 
 ccInt reorderTokens(compiler_type *compiler, ccInt expressionType, bool replaceCommandWords)
@@ -1675,6 +1690,7 @@ ccInt writeTokenOps(compiler_type *compiler, ccInt theToken, bool replaceCommand
     
     return passed;
 }
+
 
 #undef tokenSpec
 #undef scriptToken

@@ -748,7 +748,7 @@ void _def_general()
                             && (sourceWidth % GL_Path.stemView.width == 0) && (GL_Path.stemMember != NULL))     {
                 
                 
-                if (searchView.width != searchView.windowPtr->variable_ptr->instances)
+                if (destView.width != destView.windowPtr->variable_ptr->instances)
                     {  setError(incomplete_variable_err, subjectCommand);  return;  }
                 
                 

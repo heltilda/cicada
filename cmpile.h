@@ -255,6 +255,9 @@ extern ccInt addScriptToken(compiler_type *compiler, ccInt, ccInt, ccInt *, ccIn
 extern ccInt readNum(const char **, ccFloat *, bool *);
 extern ccInt readTextString(const char **, char *, ccInt **, ccInt *, bool);
 extern void nextChar(const char **);
+extern void initHash(void);
+extern void evolveHash(char *, ccInt);
+extern ccInt getHash(void);
 extern ccInt reorderTokens(compiler_type *, ccInt, bool);
 extern ccInt relinkExpression(compiler_type *, ccInt *, ccInt, ccInt, ccInt, ccInt **, bool **, ccInt *);
 extern ccInt relinkBestToken(compiler_type *, linkedlist *, ccInt, ccInt, ccInt, ccInt **, bool **, ccInt *);

@@ -67,6 +67,7 @@ extern ccInt cc_sum(argsType);
 extern ccInt cc_makeLinkList(argsType);
 extern ccInt makeLinkList(const ccInt, const ccInt, const ccInt, const ccFloat *, ccInt *);
 extern ccInt cc_sort(argsType);
+extern ccInt cc_hash(argsType args);
 
 extern ccInt cc_load(argsType);
 extern ccInt loadFile(const char *, arg *, bool);

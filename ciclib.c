@@ -55,7 +55,7 @@ const Cfunction inbuiltCfunctions[] = {
     { "abs", &cc_abs }, { "floor", &cc_floor }, { "ceil", &cc_ceil }, { "round", &cc_round }, { "exp", &cc_exp }, { "log", &cc_log },
     { "cos", &cc_cos }, { "sin", &cc_sin }, { "tan", &cc_tan }, { "acos", &cc_acos }, { "asin", &cc_asin }, { "atan", &cc_atan },
     { "add", &cc_add }, { "subtract", &cc_subtract }, { "multiply", &cc_multiply }, { "divide", &cc_divide }, { "pow", &cc_pow },
-    { "minmax", &cc_minmax }, { "sum", &cc_sum }, { "makeLinkList", &cc_makeLinkList }, { "sort", &cc_sort },
+    { "minmax", &cc_minmax }, { "sum", &cc_sum }, { "makeLinkList", &cc_makeLinkList }, { "sort", &cc_sort }, { "hash:da", &cc_hash },
     { "springCleaning:a", &cc_springCleaning }
 };
 const ccInt inbuiltCfunctionsNum = (ccInt) (sizeof(inbuiltCfunctions)/sizeof(Cfunction));
@@ -793,6 +793,32 @@ ccInt cc_sort(argsType args)
     }}  }   }
     
     return rtrn;
+}
+
+
+
+ccInt cc_hash(argsType args)
+{
+    ccInt ca, *hash;
+    view dataView;
+    
+    if (args.num < 1)  return wrong_argument_count_err;
+    
+    returnOnErr(getArgs(args, scalarRef(int_type, &hash), endArgs))
+    
+    initHash();
+    
+    for (ca = 1; ca < args.num; ca++)  {
+        dataView.windowPtr = (window *) args.p[ca];
+        if (dataView.windowPtr != NULL)  {
+            dataView.offset = dataView.windowPtr->offset;
+            dataView.width = dataView.windowPtr->width;
+            hashView(&dataView, NULL, NULL);
+    }   }
+    
+    *hash = getHash();
+    
+    return passed;
 }
 
 

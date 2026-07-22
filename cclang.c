@@ -289,6 +289,8 @@ commandTokenType cicadaLanguage[] = {
         // *****  Commands with a scripted definition (using the operators defined above)  *****
         // *************************************************************************************
     
+    { "#" type1arg, codeSubstitutionLevel, "567", "hash(" arg1 ")" },               // inside hash(), arg1 must be a type1arg (i.e. a command)
+    
     { type3arg "[ - <" type5arg "," type5arg "> ]", stepVarLevel, "1", "remove " arg1 "[<" arg2 "," arg3 ">]" },
     
     { "exit", 0, "1", "$throw(51,false,this,1,1)" }

@@ -283,6 +283,8 @@ extern void argvFillHandles(view *, void *, member *);
 extern void passDataView(view *, void *, member *);
 extern void printView(view *, void *, member *);
 extern void printData(view *, void *, member *);
+extern void hashView(view *, void *, member *);
+extern void hashData(view *, void *, member *);
 extern char hexDigit(unsigned char);
 extern void doReadWrite(view *, void *, member *, bool, bool, bool,
     void(*)(view *, void *, member *),

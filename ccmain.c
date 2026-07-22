@@ -145,7 +145,7 @@ ccInt cicadaMain(const Cfunction *CfunctionsFromUser, const ccInt numUserCfuncti
     if (rtrn == passed)  baseCompiler = newCompiler(cicadaLanguage, cicadaLanguageNumCommands,
                     cicadaLanguageAssociativity, cicadaNumPrecedenceLevels, &rtrn);
     if (rtrn != passed)  {
-        printf("Error loading compiler (error code %i on command %i)\n", (int) rtrn, (int) errPosition);
+        printf("Error loading compiler command %i:  %s\n", (int) errPosition, (char *) errorStrings[rtrn]);
         return rtrn;       }
     
     *(compiler_type **) element(&allCompilers, 1) = baseCompiler;
