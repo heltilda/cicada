@@ -206,6 +206,8 @@
 
 <P>  The code-number operator &lsquo;<tt>#</tt>&rsquo; lets us run the code beginning at the <i>N</i>th <tt>code</tt> marker.  By running <tt>f()</tt>, which defaults to <tt>f#1()</tt>, we incremented <tt>f.num</tt>.  But execution stopped at the next <tt>code</tt> marker.  There was no <tt>return</tt> statement, which is fine:  the function returns <tt>nothing</tt>, just as it would had we written <tt>return</tt> or <tt>return *</tt>.  In order to get a value back we had to run the <i>second</i> coding block which returned <tt>f.num</tt>.  Incidentally, if we run <tt>f#0()</tt> we rerun <tt>f</tt>&rsquo;s &lsquo;constructor&rsquo; which will reset <tt>f.num</tt> to 2.
 
+<P> [The number sign should not be confused with the hash operator, despite the fact that they use the same symbol.  A code-number operator follows a function name, as in  &lsquo;<tt>f # n</tt>&rsquo;; a hash operator &lsquo;<tt># var</tt>&rsquo; does not.]
+
 <P> Short functions like <tt>f()</tt> are sometimes easier to code on one line.  To do this, use the fact that 1) commas are equivalent to ends-of-lines, and 2) semicolons are equivalent to <tt>code</tt> markers.
 
 <P> 
@@ -222,4 +224,4 @@
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_47.html">Prev: Functions</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_472.html">Next: Function arguments</a>
-</div><br><br><P>Last update: November 12, 2025
+</div><br><br><P>Last update: July 22, 2026

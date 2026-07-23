@@ -743,6 +743,21 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
 
 <P> 
 
+<br><P><b><tt>hash()</b></tt><P><P>
+ <i>syntax: </i> (int) <i>myHash</i> = <tt>hash</tt>(<i>args_to_hash</i>)<P>
+ <i>operator syntax: </i> (int) <i>myHash</i> = <tt>#</tt><i>object_to_hash</i><P>
+ <i>C syntax: </i> <tt>$hash</tt>((int) <i>myHash</i>, <i>args_to_hash</i>)<P><P></b>
+<P>
+
+
+<P> Returns an integer hash of the given argument(s).  Hashes are computed using the djb2 algorithm.<P>
+
+<P> 
+
+<P> 
+
+<P> 
+
 <br><P><b><tt>load()</b></tt><P><P>
  <i>syntax: </i> (string) <i>file_string</i> = <tt>Load</tt>((string or int) <i>file_name</i>)<P>
  <i>syntax: </i> (string) <i>file_string</i> = <tt>load</tt>((string or int) <i>file_name</i>)<P>
@@ -1180,7 +1195,7 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
 
 <br><P><b><tt>sort()</b></tt><P><P>
  <i>syntax: </i> <tt>sort</tt>((table) <i>table_to_sort</i>, { (list) <i>sort_by_list</i> or (numeric) <i>sorting_index</i> } [, <tt>code</tt>, <tt>direction</tt> = { <tt>increasing</tt> / <tt>decreasing</tt>])<P>
- <i>C-1 syntax: </i> <tt>$makeLinkList</tt>((doubles) <i>list_to_sort</i>, (ints) <i>link_list</i>, (int) direction, (int) <i>first_index</i>, (ints or doubles) <i>sorted_list</i>)<P>
+ <i>C-1 syntax: </i> <tt>$makeLinkList</tt>((doubles) <i>list_to_sort</i>, (ints) <i>link_list</i>, (int) direction, (int) <i>first_index</i>)<P>
  <i>C-2 syntax: </i> <tt>$sort</tt>((ints) <i>link_list</i>, (int) first_index, (ints or doubles) <i>lists_to_sort</i>, (ints or doubles) <i>sorted_lists</i>)<P><P></b>
 <P>
 
@@ -1547,4 +1562,4 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_621.html">Prev: Define operator flags</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_64.html">Next: C functions for working with whole arguments<P></a>
-</div><br><br><P>Last update: November 12, 2025
+</div><br><br><P>Last update: July 22, 2026

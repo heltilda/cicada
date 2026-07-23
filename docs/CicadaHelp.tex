@@ -1341,7 +1341,10 @@ if Tom == Bob  then (      | yes, they will be equal
 
 \noindent We were allowed to assign and compare \verb#Tom# and \verb#Bob# because they have the same \{ number, string \} structure.
 
-Numeric operations and comparisons do not work with composite variables, even if all their members are numeric.  Expressions like \verb#Tom+Bob# and \verb#Tom > Bob# will always cause an error.\index{types!composite|)} \index{variables, composite|)}
+Numeric operations and comparisons do not work with composite variables, even if all their members are numeric.  Expressions like \verb#Tom+Bob# and \verb#Tom > Bob# will always cause an error.
+
+An integer hash can be made of any primitive or composite variable by prepending it with a \verb$#$ symbol:  e.g. `\verb$#FullAddress$'.
+\index{types!composite|)} \index{variables, composite|)}
 
 
 
@@ -1828,30 +1831,30 @@ Cicada's \texttt{for} loop is simpler and offers less control than C's.  Here is
 
 \begin{code} \begin{verbatim}
 counter :: int
-for counter in <1, 10-counter>  print(counter, " ")
+for counter in <1, 10>  print(counter, " ")
 \end{verbatim} \end{code}
 
-\noindent Notice that we had to define the loop variable before the loop, as either an \verb#int# or a \verb#double#.  The loop itself will print the numbers 1 through 5; when \verb#counter# reaches 6 it will be greater than \verb#10-counter# and the loop will stop.
+\noindent Notice that we had to define the loop variable before the loop, as either an \verb#int# or a \verb#double#.
 
 As always, we can break a loop over two lines using a `\verb#&#', and we can group several lines of code using parentheses beginning on the line of the \verb#for# command.  So we could have rewritten our code above in several different ways.
 
 \begin{code} \begin{verbatim}
 counter :: int
 
-for counter in <1, 10-counter>  &
+for counter in <1, 10>  &
     print(counter, " ")
 
-for counter in <1, 10-counter>  (
+for counter in <1, 10>  (
     print(counter)
     print(" ")
 )
 \end{verbatim} \end{code}
 
-\noindent There is no \verb#step# argument to control the increment of the counter variable, due to limitations of the compiler.  If we need a non-1 step we have to use a \verb#while# loop instead:
+\noindent There is no \verb#step# argument to control the increment of the counter variable, due to limitations of the compiler.  For a step of -1 use \verb#backfor#, otherwise you need a \verb#while# loop.
 
 \begin{code} \begin{verbatim}
 counter := 1
-while counter <= 10-counter  do (
+while counter <= 10  do (
     print(counter, " ")
     counter = that + 2
 )
@@ -2110,6 +2113,8 @@ f :: {
 \end{verbatim} \end{code}
 
 \noindent The code-number operator `\verb$#$' lets us run the code beginning at the $N$th \verb#code# marker.  By running \verb$f()$, which defaults to \verb$f#1()$, we incremented \verb#f.num#.  But execution stopped at the next \verb#code# marker.  There was no \verb#return# statement, which is fine:  the function returns \verb#nothing#, just as it would had we written \verb#return# or \verb#return *#.  In order to get a value back we had to run the \emph{second} coding block which returned \verb#f.num#.  Incidentally, if we run \verb$f#0()$ we rerun \verb#f#'s `constructor' which will reset \verb#f.num# to 2.\index{code number operator|)}
+
+[The number sign should not be confused with the hash operator, despite the fact that they use the same symbol.  A code-number operator follows a function name, as in  `\verb$f # n$'; a hash operator `\verb$# var$' does not.]
 
 Short functions like \verb#f()# are sometimes easier to code on one line.  To do this, use the fact that 1) commas are equivalent to ends-of-lines, and 2) semicolons are equivalent to \verb#code# markers.
 
@@ -3832,6 +3837,21 @@ root.a.b-->a
 
 
 
+% hash()
+
+\paragraph{\texttt{hash()}\\\\
+\normalfont \emph{syntax: } (int) \emph{myHash} = \texttt{hash}(\emph{args\_to\_hash})\\
+\normalfont \emph{operator syntax: } (int) \emph{myHash} = \texttt{\#}\emph{object\_to\_hash}\\
+\normalfont \emph{C syntax: } \texttt{\$hash}((int) \emph{myHash}, \emph{args\_to\_hash})\\\\}
+\index{hash@\texttt{hash()}|(}
+
+Returns an integer hash of the given argument(s).  Hashes are computed using the djb2 algorithm.\\
+
+\index{hash@\texttt{hash()}|)}
+
+
+
+
 
 % load()
 
@@ -4211,7 +4231,7 @@ size(a)   | will cause an error
 
 \paragraph{\texttt{sort()}\\\\
 \normalfont \emph{syntax: } \texttt{sort}((table) \emph{table\_to\_sort}, \{ (list) \emph{sort\_by\_list} or (numeric) \emph{sorting\_index} \} [, \texttt{code}, \texttt{direction} = \{ \texttt{increasing} / \texttt{decreasing}])\\
-\normalfont \emph{C-1 syntax: } \texttt{\$makeLinkList}((doubles) \emph{list\_to\_sort}, (ints) \emph{link\_list}, (int) direction, (int) \emph{first\_index}, (ints or doubles) \emph{sorted\_list})\\
+\normalfont \emph{C-1 syntax: } \texttt{\$makeLinkList}((doubles) \emph{list\_to\_sort}, (ints) \emph{link\_list}, (int) direction, (int) \emph{first\_index})\\
 \normalfont \emph{C-2 syntax: } \texttt{\$sort}((ints) \emph{link\_list}, (int) first\_index, (ints or doubles) \emph{lists\_to\_sort}, (ints or doubles) \emph{sorted\_lists})\\\\}
 \index{sort@\texttt{sort()}|(}\index{tables!sorting|(}
 
@@ -4507,6 +4527,7 @@ Sets the `top' of one \emph{member of} the argument.  An array variable has one 
 \paragraph{\texttt{setStringSize()}\\\\
 \normalfont \emph{syntax: } (ccInt) \emph{err\_code} = \texttt{setStringSize}((arg *) \emph{theArg}, (ccInt) stringNumber, (ccInt) newStringSize, (char **) stringChars)\\\\}\index{setStringSize\texttt{setStringSize()}|(}
 
+This function is equivalent to \verb#setMemberTop()#, but has a name that better reflects its use in resizing strings.
 
 
 \paragraph{\texttt{stepArg()}\\\\
