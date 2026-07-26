@@ -579,7 +579,7 @@ void test_ParseExpression()
             0, jump_if_false, 0,
         
             define_equate, 0, 0, define_equate, 0, define_equate, 0,          // 50
-            0, define_equate, 0, define_equate,
+            define_equate, define_equate, 0, define_equate,
         
             jump_if_false, jump_if_false, jump_if_false, jump_if_false, jump_if_false, 0,       // 61
         
@@ -600,9 +600,9 @@ void test_ParseExpression()
             unexpected_token_err, passed, passed, unexpected_token_err, unexpected_token_err, arg_expected_err,     //40
             type_mismatch_err, token_expected_err, passed, token_expected_err,
         
-            passed, token_expected_err, right_arg_expected_err, right_arg_expected_err, token_expected_err,    //50
-            passed, no_left_arg_allowed_err, type_mismatch_err, passed,
-            token_expected_err, passed,
+            passed, token_expected_err, right_arg_expected_err, passed, token_expected_err,    //50
+            passed, no_left_arg_allowed_err, passed, passed,
+            right_arg_expected_err, passed,
         
             passed, passed, passed, passed, passed, unexpected_token_err,    //61
         
@@ -622,7 +622,7 @@ void test_ParseExpression()
             '>', ':', ')', '=', '?',            // 30
               '?', '#', '\0', '#', '\0',
             'i', '#', '#', 'e', 't', 't', 'r', '\0', '#', '\0',
-            '#', '\0', 'i', '>', '\0', '#', 'b', '*', '#', '\0', '#',     // 50
+            '#', '\0', 'i', '#', '\0', '#', 'b', '#', '#', '(', '#',     // 50
             '#', '#', '#', '#', '#', ')',       // 61
             '#', '#', ')', 'u', ')', '#', 'u', '#',
             '#', '#', '#', '#', '#'    };
@@ -665,26 +665,16 @@ void test_Compile()
 {
     
     #define user_f_arg_flags ((1<<2)+(1<<3)+(1<<5)+(1<<6)+(1<<7))
-//    #define user_f_arg_flags ((1<<2)+(1<<3)+(1<<5)+(1<<6)+(1<<7)+(1<<8))
     
-//    #define for_pos_A (13-102)        /* (one plus the number assigned in the CodeCompare list -- since C starts arrays at 0)  */
-/*    #define for_pos_B (42-91)
-    #define do_pos (22-23)
-    #define endf_pos_A (103-14)
-    #define endf_pos_B (92-43)
-    #define endif_posA (156-125)
-    #define endif_posB (156-155)
-    #define endw_pos (154-145)
-    #define while_pos (144-153)*/
-    #define for_pos_A (12-96)        /* (one plus the number assigned in the CodeCompare list -- since C starts arrays at 0)  */
-    #define for_pos_B (40-86)
-    #define do_pos (21-22)
-    #define endf_pos_A (97-13)
-    #define endf_pos_B (87-41)
-    #define endif_posA (146-116)
-    #define endif_posB (146-145)
-    #define endw_pos (144-135)
-    #define while_pos (134-143)
+    #define for_pos_A (51-166)        /* (one plus the number assigned in the CodeCompare list -- since C starts arrays at 0)  */
+    #define for_pos_B (113-157)
+    #define do_pos (57-58)
+    #define endf_pos_A (167-52)
+    #define endf_pos_B (158-114)
+    #define endif_posA (216-186)
+    #define endif_posB (216-215)
+    #define endw_pos (214-205)
+    #define while_pos (204-213)
     
     
         // counter - 1        (Var IDs)
@@ -717,49 +707,67 @@ void test_Compile()
         "a *:: (this:this:{a, this=2} ), return," "{a},"
                 "a[+5][+4] = b[+ < 5,6>][+<8 ,9> ]," "a=a[b[c+1]+1]," "(return)";
     
+    ccInt iterator = 1, counter=4, my_var=5, a=6, b=7, c=8, d=9, A=10;
+    
     ccInt CodeCompare[] =  {
-        define_equate, vdf_flags, search_member, 2, search_member, 3,    // 0  (off from markers (after #def's above); C arrays start at 0)
-        define_equate, equ_flags, search_member, 2, constant_int, 0,        // 6
-                            jump_if_true, endf_pos_A, if_greater, search_member, 2, step_to_member_ID, 5, search_member, 4,
-                jump_if_false, do_pos, if_or, if_greater, search_member, 6, search_member, 7, if_less_or_equal, search_member, 6, search_member, 7,     // 21
+        define_equate, vdf_flags, search_member, counter, search_member, my_var,    // 0  (off from markers (after #def's above); C arrays start at 0)
+        define_equate, dqaxxFlags, search_member, -1, user_function, search_member, iterator,       // 6
+                define_equate, defxxFlags, search_member, -2, code_block, define_equate, defxFlags, search_member, -3, code_block,      // 13
+                    define_equate, dqaxFlags, search_member, -4, search_member, counter, code_marker,        // 23
+                    define_equate, eqaFlags, search_member, counter, args_variable, end_of_script,        // 30
+                define_equate, deqxFlags, search_member, -5, constant_int, 0,       // 36
+                define_equate, dqaxFlags, search_member, -6, step_to_member_ID, b, search_member, a, end_of_script,       // 42
+            jump_if_false, endf_pos_A, user_function, search_member, -1, no_variable,       // 51
+//        define_equate, equ_flags, search_member, counter, constant_int, 0,        // 6
+//                            jump_if_true, endf_pos_A, if_greater, search_member, counter, step_to_member_ID, b, search_member, a,
+                jump_if_false, do_pos, if_or, if_greater, search_member, c, search_member, d, if_less_or_equal, search_member, c, search_member, d,     // 57
 
-                define_equate, equ_flags, search_member, 4, constant_int, 1, jump_if_true, endf_pos_B,    // 34
-                                                    if_greater, search_member, 4, constant_int, 2,
-                        define_equate, dqa_flags, search_member, 5, search_member, 4, forced_equate, search_member, 6, user_function,     // 47
-                                    search_member, 8, define_equate, user_f_arg_flags, search_member, -1, code_block,
-                    define_equate, dqa_flags-2+128, search_member, -2, search_member, 4, define_equate, deq_flags-2+128, search_member,
-                                                                                                    -3, constant_int, 3, end_of_script,
-                define_equate, equ_flags, search_member, 4, add_num, that_variable, constant_int, 1, jump_always, for_pos_B,            // 77
-        define_equate, equ_flags, search_member, 2, add_num, that_variable, constant_int, 1, jump_always, for_pos_A,        // 87
-        define_equate, equ_flags, search_member, 2, multiply_num, search_member, 6, subtract_num, divide_num, multiply_num, constant_int, -1, search_member, 7,    // 97
+            define_equate, dqaxxFlags, search_member, -7, user_function, search_member, iterator,       // 70
+                    define_equate, defxxFlags, search_member, -8, code_block, define_equate, defxFlags, search_member, -9, code_block,  // 77
+                        define_equate, dqaxFlags, search_member, -10, search_member, a, code_marker,        // 87
+                        define_equate, eqaFlags, search_member, a, args_variable, end_of_script,        // 94
+                    define_equate, deqxFlags, search_member, -11, constant_int, 1,       // 100
+                    define_equate, deqxFlags, search_member, -12, constant_int, 2, end_of_script,       // 106
+                jump_if_false, endf_pos_B, user_function, search_member, -7, no_variable,       // 113
+//                define_equate, equ_flags, search_member, a, constant_int, 1, jump_if_true, endf_pos_B,    // 70
+//                                                    if_greater, search_member, a, constant_int, 2,
+                        define_equate, dqa_flags, search_member, b, search_member, a, forced_equate, search_member, c, user_function,     // 119
+                                    search_member, A, define_equate, user_f_arg_flags, search_member, -13, code_block,
+                    define_equate, dqa_flags-2+128, search_member, -14, search_member, a, define_equate, deq_flags-2+128, search_member,
+                                                                                                    -15, constant_int, 3, end_of_script,
+                user_function, code_number, constant_int, 2, search_member, -7, no_variable, jump_always, for_pos_B,            // 149
+//                define_equate, equ_flags, search_member, a, add_num, that_variable, constant_int, 1, jump_always, for_pos_B,            // 149
+        user_function, code_number, constant_int, 2, search_member, -1, no_variable, jump_always, for_pos_A,        // 158
+//        define_equate, equ_flags, search_member, counter, add_num, that_variable, constant_int, 1, jump_always, for_pos_A,        // 159
+        define_equate, equ_flags, search_member, counter, multiply_num, search_member, c, subtract_num, divide_num, multiply_num, constant_int, -1, search_member, d,    // 167
                                                 constant_int, -5300, constant_int, 52,
         
-        jump_if_false, endif_posA, if_xor, if_and, if_less, search_member, 4, search_member, 5, if_greater_or_equal, constant_int, 0, search_member, 5, if_equal,    // 115
-                                                                                                search_member, 4, search_member, 5,
-                jump_if_false, endw_pos, if_not, if_not_equal, search_member, 4, search_member, 5,                    // 134
-                jump_always, while_pos, jump_always, endif_posB,                                            // 142
+        jump_if_false, endif_posA, if_xor, if_and, if_less, search_member, a, search_member, b, if_greater_or_equal, constant_int, 0, search_member, b, if_equal,    // 185
+                                                                                                search_member, a, search_member, b,
+                jump_if_false, endw_pos, if_not, if_not_equal, search_member, a, search_member, b,                    // 204
+                jump_always, while_pos, jump_always, endif_posB,                                            // 212
         
-        define_equate, dqa_flags-2+128, search_member, -4, this_variable, define_equate, eqa_flags, search_member, 4, search_member, 5, // 146
-                                                define_equate, def_flags, search_member, 5, append_code, search_member, 4, search_member, 7,
-        define_equate, equ_flags, search_member, 4, user_function, substitute_code, append_code, search_member, 5, search_member, 5,              // 166
-                    search_member, 8, define_equate, user_f_arg_flags, search_member, -5, code_block, end_of_script,
-        define_equate, def_flags, step_to_index, search_member, 4, add_num, search_member, 4, constant_int, 2, no_variable, define_equate,  // 185
-                                                                deq_flags, search_member, 5, args_variable, function_return, search_member, 5,
-        define_equate, equ_flags, step_to_indices, search_member, 4, constant_int, 2, constant_int, 3, add_num, step_to_index,    // 204
-                                                        search_member, 5, constant_int, 1, mod_int, constant_int, 4, constant_int, 5,
+        define_equate, dqa_flags-2+128, search_member, -16, this_variable, define_equate, eqa_flags, search_member, a, search_member, b, // 216
+                                                define_equate, def_flags, search_member, b, append_code, search_member, a, search_member, d,
+        define_equate, equ_flags, search_member, a, user_function, substitute_code, append_code, search_member, b, search_member, b,              // 236
+                    search_member, A, define_equate, user_f_arg_flags, search_member, -17, code_block, end_of_script,
+        define_equate, def_flags, step_to_index, search_member, a, add_num, search_member, a, constant_int, 2, no_variable, define_equate,  // 255
+                                                                deq_flags, search_member, b, args_variable, function_return, search_member, b,
+        define_equate, equ_flags, step_to_indices, search_member, a, constant_int, 2, constant_int, 3, add_num, step_to_index,    // 274
+                                                        search_member, b, constant_int, 1, mod_int, constant_int, 4, constant_int, 5,
         
-        define_equate, mdf_flags, search_member, 4, append_code, append_code, this_variable, this_variable, code_block, define_equate, dqa_flags+128-2, // 224
-                    search_member, -6, search_member, 4, define_equate, equ_flags, this_variable, constant_int, 2, end_of_script, function_return, no_variable,
-                            define_equate, def_flags-2+128, search_member, -7, code_block, define_equate, dqa_flags-2+128,         //  247
-                                                                        search_member, -8, search_member, 4, end_of_script,
-        define_equate, equ_flags, insert_index, insert_index, search_member, 4, constant_int, 5, constant_int, 4,   // 259
-                insert_indices, insert_indices, search_member, 5, constant_int, 5, constant_int, 6, constant_int, 8, constant_int, 9,
-                                define_equate, equ_flags, search_member, 4, step_to_index, search_member, 4,
-                        add_num, step_to_index, search_member, 5, add_num, search_member, 6, constant_int, 1, constant_int, 1,
-        function_return, no_variable, end_of_script         // 299
+        define_equate, mdf_flags, search_member, a, append_code, append_code, this_variable, this_variable, code_block, define_equate, dqa_flags+128-2, // 294
+                    search_member, -18, search_member, a, define_equate, equ_flags, this_variable, constant_int, 2, end_of_script, function_return, no_variable,
+                            define_equate, def_flags-2+128, search_member, -19, code_block, define_equate, dqa_flags-2+128,         //  317
+                                                                        search_member, -20, search_member, a, end_of_script,
+        define_equate, equ_flags, insert_index, insert_index, search_member, a, constant_int, 5, constant_int, 4,   // 329
+                insert_indices, insert_indices, search_member, b, constant_int, 5, constant_int, 6, constant_int, 8, constant_int, 9,
+                                define_equate, equ_flags, search_member, a, step_to_index, search_member, a,
+                        add_num, step_to_index, search_member, b, add_num, search_member, c, constant_int, 1, constant_int, 1,
+        function_return, no_variable, end_of_script         // 369
     };
     
-    ccInt counter, rtrn, dummy_refs;
+    ccInt cb, rtrn, dummy_refs;
     
     compiler_type *theCompiler = newCompiler(cicadaLanguage, cicadaLanguageNumCommands,
                     cicadaLanguageAssociativity, cicadaNumPrecedenceLevels, &rtrn);
@@ -780,14 +788,14 @@ void test_Compile()
     if (theCompiler->bytecode.elementNum != sizeof(CodeCompare)/sizeof(ccInt))
         printf("test_Compile: Number of code words was %i; should be %i\n", (int) theCompiler->bytecode.elementNum, (int) (sizeof(CodeCompare)/sizeof(ccInt)));
     
-    for (counter = 0; counter < theCompiler->bytecode.elementNum; counter++)    {
-        if (counter >= sizeof(CodeCompare)/sizeof(ccInt))  {
-            printf("test_Compile: Code overflow on counter = %i\n", counter);
+    for (cb = 0; cb < theCompiler->bytecode.elementNum; cb++)    {
+        if (cb >= sizeof(CodeCompare)/sizeof(ccInt))  {
+            printf("test_Compile: Code overflow on cb = %i\n", cb);
             break;
         }
-        if (*(ccInt *) findElement(&(theCompiler->bytecode), counter+1) != CodeCompare[counter])  {
-            printf("test_Compile: Code mismatch on counter = %i:  compiled %i vs expected %i\n", 
-                (int) counter, (int) *(ccInt *) findElement(&(theCompiler->bytecode), counter+1), (int) CodeCompare[counter]);
+        if (*(ccInt *) findElement(&(theCompiler->bytecode), cb+1) != CodeCompare[cb])  {
+            printf("test_Compile: Code mismatch on cb = %i:  compiled %i vs expected %i\n", 
+                (int) cb, (int) *(ccInt *) findElement(&(theCompiler->bytecode), cb+1), (int) CodeCompare[cb]);
     }   }
     
     startCodePtr = LL_int(&(theCompiler->bytecode), 1);

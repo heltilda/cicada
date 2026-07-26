@@ -23,6 +23,8 @@ void test_YHErrors()
     linkedlist CompiledCodes;
     compiler_type *testCompiler;
     
+    ccInt a=4, b=5, c=6, d=7;
+    
             // Introduce the variables in the same order for each test case, since the compiler starts anew each run.  Only then a=a between any two runs.
             // Start with the definitions that introduce errors.  (This is now not true -- 2/17/05).
     char *TestPrograms[tYHE_TestRuns] = {
@@ -53,7 +55,7 @@ void test_YHErrors()
                                             "a=!b.d", "remove a, remove b.c, remove b",
         "a::5, b:=a, if (b /= a) then a::\"x\", b=2, if a==b then a::char",                    // 80
                                             "a = 1, b = 1.01, if a > b or -a < -b then a::{}, while not a<=b xor -3.5 == a do a::{}",
-                       "remove a, for (a::double) in <1, 2> if a >= 3 or a <= 0.99 then a::{}", "if 1 == 1 and 2 > 1 then a::{}",
+                       "remove a, a::double, for (a=1; return a<=2; a=a+1) if a >= 3 or a <= 0.99 then a::{}", "if 1 == 1 and 2 > 1 then a::{}",
                                             "remove a, (a::int) = 1+2*5^2-6/3.0, if a mod 30 /=19 then a::{}, remove a, remove b",
             "a::{code, args(), (b::int)=args[1], b=b+1, return b}, if a(-8) /= -7 then a::int", "if a(a(a(5))) /= 8 then a=0",    // 85
                                 "remove this[1], strs := {a::{\"Done\"}, \", at last!  \", 12, .22, \"\\n\\n\"}"
@@ -82,22 +84,22 @@ void test_YHErrors()
                                     };
     
     const ccInt ErrorPtrInts[tYHE_TestRuns] = {        // errIndexes of vars are off by one for c, d, etc. (from{a} of run 5)
-            3, 3, 0, 0, 0,
+            b, b, 0, 0, 0,
                 0, define_equate, define_equate, define_equate, 0,
-            define_equate, 0, 5, 0, 0,
+            define_equate, 0, d, 0, 0,
                 0, define_equate, 0, 0, this_variable,
             step_to_index, -1, 5, 0, 0,
                 11, 0, 0, 0, 0,
-            0, 0, 2, 0, 4,
-                0, define_equate, define_equate, 0, 3,
+            0, 0, a, 0, c,
+                0, define_equate, define_equate, 0, b,
             0, 0, 0, 0, 9,
                 0, 0, 2, 1, 0,
             0, 5, insert_index, 0, 0,        // 50
                 0, 0, 0, 0, 0,
-            0, 0, 5, step_to_member_ID, 2,
-                2, 2, 0, 3, 0,
+            0, 0, d, step_to_member_ID, a,
+                a, a, 0, b, 0,
             0, 0, define_equate, 0, 0,
-                0, 1, 0, 3, 0,
+                0, 1, 0, b, 0,
             0, 0, 0, define_equate, 0,
                 0, 0, 0
     };
