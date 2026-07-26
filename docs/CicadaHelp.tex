@@ -1343,7 +1343,7 @@ if Tom == Bob  then (      | yes, they will be equal
 
 Numeric operations and comparisons do not work with composite variables, even if all their members are numeric.  Expressions like \verb#Tom+Bob# and \verb#Tom > Bob# will always cause an error.
 
-An integer hash can be made of any primitive or composite variable by prepending it with a \verb$#$ symbol:  e.g. `\verb$#FullAddress$'.
+An integer hash can be made of any primitive or composite variable by prepending it with a \verb$#$ symbol:  e.g. `\verb$#FullAddress$'.\index{hashes} 
 \index{types!composite|)} \index{variables, composite|)}
 
 
@@ -1754,7 +1754,7 @@ var3 =! var1   | OK, surprisingly!
 
 \subsection{Loops and \texttt{if} blocks} \index{flow control|(}
 
-Cicada has five commands for controlling the program flow:  \verb#if# statements, \verb#for# and \verb#backfor# loops, and \verb#while..do# and \verb#loop..until# loops.
+Cicada has four commands for controlling the program flow:  \verb#if# statements, \verb#for# loops, and \verb#while..do# and \verb#loop..until# loops.
 
 
 \subsubsection{\texttt{if}} \index{if@\texttt{if}|(}
@@ -1827,61 +1827,63 @@ loop print("> ") until input() == "exit"
 
 \subsubsection{\texttt{for}} \index{for@\texttt{for}|(}
 
-Cicada's \texttt{for} loop is simpler and offers less control than C's.  Here is an example showing the syntax.
+Cicada has two main variants of a \texttt{for} loop.  One is a C-style \texttt{for} loop which fully specifies the iterator inside of parentheses.  The syntax is slightly different since the iterator has to be an actual Cicada function.  Here is an example:
 
 \begin{code} \begin{verbatim}
 counter :: int
+for (counter = 1; return counter <= 10; counter = that + 1)  print(counter, " ")
+\end{verbatim} \end{code}
+
+\noindent Notice that we had to define the loop variable before the loop, as either an \verb#int# or a \verb#double#.  Anything defined inside of the parentheses will only be visible \emph{inside the iterator object}.
+
+The second type of \verb#for# loop uses a prebuilt iterator whose parameters are inside of angle brackets.  If there are two parameters, they are interpreted as the range of indices to loop over.
+
+\begin{code} \begin{verbatim}
 for counter in <1, 10>  print(counter, " ")
 \end{verbatim} \end{code}
 
-\noindent Notice that we had to define the loop variable before the loop, as either an \verb#int# or a \verb#double#.
+\noindent One limitation: this macro for this latter \verb#for# loop expects a variable name in before the `\verb#in#', so commands like `\verb#for counter::int in ...#' won't work.
 
 As always, we can break a loop over two lines using a `\verb#&#', and we can group several lines of code using parentheses beginning on the line of the \verb#for# command.  So we could have rewritten our code above in several different ways.
 
 \begin{code} \begin{verbatim}
-counter :: int
-
 for counter in <1, 10>  &
     print(counter, " ")
 
 for counter in <1, 10>  (
-    print(counter)
-    print(" ")
+    print(counter, " ")
 )
 \end{verbatim} \end{code}
 
-\noindent There is no \verb#step# argument to control the increment of the counter variable, due to limitations of the compiler.  For a step of -1 use \verb#backfor#, otherwise you need a \verb#while# loop.
+By default, a \verb#for .. in# loop increments the counter by 1 each pass.  To change this increment, use the \verb#step# parameter after a semicolon:
 
 \begin{code} \begin{verbatim}
-counter := 1
-while counter <= 10  do (
-    print(counter, " ")
-    counter = that + 2
-)
+for counter in <1, 10; step = 2>  print(counter, " ")
 \end{verbatim} \end{code}
+
+\noindent If the step is negative, the loop will run backwards from the first index to the last index.
+
+\begin{code} \begin{verbatim}
+for counter in <10, 1; step = -1>  print(counter, " ")
+\end{verbatim} \end{code}
+
+Finally, we can use the \verb#for .. in <..># iterator to loop over set elements.  Now the angle brackets contain just one parameter:  the set.  Here is an example:
+
+\begin{code} \begin{verbatim}
+mySet :: { pi, "aString", { 1, 2 } }
+el :: *
+for el in <mySet>  sprint(el)
+\end{verbatim} \end{code}
+
 
 \index{for@\texttt{for}|)}
-
-
-\subsubsection{\texttt{backfor}} \index{backfor@\texttt{backfor}|(}
-
-This is a \verb$for$ loop that counts backwards (since \verb$for$ does not have this capability).  For example,
-
-\begin{code} \begin{verbatim}
-counter :: int
-backfor counter in <1, 9>  print(counter, " ")
-\end{verbatim} \end{code}
-
-\noindent produces the output \verb$9 8 7 6 5 4 3 2 1$.
-
-\index{backfor@\texttt{backfor}|)}
 
 
 
 
 \subsubsection{\texttt{break}} \index{break equivalent|(}
 
-There is no \verb#break# statement in Cicada.  But there is a way to jerry-rig something that does pretty much the same.  The trick is to put braces -- with no \verb#code# marker or semicolon -- around the code we eventually want to escape from.  Within those braces, a \verb#return# statement will simply escape from the bracketed code and continue with what follows.  For example:
+There is no explicit \verb#break# statement in Cicada.  But there is a way to jerry-rig something that does pretty much the same thing.  The trick is to put braces -- with no \verb#code# marker or semicolon -- around the code we eventually want to escape from.  Within those braces, a \verb#return# statement will simply escape from the bracketed code and continue with what follows.  For example:
 
 \begin{code} \begin{verbatim}
 {
@@ -2236,13 +2238,13 @@ Finally, function arguments can contain \verb#return# statements just like norma
 81
 \end{verbatim} \end{code}
 
-To summarize, Cicada's function arguments are themselves functions.  To make this clearer, we can imagine a syntax that uses curly braces for function calls:
+To summarize, Cicada's function arguments are themselves functions.  To make this clearer, we can imagine a syntax where `\verb#args#' is an explicit alias to an object:
 
 \begin{code} \begin{verbatim}
-doTwice{ 3, code, return args[1]^2 }
+doTwice @{ 3, code, return args[1]^2 }
 \end{verbatim} \end{code}
 
-\noindent In fact this syntax is legal!  The only difference with a regular function call is that the argument space will linger as a new object after the function call, wherever that call happened.  (Technically the argument space always persists but is normally hidden).  This way of writing a function makes clear that the arguments are just some function object that's ordinarily invisible, but has an \verb#args# alias inside of the running function.
+\noindent In fact this syntax is legal!  The only difference with a regular function call is that the argument space will linger visibly as a new object after the function call, wherever that call happened.  (It's not a hidden variable).  This way of writing a function makes clear that the arguments are just some function object that's ordinarily invisible, but accessible via `\verb#args#' when the function is running.
 
 The args variable is usually defined inline, using parentheses or braces, but it can also be aliased from an existing variable or function using the familiar \verb#@# operator.  For example:
 
@@ -3109,8 +3111,7 @@ Program flow:
 \item{\verb#if A then ..., else if B then ..., else ...#} :  do if A, B, etc. are true
 \item{\verb#while A do ...,#} :  do as long as A is true
 \item{\verb#loop ... until A#} :  do until A is true
-\item{\verb#for I in < A, B >  ...#} :  do for a defined number of times
-\item{\verb#backfor I in < A, B >  ...#} :  same as \verb$for$, except starts at B and counts backwards to A
+\item{\verb#for ()  ...# or \verb#for @ iterF do  ...# or \verb#for I in < A, B >  ...#} :  do for a defined number of times
 \item{\verb#A( ... )#} :  call A as a function with given arguments
 \item{\verb#code#} or \verb#;# :  begin a new code block\index{code@\texttt{code} marker}
 \item{\verb#return A#  or  \verb#return#} :  exit function with return variable A (if specified)\index{return@\texttt{return}}
@@ -4370,7 +4371,7 @@ For technical reasons \verb#top()# is defined inside of \verb#cclang.c# rather t
 \paragraph{\texttt{transform()}\\\\
 \normalfont \emph{syntax: } [(composite) \emph{target\_function} =] \texttt{transform}((string) \emph{bytecode} [, (function) \emph{target\_function} ] [\texttt{, code, codePath} = @(set of functions), \texttt{errInfo.filename/sourceCode/opCharPositions} = (string)])\\
 \normalfont \emph{C syntax: } \texttt{\$transform}((string) \emph{bytecode}, (function) \emph{target\_function}, (set of functions) \emph{codePath}, (string) \emph{errInfoFilename}, (string) \emph{errInfoSourceCode}, (string) \emph{errInfoOpCharPositions})\\\\}
-\index{transform@\texttt{transform()}|(textbf} \index{registers!composite|(} \index{R_composite@\verb#R_composite#|(}
+\index{transform@\texttt{transform()}|(textbf}
 
 Copies compiled bytecode stored as a string (1st argument) into the internal code of a target function variable (return value or 2nd argument), \emph{without} running the code's constructor.  The bytecode is typically generated using the \verb#compile()# function:
 
@@ -4425,7 +4426,7 @@ transform(scriptBytecode, newFunction, { }, fileName, myScript, opPositions)
 
 It is certainly possible to pass bogus bytecode to \verb#transform()# (particularly if we're trying to write out the binary ourselves).  \verb#transform()# checks the bytecode's syntax, and if there is a problem then it crashes out with an error message.\\
 
-\index{transform@\texttt{transform()}|)textbf} \index{registers!composite|)} \index{R_composite@\verb#R_composite#|)}
+\index{transform@\texttt{transform()}|)textbf}
 
 
 
@@ -4434,7 +4435,7 @@ It is certainly possible to pass bogus bytecode to \verb#transform()# (particula
 
 \paragraph{\texttt{trap()}\\\\
 \normalfont \emph{syntax: } (numeric) \emph{error\_code} = \texttt{trap}([;[;[;]]] code\_to\_run)\\\\}
-\index{trap@\texttt{trap()}|(textbf} \index{registers!error and warning|(}
+\index{trap@\texttt{trap()}|(textbf}
 
 Runs the code inside the parentheses (i.e. its argument), and returns any error value.  Error codes are listed in Table \ref{errCodeTable} on page \pageref{errCodeTable}.  No \texttt{code} marker is needed within a \texttt{trap()} call.  Upon error, the argument stops running and the error code is returned; if the argument finishes with no error then the return value is 0.  \verb#trap()# thus prevents a piece of dubious code from crashing a larger script.  Note that some egregious errors are caught at compile-time and \verb#trap()# will not be able to prevent those -- this includes some type-mismatch errors like \verb#trap(string = 4)#.
 
@@ -4451,7 +4452,7 @@ trap( ; ; ; (a::*) = 2)            | prints a type-mismatch error, then crashes 
 
 The \verb#trap()# function is actually defined in \verb#cclang.c#, and has the unique ability to run its arguments in whatever function called \verb#trap()#, rather than in a private argument variable used by all other built-in and user-defined functions.  So variables which are defined within the \verb#trap()# argument list will be accessible to the rest of the function.  Also \verb#this# and \verb#parent# have the same meaning inside a \verb#trap()# command as outside of it.  The C-coded \verb#$trap()# lacks this ability and has the usual run-constructor arguments flag, so just use the scripted function call.
 
-\index{trap@\texttt{trap()}|)textbf} \index{registers!error and warning|)}
+\index{trap@\texttt{trap()}|)textbf}
 
 
 
@@ -4513,34 +4514,34 @@ Returns the names of the variables in the current directory, which is usually \v
 \paragraph{\texttt{getArgTop()}\\\\
 \normalfont \emph{syntax: } (ccInt) \emph{member\_top} = \texttt{getArgTop}((arg *) \emph{theArg})\\\\}\index{getArgTop@\texttt{getArgTop()}|(}
 
-Returns the `top' of the argument.  This is either the array dimension (if it is an array variable), the number of list elements spanned (for a list variable), or the number of members (if it's a composite variable).\index{getArgTop\texttt{getArgTop()}|)}\\
+Returns the `top' of the argument.  This is either the array dimension (if it is an array variable), the number of list elements spanned (for a list variable), or the number of members (if it's a composite variable).\index{getArgTop@\texttt{getArgTop()}|)}\\
 
 
 
 \paragraph{\texttt{setMemberTop()}\\\\
-\normalfont \emph{syntax: } (ccInt) \emph{err\_code} = \texttt{setMemberTop}((arg *) \emph{theArg}, (ccInt) memberNumber, (ccInt) newTop, (char **) argData)\\\\}\index{setMemberTop\texttt{setMemberTop()}|(}
+\normalfont \emph{syntax: } (ccInt) \emph{err\_code} = \texttt{setMemberTop}((arg *) \emph{theArg}, (ccInt) memberNumber, (ccInt) newTop, (char **) argData)\\\\}\index{setMemberTop@\texttt{setMemberTop()}|(}
 
-Sets the `top' of one \emph{member of} the argument.  An array variable has one member whose top is one array dimension; a list variable has one member for each list it contains; and a composite variable typically each member has a name.  If the member points to primitive data, returns a pointer to that data in \verb#argData#.\index{setMemberTop\texttt{setMemberTop()}|)}\\
+Sets the `top' of one \emph{member of} the argument.  An array variable has one member whose top is one array dimension; a list variable has one member for each list it contains; and a composite variable typically each member has a name.  If the member points to primitive data, returns a pointer to that data in \verb#argData#.\index{setMemberTop@\texttt{setMemberTop()}|)}\\
 
 
 
 \paragraph{\texttt{setStringSize()}\\\\
-\normalfont \emph{syntax: } (ccInt) \emph{err\_code} = \texttt{setStringSize}((arg *) \emph{theArg}, (ccInt) stringNumber, (ccInt) newStringSize, (char **) stringChars)\\\\}\index{setStringSize\texttt{setStringSize()}|(}
+\normalfont \emph{syntax: } (ccInt) \emph{err\_code} = \texttt{setStringSize}((arg *) \emph{theArg}, (ccInt) stringNumber, (ccInt) newStringSize, (char **) stringChars)\\\\}\index{setStringSize@\texttt{setStringSize()}|(}
 
-This function is equivalent to \verb#setMemberTop()#, but has a name that better reflects its use in resizing strings.
+This function is equivalent to \verb#setMemberTop()#, but has a name that better reflects its use in resizing strings.\index{setStringSize@\texttt{setStringSize()}|)}
 
 
 \paragraph{\texttt{stepArg()}\\\\
-\normalfont \emph{syntax: } (arg *) \emph{sub\_arg} = \texttt{stepArg}((arg *) \emph{theArg}, (ccInt) memberNumber, (ccInt *) numIndices)\\\\}\index{stepArg\texttt{stepArg()}|(}
+\normalfont \emph{syntax: } (arg *) \emph{sub\_arg} = \texttt{stepArg}((arg *) \emph{theArg}, (ccInt) memberNumber, (ccInt *) numIndices)\\\\}\index{stepArg@\texttt{stepArg()}|(}
 
-Steps into a member of an argument, returning another \verb#arg#-type pointer.  If \verb#numIndices# is non-null, its referent is multiplied by the top of that member.  Typically one would set \verb#numIndices# to \verb#args.indices[n]# and then update this variable with each \verb#stepArg()# call.\index{stepArg\texttt{stepArg()}|)}\\
+Steps into a member of an argument, returning another \verb#arg#-type pointer.  If \verb#numIndices# is non-null, its referent is multiplied by the top of that member.  Typically one would set \verb#numIndices# to \verb#args.indices[n]# and then update this variable with each \verb#stepArg()# call.\index{stepArg@\texttt{stepArg()}|)}\\
 
 
 
 \paragraph{\texttt{argData()}\\\\
-\normalfont \emph{syntax: } (void *) \emph{arg\_data} = \texttt{argData}((arg *) \emph{theArg})\\\\}\index{argData\texttt{argData()}|(}
+\normalfont \emph{syntax: } (void *) \emph{arg\_data} = \texttt{argData}((arg *) \emph{theArg})\\\\}\index{argData@\texttt{argData()}|(}
 
-Returns a pointer to the data list of a primitive (\verb#bool#/\verb#char#/\verb#int#/\verb#double#) argument.\index{argData\texttt{argData()}|)}\\
+Returns a pointer to the data list of a primitive (\verb#bool#/\verb#char#/\verb#int#/\verb#double#) argument.\index{argData@\texttt{argData()}|)}\\
 
 \index{arg@\texttt{arg}|)}\index{functions!for strings in C|)}
 

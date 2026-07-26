@@ -212,19 +212,19 @@
 
 <P>
 
-<P> To summarize, Cicada&rsquo;s function arguments are themselves functions.  To make this clearer, we can imagine a syntax that uses curly braces for function calls:
+<P> To summarize, Cicada&rsquo;s function arguments are themselves functions.  To make this clearer, we can imagine a syntax where &lsquo;<tt>args</tt>&rsquo; is an explicit alias to an object:
 
 <P> 
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; doTwice{ 3, code, return args[1]^2 }
+<br>&nbsp;&nbsp;&nbsp; doTwice @{ 3, code, return args[1]^2 }
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
 <P>
 
-<P>  In fact this syntax is legal!  The only difference with a regular function call is that the argument space will linger as a new object after the function call, wherever that call happened.  (Technically the argument space always persists but is normally hidden).  This way of writing a function makes clear that the arguments are just some function object that&rsquo;s ordinarily invisible, but has an <tt>args</tt> alias inside of the running function.
+<P>  In fact this syntax is legal!  The only difference with a regular function call is that the argument space will linger visibly as a new object after the function call, wherever that call happened.  (It&rsquo;s not a hidden variable).  This way of writing a function makes clear that the arguments are just some function object that&rsquo;s ordinarily invisible, but accessible via &lsquo;<tt>args</tt>&rsquo; when the function is running.
 
 <P> The args variable is usually defined inline, using parentheses or braces, but it can also be aliased from an existing variable or function using the familiar <tt>@</tt> operator.  For example:
 
@@ -252,4 +252,4 @@
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_471.html">Prev: Defining functions (properly)</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_473.html">Next: Code substitution</a>
-</div><br><br><P>Last update: July 22, 2026
+</div><br><br><P>Last update: July 26, 2026

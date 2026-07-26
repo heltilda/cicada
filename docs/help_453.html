@@ -12,13 +12,27 @@
 
  
 
-<P> Cicada&rsquo;s <tt>for</tt> loop is simpler and offers less control than C&rsquo;s.  Here is an example showing the syntax.
+<P> Cicada has two main variants of a <tt>for</tt> loop.  One is a C-style <tt>for</tt> loop which fully specifies the iterator inside of parentheses.  The syntax is slightly different since the iterator has to be an actual Cicada function.  Here is an example:
 
 <P> 
 
 <P><P><tt> 
 
 <br>&nbsp;&nbsp;&nbsp; counter :: int
+
+<br>&nbsp;&nbsp;&nbsp; for (counter = 1; return counter &lt;= 10; counter = that + 1)&nbsp;print(counter, &quot; &quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P>  Notice that we had to define the loop variable before the loop, as either an <tt>int</tt> or a <tt>double</tt>.  Anything defined inside of the parentheses will only be visible <i>inside the iterator object</i>.
+
+<P> The second type of <tt>for</tt> loop uses a prebuilt iterator whose parameters are inside of angle brackets.  If there are two parameters, they are interpreted as the range of indices to loop over.
+
+<P> 
+
+<P><P><tt> 
 
 <br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10&gt;&nbsp;print(counter, &quot; &quot;)
 
@@ -26,17 +40,13 @@
 
 <P>
 
-<P>  Notice that we had to define the loop variable before the loop, as either an <tt>int</tt> or a <tt>double</tt>.
+<P>  One limitation: this macro for this latter <tt>for</tt> loop expects a variable name in before the &lsquo;<tt>in</tt>&rsquo;, so commands like &lsquo;<tt>for counter::int in ...</tt>&rsquo; won&rsquo;t work.
 
 <P> As always, we can break a loop over two lines using a &lsquo;<tt>&amp;</tt>&rsquo;, and we can group several lines of code using parentheses beginning on the line of the <tt>for</tt> command.  So we could have rewritten our code above in several different ways.
 
 <P> 
 
 <P><P><tt> 
-
-<br>&nbsp;&nbsp;&nbsp; counter :: int
-
-<br>&nbsp;&nbsp;&nbsp; 
 
 <br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10&gt;&nbsp;&amp;
 
@@ -46,9 +56,7 @@
 
 <br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10&gt;&nbsp;(
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(counter)
-
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(&quot; &quot;)
+<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(counter, &quot; &quot;)
 
 <br>&nbsp;&nbsp;&nbsp; )
 
@@ -56,21 +64,41 @@
 
 <P>
 
-<P>  There is no <tt>step</tt> argument to control the increment of the counter variable, due to limitations of the compiler.  For a step of -1 use <tt>backfor</tt>, otherwise you need a <tt>while</tt> loop.
+<P> By default, a <tt>for .. in</tt> loop increments the counter by 1 each pass.  To change this increment, use the <tt>step</tt> parameter after a semicolon:
 
 <P> 
 
 <P><P><tt> 
 
-<br>&nbsp;&nbsp;&nbsp; counter := 1
+<br>&nbsp;&nbsp;&nbsp; for counter in &lt;1, 10; step = 2&gt;&nbsp;print(counter, &quot; &quot;)
 
-<br>&nbsp;&nbsp;&nbsp; while counter &lt;= 10&nbsp;do (
+<br>&nbsp;&nbsp;&nbsp; </tt>
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;print(counter, &quot; &quot;)
+<P>
 
-<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;counter = that + 2
+<P>  If the step is negative, the loop will run backwards from the first index to the last index.
 
-<br>&nbsp;&nbsp;&nbsp; )
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; for counter in &lt;10, 1; step = -1&gt;&nbsp;print(counter, &quot; &quot;)
+
+<br>&nbsp;&nbsp;&nbsp; </tt>
+
+<P>
+
+<P> Finally, we can use the <tt>for .. in &lt;..&gt;</tt> iterator to loop over set elements.  Now the angle brackets contain just one parameter:  the set.  Here is an example:
+
+<P> 
+
+<P><P><tt> 
+
+<br>&nbsp;&nbsp;&nbsp; mySet :: { pi, &quot;aString&quot;, { 1, 2 } }
+
+<br>&nbsp;&nbsp;&nbsp; el :: *
+
+<br>&nbsp;&nbsp;&nbsp; for el in &lt;mySet&gt;&nbsp;sprint(el)
 
 <br>&nbsp;&nbsp;&nbsp; </tt>
 
@@ -79,5 +107,5 @@
 <P> 
 
 <P> <br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_452.html">Prev: <tt>while do</tt> and <tt>loop until</tt></a> &nbsp;&nbsp;
-<a href="https://heltilda.github.io/cicada/help_454.html">Next: <tt>backfor</tt></a>
-</div><br><br><P>Last update: July 22, 2026
+<a href="https://heltilda.github.io/cicada/help_454.html">Next: <tt>break</tt></a>
+</div><br><br><P>Last update: July 26, 2026

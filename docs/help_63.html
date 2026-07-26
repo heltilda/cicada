@@ -1369,7 +1369,7 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
  <i>syntax: </i> [(composite) <i>target_function</i> =] <tt>transform</tt>((string) <i>bytecode</i> [, (function) <i>target_function</i> ] [<tt>, code, codePath</tt> = @(set of functions), <tt>errInfo.filename/sourceCode/opCharPositions</tt> = (string)])<P>
  <i>C syntax: </i> <tt>$transform</tt>((string) <i>bytecode</i>, (function) <i>target_function</i>, (set of functions) <i>codePath</i>, (string) <i>errInfoFilename</i>, (string) <i>errInfoSourceCode</i>, (string) <i>errInfoOpCharPositions</i>)<P><P></b>
 <P>
-  
+
 
 <P> Copies compiled bytecode stored as a string (1st argument) into the internal code of a target function variable (return value or 2nd argument), <i>without</i> running the code&rsquo;s constructor.  The bytecode is typically generated using the <tt>compile()</tt> function:
 
@@ -1471,7 +1471,7 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
 
 <P> It is certainly possible to pass bogus bytecode to <tt>transform()</tt> (particularly if we&rsquo;re trying to write out the binary ourselves).  <tt>transform()</tt> checks the bytecode&rsquo;s syntax, and if there is a problem then it crashes out with an error message.<P>
 
-<P>   
+<P> 
 
 <P> 
 
@@ -1480,7 +1480,7 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
 <br><P><b><tt>trap()</b></tt><P><P>
  <i>syntax: </i> (numeric) <i>error_code</i> = <tt>trap</tt>([;[;[;]]] code_to_run)<P><P></b>
 <P>
- 
+
 
 <P> Runs the code inside the parentheses (i.e. its argument), and returns any error value.  Error codes are listed in Table 5.  No <tt>code</tt> marker is needed within a <tt>trap()</tt> call.  Upon error, the argument stops running and the error code is returned; if the argument finishes with no error then the return value is 0.  <tt>trap()</tt> thus prevents a piece of dubious code from crashing a larger script.  Note that some egregious errors are caught at compile-time and <tt>trap()</tt> will not be able to prevent those -- this includes some type-mismatch errors like <tt>trap(string = 4)</tt>.
 
@@ -1506,7 +1506,7 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
 
 <P> The <tt>trap()</tt> function is actually defined in <tt>cclang.c</tt>, and has the unique ability to run its arguments in whatever function called <tt>trap()</tt>, rather than in a private argument variable used by all other built-in and user-defined functions.  So variables which are defined within the <tt>trap()</tt> argument list will be accessible to the rest of the function.  Also <tt>this</tt> and <tt>parent</tt> have the same meaning inside a <tt>trap()</tt> command as outside of it.  The C-coded <tt>$trap()</tt> lacks this ability and has the usual run-constructor arguments flag, so just use the scripted function call.
 
-<P>  
+<P> 
 
 <P> 
 
@@ -1562,4 +1562,4 @@ springCleaning </td><td> x </td><td> x </td><td> &nbsp;</td><td> uppercase </td>
 <P> <ul>
 </ul><br><P><div align="center"><a href="https://heltilda.github.io/cicada/help_621.html">Prev: Define operator flags</a> &nbsp;&nbsp;
 <a href="https://heltilda.github.io/cicada/help_64.html">Next: C functions for working with whole arguments<P></a>
-</div><br><br><P>Last update: July 22, 2026
+</div><br><br><P>Last update: July 26, 2026

@@ -1,7 +1,7 @@
 InFileName := "/Users/brianross/Desktop/cicada/docs/docsCompileDirectory/CicadaHelp.tex"
 OutFilePath := "/Users/brianross/Desktop/cicada/docs/"
 url := "https://heltilda.github.io/cicada/"
-update_date := "November 12, 2025"
+update_date := "July 26, 2026"
 
 |* SFLogo := "<a href=\"http://sourceforge.net/projects/yazoo\"><img src=\"http://sflogo.sourceforge.net/sflogo.php?group_id=148821&amp;type=13\" width=\"120\" height=\"30\" alt=\"Get Cicada scripting language at SourceForge.net. Fast, secure and Free Open Source software downloads\" /></a>"
 piwiks := "<!-- Piwik -->\n<script type=\"text/javascript\">\nvar pkBaseURL = ((\"https:\" == document.location.protocol) ? \"https://sourceforge.net/apps/piwik/yazoo/\" : \"http://sourceforge.net/apps/piwik/yazoo/\");\ndocument.write(unescape(\"%3Cscript src='\" + pkBaseURL + \"piwik.js' type='text/javascript'%3E%3C/script%3E\"));\n</script><script type=\"text/javascript\">\npiwik_action_name = '';\npiwik_idsite = 1;\npiwik_url = pkBaseURL + \"piwik.php\";\npiwik_log(piwik_action_name, piwik_idsite, piwik_url);\n</script>\n<object><noscript><p><img src=\"http://sourceforge.net/apps/piwik/yazoo/piwik.php?idsite=1\" alt=\"piwik\"/></p></noscript></object>\n<!-- End Piwik Tag -->" *|
@@ -212,7 +212,7 @@ PrintPage :: {
 
 scan :: {
     next_mark :: [marks_num] int
-    mark :: text_end :: c1 :: end_expr :: int
+    mark :: text_end :: c1 :: end_expr :: figID :: tblID :: int
     table_mode := 0
     
     GetArg :: {
@@ -459,7 +459,7 @@ scan :: {
                 GetArg()
                 
                 Add("<br><center><div class=\"image\"><img src=\"", url, fig_name, ".jpg\"<div><br><br>")
-                for (figID :: int) in <1, top(refs)>  (
+                for figID in <1, top(refs)>  (
                 if refs[figID][1] == fig_label  then (
                     Add("Figure ", refs[figID][2], ":  ")
                 ))
@@ -504,7 +504,7 @@ scan :: {
                         else  pos = that+1
                         pos = find(TEX_text, "\\";; startPosition = pos)      )
 
-                    for (tblID :: int) in <1, top(refs)>  (
+                    for tblID in <1, top(refs)>  (
                     if refs[tblID][1] == tbl_label  then (
                         Add("<div>Table ", refs[tblID][2], ":  ")
                     ))
