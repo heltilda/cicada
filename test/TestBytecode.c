@@ -23,7 +23,7 @@ void test_YHErrors()
     linkedlist CompiledCodes;
     compiler_type *testCompiler;
     
-    ccInt a=4, b=5, c=6, d=7;
+    ccInt a=5, b=6, c=7, d=8;
     
             // Introduce the variables in the same order for each test case, since the compiler starts anew each run.  Only then a=a between any two runs.
             // Start with the definitions that introduce errors.  (This is now not true -- 2/17/05).
