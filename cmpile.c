@@ -56,10 +56,11 @@ cc_compile_global_struct cc_compile_globals;
 
 #define errOut(a,b) {  freeCompiler(compiler);  *rtrn = a;  errPosition = b;  return NULL;  }
 
+
 compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, ccInt *OoOdirections, ccInt numOoOs, ccInt *rtrn)
 {
     compiler_type *compiler = (compiler_type *) malloc(sizeof(compiler_type));
-    ccInt loopList, loopCmd, loopTokenString, loopOoO, loopArgCmd, loopArgType, loopRtrnType, loopToken = 3;
+    ccInt loopList, loopCmd, loopTokenString, loopOoO, ca, loopArgType, loopRtrnType, loopToken = 3;
     ccInt jumpTo[9], jumpMarkers[9], loopJump, loopStartingChar;
     const char *oneChar;
     ccFloat theNum;
@@ -162,7 +163,8 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
     for (loopCmd = 0; loopCmd < numCommands; loopCmd++)  {
         
         const char *tokenChar = (char *) commandTokens[loopCmd].cmdString;
-        ccInt firstToken = loopToken+1, LHarg = -1, RHarg = -1, firstRtrnType = -1, numJumps = 0, aOrtrn, numArgs = 0;
+        ccInt firstToken = loopToken+1, LHarg = -1, RHarg = -1, firstRtrnType = -1, numJumps = 0, aOrtrn;
+        ccInt numArgs = 0;
         bool expectLHarg = false, optionalLHarg;
         bool tobeRemoved = ( (*commandTokens[loopCmd].rtrnTypeString == *removedexpression)
                             || (*commandTokens[loopCmd].translation == *removedexpression) );
@@ -303,8 +305,8 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
         if (*oneChar == *inbytecode)  {
             oneChar++;
             while (*oneChar != 0)  {
-                while ( (*oneChar == ' ') || (*oneChar == '\t') ||
-                        ((lettertype(oneChar) == unprintable) && (*oneChar != anonymousmember[1])) )  {
+                while ( (*oneChar == ' ') || (*oneChar == '\t') || ( (lettertype(oneChar) == unprintable)
+                                && (*oneChar != anonymousmember[1]) && ((*oneChar < anon1[1]) || (*oneChar > anon9[1])) ) )  {
                     oneChar++;      }
                 
                 if (*oneChar != 0)  {
@@ -314,7 +316,14 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
                     
                     if (*oneChar == anonymousmember[1])  {
                         oneChar++;
+//                        numAnons++;
                         wordType = 4;
+                        wordsToAdd = 2;         }
+                    
+                    else if ((*oneChar >= anon1[1]) && (*oneChar <= anon9[1]))  {
+                        wordType = 11 + ((*oneChar) - anon1[1]);
+//                        if (wordType-10 > maxPrevAnon)  maxPrevAnon = wordType-10;
+                        oneChar++;
                         wordsToAdd = 2;         }
                     
                     else  {
@@ -365,9 +374,9 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
         else if (!tobeRemoved)  {
             tokenSpec(firstToken)->numCodeWords = 0;        // temporary patch, to ensure we can compile the macro string
             
-            for (loopArgCmd = *arg1; loopArgCmd <= *arg9; loopArgCmd++)  lettertypeArray[loopArgCmd] = a_symbol;  
+            for (ca = 0; ca < 9; ca++)  lettertypeArray[(*arg1)+ca] = a_symbol;  
             *rtrn = tokenize(compiler, oneChar, firstRtrnType);
-            for (loopArgCmd = *arg1; loopArgCmd <= *arg9; loopArgCmd++)  lettertypeArray[loopArgCmd] = unprintable;  
+            for (ca = 0; ca < 9; ca++)  lettertypeArray[(*arg1)+ca] = unprintable;  
             
             if (*rtrn == passed)  *rtrn = reorderTokens(compiler, firstRtrnType, false);
             if (*rtrn == passed)  *rtrn = addElements(&(compiler->allCodeWords), compiler->bytecode.elementNum, false);
@@ -376,6 +385,8 @@ compiler_type *newCompiler(commandTokenType *commandTokens, ccInt numCommands, c
             copyElements(&(compiler->bytecode), 1,
                     &(compiler->allCodeWords), tokenSpec(firstToken)->firstCodeWord, compiler->bytecode.elementNum);
         }
+        
+//        if (maxPrevAnon > numAnons)  errOut(out_of_range_err, loopCmd+1)
         
         for (loopJump = 0; loopJump < 9; loopJump++)  {
         if ((jumpMarkers[loopJump] == 0) && (jumpTo[loopJump] != 0))  {
@@ -986,9 +997,10 @@ ccInt tokenize(compiler_type *compiler, const char *charPtr, ccInt scriptType)
         if (nextRightArgType != *commentarg - *type0arg)  expectedArgType = nextRightArgType;
         else  expectedArgType = tokenSpec(prevTokenType)->rightArgType;
         
-        if (expectedArgType != constDataArgType)  {
+        if ((nextTokenStack.elementNum == 0) && (expectedArgType != constDataArgType))  {
         if (compiler->adapters[10][expectedArgType] != 0)  {
-            rtrn = addScriptToken(compiler, compiler->adapters[10][expectedArgType], tokenErrPosition, NULL, 0);   }}
+            rtrn = addScriptToken(compiler, compiler->adapters[10][expectedArgType], tokenErrPosition, NULL, 0);
+        }}
         
         if (rtrn != passed)  {
             if (rtrn == token_expected_err)  {
@@ -1541,9 +1553,9 @@ ccInt relinkBestToken(compiler_type *compiler, linkedlist *OoOblock, ccInt first
 
 ccInt writeTokenOps(compiler_type *compiler, ccInt theToken, bool replaceCommandWords)
 {
-    ccInt nextOpPosition, loopToken, loopJump, rtrn;
+    ccInt nextOpPosition, loopToken, loopJump, numAnons = 0, rtrn;
     ccInt tokenCharNum = scriptToken(theToken)->tokenCharNum;
-    ccInt jumpMarkers[9], jumps[9], jumpTo[9], numJumps = 0;
+    ccInt jumpMarkers[9], jumps[9], jumpTo[9], anons[9], numJumps = 0;
     ccInt theTokenID = scriptToken(theToken)->tokenID;
     tokenSpecType *theTokenSpec = tokenSpec(theTokenID);
     
@@ -1575,8 +1587,8 @@ ccInt writeTokenOps(compiler_type *compiler, ccInt theToken, bool replaceCommand
                 if ((!replaceCommandWords) && (theTokenID != 3))  numTimesToWrite = 2;
                 
                 loopToken++;
-                regularCommand = true;        }
-            
+                regularCommand = true;
+            }
             
                 // if we are to write an argument of the operator, we call this function for the n'th argument
                 // command is (0, 1, arg #)
@@ -1606,8 +1618,8 @@ ccInt writeTokenOps(compiler_type *compiler, ccInt theToken, bool replaceCommand
                 
                 jumpMarkers[toWrite[2]-1] = nextOpPosition;
                 
-                loopToken += 3;            }
-            
+                loopToken += 3;
+            }
             
                 // a jump command is represented by (0, 3, marker #)
             
@@ -1623,8 +1635,8 @@ ccInt writeTokenOps(compiler_type *compiler, ccInt theToken, bool replaceCommand
                 jumps[numJumps] = nextOpPosition;
                 numJumps++;
                 
-                loopToken += 3;     }
-            
+                loopToken += 3;
+            }
             
                 // a new hidden variable is represented by (0, 4)
             
@@ -1632,6 +1644,19 @@ ccInt writeTokenOps(compiler_type *compiler, ccInt theToken, bool replaceCommand
                 
                 compiler->anonymousMemberNum--;
                 toWrite = &(compiler->anonymousMemberNum);
+                regularCommand = true;
+                
+                anons[numAnons] = compiler->anonymousMemberNum;
+                numAnons++;
+                
+                loopToken++;
+            }
+            
+                // an existing hidden variable is represented by (0, 10+var#)
+            
+            else if ((toWrite[1] >= 11) && (toWrite[1] <= 19))  {
+                
+                toWrite = &(anons[toWrite[1]-11]);
                 regularCommand = true;
                 
                 loopToken++;

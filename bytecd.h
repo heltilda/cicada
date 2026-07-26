@@ -28,7 +28,7 @@
 
 #include "lnklst.h"
 #include "intrpt.h"
-#include "cclang.h"
+//#include "cclang.h"
 #include "ciclib.h"
 
 
@@ -168,6 +168,17 @@ extern cc_bytecode_global_struct cc_bytecode_globals;
 
 #define extCallMode cc_bytecode_globals._extCallMode
 #define doPrintError cc_bytecode_globals._doPrintError
+
+
+
+// argument types (IDs of jump table) of the left/right arguments to the various operators
+
+#define start_arg 0   /* start_arg is anything that can be used as the first function in an expression */
+#define var_arg 1
+#define data_arg 2
+#define code_arg 3
+#define type_arg 4
+#define no_arg 5
 
 
 

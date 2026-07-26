@@ -113,7 +113,7 @@ void _user_function()
     view holdArgsView = argsView, functionView;
     linkedlist backupCodeList, *theCodeList;
     ccInt counter, holdCodeNumber, rtrn;
-    bool cleanUpCodeLL = false;
+    bool functionExists, cleanUpCodeLL = false;
     
     
         // First determine which code marker N to skip to.  N = 0 would run the constructor.
@@ -124,6 +124,7 @@ void _user_function()
     callCodeFunction();
     if (errCode != passed)  return;
     
+    functionExists = (GL_Object.type == var_type);
     functionView = searchView;
     holdCodeNumber = codeNumber;
     
@@ -158,13 +159,14 @@ void _user_function()
     
     holdArgsView = argsView;
     argsView = searchView;
+    if (GL_Object.type == no_type)  argsView.windowPtr = NULL;
     refWindow(argsView.windowPtr);
     
     
         // Run the function.
     
     returnView.windowPtr = NULL;
-    if ((GL_Object.type == var_type) && (functionView.windowPtr != NULL))  {
+    if ((functionExists) && (functionView.windowPtr != NULL))  {
     if (*functionView.windowPtr->variable_ptr->types == composite_type)  {        // don't run array variables (they weren't customized)
     for (counter = 1; counter <= theCodeList->elementNum; counter++)  {
         beginExecution((code_ref *) element(theCodeList, counter), true, functionView.offset,

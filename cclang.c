@@ -90,11 +90,9 @@ commandTokenType cicadaLanguage[] = {
     { "return" type4arg, commandLevel, "1", inbytecode bc(function_return) bcArg(1) },
     { type3arg "(" type1arg ")", stepVarLevel, "234567", inbytecode bc(user_function) bcArg(1)
                     bc_define(defxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script) },
-    { type3arg "{" type1arg "}", stepVarLevel, "234567", inbytecode bc(user_function) bcArg(1)
-                    bc_define(defFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script) },
     { type3arg "@" type3arg, negationLevel, "234567", inbytecode bc(user_function) bcArg(1) bcArg(2) },     // negationLevel so it's r_to_l
-    { "@" type3arg "(" type1arg ")", stepVarLevel, "34567", inbytecode bc(user_function) bcArg(1)
-                    bc_define(defxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script) },
+/*    { "@" type3arg "(" type1arg ")", stepVarLevel, "34567", inbytecode bc(user_function) bcArg(1)
+                    bc_define(defxxFlags) bc(search_member) anonymousmember bc(code_block) bcArg(2) bc(end_of_script) },*/
     
     { "$math." type7arg "." Cfunctionarg "(" type1arg ")", stepVarLevel, "134567",
                     inbytecode bc(C_function) bcArg(2) bc_define(defxxFlags) bc(search_member) anonymousmember
@@ -121,6 +119,11 @@ commandTokenType cicadaLanguage[] = {
     { type3arg "* ::" type7arg, defineLevel, "134567", inbytecode bc_define(mdfFlags) bcArg(1) bcArg(2) },
     { type3arg "= !" type6arg, defineLevel, "134567", inbytecode bc(forced_equate) bcArg(1) bcArg(2) },
     { type3arg "<- !" type6arg, defineLevel, "134567", inbytecode bc(forced_equate) bcArg(1) bcArg(2) },
+    
+    { "? ::" type7arg, defineLevel, "134567", inbytecode bc_define(defFlags) bc(search_member) anonymousmember bcArg(1) },
+    { "?* ::" type7arg, defineLevel, "134567", inbytecode bc_define(defxxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { "? := @" type7arg, defineLevel, "134567", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bcArg(1) },
+    { "?* := @" type7arg, defineLevel, "134567", inbytecode bc_define(dqaxxFlags) bc(search_member) anonymousmember bcArg(1) },
     
     
         // Member and array index operators
@@ -238,30 +241,6 @@ commandTokenType cicadaLanguage[] = {
     { type6arg "xor" type6arg, binaryBoolLevel, "6", "$math.bool.ifXOr(" arg1 "," arg2 ")" },*/
     
     
-        // High-level flow control commands, each several bytecode 'sentences' long
-    
-    { "for" type3arg "in <" type5arg "," type5arg ">" type1arg, commandLevel, "1",
-                    inbytecode bc_define(equFlags) bcArg(1) bcArg(2)
-                    bcPosition(1) bc_jump_if_true(2) bc(if_greater) bcArg(1)
-                    bcArg(3) bcArg(4) bc_define(equFlags) bcArg(1)
-                    bc(add_num) bc(that_variable) bc_constant_int(1) //bc(search_member) anonymousmember
-                    bc_jump_always(1) bcPosition(2) },
-    { "backfor" type3arg "in <" type5arg "," type5arg ">" type1arg, commandLevel, "1",
-                    inbytecode bc_define(equFlags) bcArg(1) bcArg(3)
-                    bcPosition(1) bc_jump_if_true(2) bc(if_less) bcArg(1)
-                    bcArg(2) bcArg(4) bc_define(equFlags) bcArg(1)
-                    bc(subtract_num) bc(that_variable) bc_constant_int(1) //bc(search_member) anonymousmember
-                    bc_jump_always(1) bcPosition(2) },
-    { "if" type6arg "then" type1arg optionalargs "else" type1arg, commandLevel, "1",
-                    inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
-                    bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2) },
-    { "while" type6arg "do" type1arg, commandLevel, "1",
-                    inbytecode bcPosition(2) bc_jump_if_false(1) bcArg(1) bcArg(2)
-                    bc_jump_always(2) bcPosition(1) },
-    { "loop" type1arg "until" type6arg, commandLevel, "1",
-                    inbytecode bcPosition(1) bcArg(1) bc_jump_if_false(1) bcArg(2) },
-    
-    
         // The 'adapters':  wee bits of unscripted bytecode that make the Cicada syntax work
     
     { noarg_adapter, 0, "0", inbytecode bc(end_of_script) },
@@ -283,6 +262,27 @@ commandTokenType cicadaLanguage[] = {
     { type6arg_adapter, 0, "0", inbytecode bc_define(deqxFlags) bc(search_member) anonymousmember bcArg(1) bc(end_of_script) },
     { type7arg_adapter, 0, "0", inbytecode bc_define(defxFlags) bc(search_member) anonymousmember bcArg(1) bc(end_of_script) },
     { type9arg_adapter, 0, "0", inbytecode bc_define(dqaxFlags) bc(search_member) anonymousmember bc(search_member) bcArg(1) bc(end_of_script) },
+    
+    
+        // High-level flow control commands, each several bytecode 'sentences' long
+    
+    { "?1", 0, "34567", inbytecode bc(search_member) anon1 },
+    
+    { "for @" type3arg "do" type1arg, commandLevel, "1",
+                    inbytecode bcPosition(1) bc_jump_if_false(2) bc(user_function) bcArg(1) bc(no_variable)
+                    bcArg(2) bc(user_function) bc(code_number) bc(constant_int) bc(2) bcArg(1) bc(no_variable)
+                    bc_jump_always(1) bcPosition(2) },
+    { "for (" type1arg ")" type1arg, commandLevel, "1", "?* :: {" arg1 "}, for @ ?1 do " arg2 },
+    { "for" type3arg "in <" type1arg ">" type1arg, commandLevel, "1",
+                    "?* := @iterator({? := @" arg1 "; " arg1 "=@args}, " arg2 "), for @ ?1 do " arg3 },
+    { "if" type6arg "then" type1arg optionalargs "else" type1arg, commandLevel, "1",
+                    inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
+                    bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2) },
+    { "while" type6arg "do" type1arg, commandLevel, "1",
+                    inbytecode bcPosition(2) bc_jump_if_false(1) bcArg(1) bcArg(2)
+                    bc_jump_always(2) bcPosition(1) },
+    { "loop" type1arg "until" type6arg, commandLevel, "1",
+                    inbytecode bcPosition(1) bcArg(1) bc_jump_if_false(1) bcArg(2) },
     
     
         // *************************************************************************************

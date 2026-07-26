@@ -109,17 +109,6 @@
 #define commands_num 58
 
 
-
-// argument types (IDs of jump table) of the left/right arguments to the various operators
-
-#define start_arg 0   /* start_arg is anything that can be used as the first function in an expression */
-#define var_arg 1
-#define data_arg 2
-#define code_arg 3
-#define type_arg 4
-#define no_arg 5
-
-
 // flags used by define/equate/etc commands -- must be string literals equal to commented expressions (see cmpile.h for X_flag definitions)
 
 #define defFlags 46     // can_add_members_flag + update_members_flag + new_target_flag + run_constructor_flag
@@ -132,6 +121,7 @@
 #define defxFlags 172   // can_add_members_flag + new_target_flag + run_constructor_flag + unjammable_flag
 #define deqxFlags 173   // can_add_members_flag + new_target_flag + post_equate_flag + run_constructor_flag + unjammable_flag
 #define dqaxFlags 148   // can_add_members_flag + relink_target_flag + unjammable_flag
+#define dqaxxFlags 212   // can_add_members_flag + relink_target_flag + unjammable_flag + hidden_member_flag
 #define defxxFlags 236  // can_add_members_flag + new_target_flag + run_constructor_flag + unjammable_flag + hidden_member_flag
 #define deqxxFlags 237  // can_add_members_flag + new_target_flag+post_equate_flag+run_constructor_flag+unjammable_flag+hidden_member_flag
 #define defcxxFlags 204 // can_add_members_flag + new_target_flag + unjammable_flag + hidden_member_flag

@@ -164,6 +164,16 @@ typedef struct {
 #define removedexpression "\x1b"
 #define inbytecode "\x1c"
 
+#define anon1 " \xa1 "
+#define anon2 " \xa2 "
+#define anon3 " \xa3 "
+#define anon4 " \xa4 "
+#define anon5 " \xa5 "
+#define anon6 " \xa6 "
+#define anon7 " \xa7 "
+#define anon8 " \xa8 "
+#define anon9 " \xa9 "
+
 
 
 // Numbers corresponding to the define flags; flags word = appropriate sum of these numbers
