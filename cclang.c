@@ -273,8 +273,10 @@ commandTokenType cicadaLanguage[] = {
                     bcArg(2) bc(user_function) bc(code_number) bc(constant_int) bc(2) bcArg(1) bc(no_variable)
                     bc_jump_always(1) bcPosition(2) },
     { "for (" type1arg ")" type1arg, commandLevel, "1", "?* :: {" arg1 "}, for @ ?1 do " arg2 },
+/*    { "for" type3arg "in <" type1arg ">" type1arg, commandLevel, "1",
+                    "?* := @iterator({? := @" arg1 "; " arg1 "=@args}, " arg2 "), for @ ?1 do " arg3 },*/
     { "for" type3arg "in <" type1arg ">" type1arg, commandLevel, "1",
-                    "?* := @iterator({? := @" arg1 "; " arg1 "=@args}, " arg2 "), for @ ?1 do " arg3 },
+                    "?* :: iterator, ?1.init({? := @" arg1 "; " arg1 "=@args}, " arg2 "), for @ ?1 do " arg3 },
     { "if" type6arg "then" type1arg optionalargs "else" type1arg, commandLevel, "1",
                     inbytecode bc_jump_if_false(1) bcArg(1) bcArg(2)
                     bc_jump_always(2) bcPosition(1) bcArg(3) bcPosition(2) },

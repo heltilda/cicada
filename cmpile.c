@@ -1646,8 +1646,10 @@ ccInt writeTokenOps(compiler_type *compiler, ccInt theToken, bool replaceCommand
                 toWrite = &(compiler->anonymousMemberNum);
                 regularCommand = true;
                 
-                anons[numAnons] = compiler->anonymousMemberNum;
-                numAnons++;
+                if (numAnons < 9)  {
+                    anons[numAnons] = compiler->anonymousMemberNum;
+                    numAnons++;
+                }
                 
                 loopToken++;
             }
