@@ -72,6 +72,9 @@ if u /= { { { 0 } } }  then throw(-1)
 v2 :: v3 :: [] [[]] int, v2[^1], v3 :: v2
 
 al :: [][[]]int, al[^2], al[1][^5], al[1][+2], remove al[1][3], al[1][^2]
+strs :: [] string, strs[+1] = "hi", strs[+2] = s2[<2,top>]
+
+ala :: [1] (la *:: [[]][] int), $sin(1.,2.), la = @ala[1]
 
 
 
