@@ -536,10 +536,11 @@ void _def_general()
                 
                 if (sourceView.windowPtr != NULL)  {
                     variable *sourceVar = sourceView.windowPtr->variable_ptr;
+                    ccInt SVidx = 0;
                     bool seenList = false;
                     while (GL_Object.arrayDimList.elementNum > dimCounter)  {
                         dimCounter++;
-                        if (*sourceVar->types == list_type)  {
+                        if (sourceVar->types[SVidx] == list_type)  {
                             *LL_int(&(GL_Object.arrayDimList), dimCounter) = -1;
                             seenList = true;        }
                         else if (seenList)  *LL_int(&(GL_Object.arrayDimList), dimCounter) = 0;
@@ -548,8 +549,9 @@ void _def_general()
                             *LL_int(&(GL_Object.arrayDimList), dimCounter) = arrayMember->indices;
                             if (arrayMember->memberWindow == NULL)  break;
                             sourceVar = arrayMember->memberWindow->variable_ptr;
-                }   }   }
-        }   }
+                        }
+                        if (seenList)  SVidx++;         // we stop stepping through the array variables at this point
+        }   }   }   }
         
         else if ((sourceType != no_type) && (getFlag(flags, relink_target_flag)))  {  setError(illegal_target_err, subjectCommand);  return;  }
         
