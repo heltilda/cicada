@@ -747,7 +747,9 @@ void _def_general()
         }   }}
         
         if (sourceWidth != destView.width)  {
-            canResizeDestination = (canResizeDestination) || (GL_Path.stemView.windowPtr->variable_ptr->types[0] == list_type);
+            variable *stemVar = GL_Path.stemView.windowPtr->variable_ptr;
+            canResizeDestination = (canResizeDestination) ||
+                    ((stemVar->types[0] == list_type) && (destView.windowPtr->variable_ptr->arrayDepth == stemVar->arrayDepth));
             if ((canResizeDestination) && (GL_Path.stemView.width != 0)
                             && (sourceWidth % GL_Path.stemView.width == 0) && (GL_Path.stemMember != NULL))     {
                 
