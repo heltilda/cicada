@@ -735,21 +735,24 @@ void _def_general()
             sourceWidth = numMemberIndices(&sourceView);
         else if ((sourceView.multipleIndices) && (!destView.multipleIndices))  {
             if (destView.windowPtr != NULL)  {
-            if (destView.windowPtr->variable_ptr->types[0] == list_type)  {
-                GL_Path.stemMemberNumber = destView.offset+1;
-                GL_Path.stemMember = LL_member(destView.windowPtr->variable_ptr, GL_Path.stemMemberNumber);
-                GL_Path.offset = 0;
-                GL_Path.indices = GL_Path.stemMember->indices;
-                GL_Path.stemView = destView;
-                stepView(&destView, GL_Path.stemMember, 0, GL_Path.indices);
-                if (errCode != passed)  return;
-                destView.multipleIndices = true;
-        }   }}
+                ccInt destType = destView.windowPtr->variable_ptr->types[0];
+                if ((destType == array_type) || (destType == list_type))  {
+                    if (destType == array_type)  GL_Path.stemMemberNumber = 1;
+                    else  GL_Path.stemMemberNumber = destView.offset+1;
+                    GL_Path.stemMember = LL_member(destView.windowPtr->variable_ptr, GL_Path.stemMemberNumber);
+                    GL_Path.offset = 0;
+                    GL_Path.indices = GL_Path.stemMember->indices;
+                    GL_Path.stemView = destView;
+                    stepView(&destView, GL_Path.stemMember, 0, GL_Path.indices);
+                    if (errCode != passed)  return;
+                    destView.multipleIndices = true;
+        }   }   }
         
         if (sourceWidth != destView.width)  {
             variable *stemVar = GL_Path.stemView.windowPtr->variable_ptr;
-            canResizeDestination = (canResizeDestination) ||
-                    ((stemVar->types[0] == list_type) && (destView.windowPtr->variable_ptr->arrayDepth == stemVar->arrayDepth));
+            ccInt sourceArrayDepth = sourceView.windowPtr->variable_ptr->arrayDepth;
+            if (sourceView.multipleIndices)  sourceArrayDepth++;
+            canResizeDestination = (canResizeDestination) || ((stemVar->types[0] == list_type) && (sourceArrayDepth == stemVar->arrayDepth));
             if ((canResizeDestination) && (GL_Path.stemView.width != 0)
                             && (sourceWidth % GL_Path.stemView.width == 0) && (GL_Path.stemMember != NULL))     {
                 

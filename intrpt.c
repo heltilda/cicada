@@ -283,6 +283,14 @@ void doCopyCompare(view *sourceView, view *destView, bool amComparing,
             }
             
             sourceWidth = destWidth = 0;
+/*            if (spanMultipleIndices)  {
+                if (sourceMemberNumber <= sourceMemberTop)  sourceWidth = loopSourceMember->indices;
+                if (destMemberNumber <= destMemberTop)  destWidth = loopDestMember->indices;
+            }
+            else  {
+                if (sourceMemberNumber <= sourceMemberTop)  sourceWidth = 1;
+                if (destMemberNumber <= destMemberTop)  destWidth = 1;
+            }*/
             if ((sourceMemberNumber <= sourceMemberTop) && (destMemberNumber <= destMemberTop))  {
                 
                 if (spanMultipleIndices)  {    // ((sourceType != composite_type) && (destType != composite_type))  {
@@ -326,15 +334,19 @@ void doCopyCompare(view *sourceView, view *destView, bool amComparing,
                     findNextVisibleMember(sourceVar, &loopSourceMember, &sourceMemberNumber);
                     sourceOffset = 0;
                 }
-                else  sourceOffset += sourceWidth;
-            }
+                else  {
+                    if (sourceWidth == 0)  {  setError(type_mismatch_err, pcCodePtr-1);  return;  }
+                    sourceOffset += sourceWidth;
+            }   }
             if (destMemberNumber <= destMemberTop)  {
                 if (destOffset+destWidth >= loopDestMember->indices)  {
                     findNextVisibleMember(destVar, &loopDestMember, &destMemberNumber);
                     destOffset = 0;
                 }
-                else  destOffset += destWidth;
-            }
+                else  {
+                    if (destWidth == 0)  {  setError(type_mismatch_err, pcCodePtr-1);  return;  }
+                    destOffset += destWidth;
+            }   }
         }
         
         if (destMemberNumber <= destMemberTop)  setError(type_mismatch_err, pcCodePtr-1);
