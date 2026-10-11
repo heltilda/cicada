@@ -1058,13 +1058,16 @@ void stepView(view *viewToStep, member *startingMember, ccInt entryOffset, ccInt
         if (startingWidth > 1)  startingWidth = 1;
     }
     
-    if (memberWindow == NULL)  {  viewToStep->windowPtr = NULL;  setError(void_member_err, pcCodePtr-1);  return;  };
+//    if (memberWindow == NULL)  {  viewToStep->windowPtr = NULL;  setError(void_member_err, pcCodePtr-1);  return;  };
     
     viewToStep->windowPtr = memberWindow;
+    if (memberWindow == NULL)  return;
+    
     if (startingMember->memberWindow->jamStatus == unjammed)  {
         viewToStep->windowPtr = NULL;
-        setError(void_member_err, pcCodePtr-1);
-        return;         }
+//        setError(void_member_err, pcCodePtr-1);
+        return;
+    }
     
     viewToStep->offset = startingOffset*startingMember->indices + viewToStep->windowPtr->offset + entryOffset;
     viewToStep->width = startingWidth * indexWidth;

@@ -712,7 +712,7 @@ void _def_general()
             toCopy = &fauxStringWindow;
     }   }
     
-    else if (sourceDataType == no_type)  {  setError(not_a_variable_err, subjectCommand);  return;  }
+    else if (sourceDataType == no_type)  {  setError(not_a_variable_err, pcCodePtr-1);  return;  }
     
     
         // if data is a scalar, copy it using the one-to-many copy routine (also handles one-to-one)
@@ -920,7 +920,7 @@ ccInt buildOneVarLayer(view *varView, step_params *varPath, const ccInt *types, 
         // step into the next variable
     
     stepView(varView, varPath->stemMember, varPath->offset, varPath->indices);
-    if (errCode == void_member_err)  errCode = passed;
+//    if (errCode == void_member_err)  errCode = passed;
     if ((loopArrayDim == 1) && (searchViewToReturn != NULL))  {
         *searchViewToReturn = *varView;
     }
@@ -1792,13 +1792,15 @@ void navigate(void (*stepFunction)(bool), bool defineMode, bool takeStep, bool a
         }
         
         stepView(&searchView, GL_Path.stemMember, GL_Path.offset, GL_Path.indices);
-    }
+        if ((!allowStepToVoid) && (searchView.windowPtr == NULL))  {
+//            setError(void_member_err, pcCodePtr-1);
+    }   }
     
     
         // set our object info before returning
     
     GL_Object.type = var_type;
-    if ((allowStepToVoid) && (errCode == void_member_err))  errCode = passed;  /*{
+/*    if ((allowStepToVoid) && (errCode == void_member_err))  errCode = passed;  {
         errCode = passed;
         GL_Object.type = no_type;       }*/
     
@@ -2090,16 +2092,16 @@ void _if_ne_at()
 
 void eqaOneArg()
 {
-    ccInt *ArgBeginningPtr, *ErrPtr, hold_err_code;
+//    ccInt *ArgBeginningPtr, *ErrPtr, hold_err_code;
     
-    ArgBeginningPtr = pcCodePtr;
+//    ArgBeginningPtr = pcCodePtr;
     callBytecodeFunction();
     
     if (errCode == passed)  {
         if (GL_Object.type == no_type)  searchView.windowPtr = NULL;
         else if (GL_Object.type != var_type)  setError(not_a_variable_err, pcCodePtr-1);    }
     
-    else if (errCode == void_member_err)  {
+/*    else if (errCode == void_member_err)  {
         
         hold_err_code = errCode;
         errCode = passed;
@@ -2109,7 +2111,7 @@ void eqaOneArg()
         
         if (ErrPtr == pcCodePtr)  searchView.windowPtr = NULL;
         else  errCode = hold_err_code;
-    }
+    }*/
 }
 
 
