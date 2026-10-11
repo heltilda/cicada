@@ -105,4 +105,6 @@ f2b(), if f2b /= { 3 }  then throw(-1)          | make sure code #2 runs when co
 
 f3 :: { ; return {args[1]} }, { f3(1) }
 
+{} @ { 1, * }[2]
+
 print("Finished tests!\n")

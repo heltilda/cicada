@@ -74,7 +74,7 @@ void test_YHErrors()
                 passed, invalid_index_err, incomplete_variable_err, incomplete_variable_err, passed,
             passed, invalid_index_err, not_composite_err, passed, passed,    // 50
                 passed, passed, passed, passed, passed,
-            passed, passed, type_mismatch_err, type_mismatch_err, void_member_err,
+            passed, passed, type_mismatch_err, type_mismatch_err, not_a_variable_err,
                 member_not_found_err, member_not_found_err, passed, type_mismatch_err, passed,
             invalid_index_err, invalid_index_err, type_mismatch_err, passed, passed,
                 passed, unequal_data_size_err, passed, unequal_data_size_err, passed,
